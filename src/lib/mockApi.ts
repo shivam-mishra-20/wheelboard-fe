@@ -507,21 +507,24 @@ export const companyHomeData = {
     {
       id: 'job-1',
       title: 'Driver',
-      description: 'Lorem ipsum dolor Description part comes here dynamically as the company creates Jobs and posts online',
+      description:
+        'Lorem ipsum dolor Description part comes here dynamically as the company creates Jobs and posts online',
       image: '/staring-man.jpg',
       createdAt: '2025-09-26T10:30:00Z',
     },
     {
       id: 'job-2',
       title: 'Technician',
-      description: 'Lorem ipsum dolor Description part comes here dynamically as the company creates Jobs and posts online',
+      description:
+        'Lorem ipsum dolor Description part comes here dynamically as the company creates Jobs and posts online',
       image: '/excavator.jpg',
       createdAt: '2025-09-25T14:15:00Z',
     },
     {
       id: 'job-3',
       title: 'Logistics Manager',
-      description: 'Lorem ipsum dolor Description part comes here dynamically as the company creates Jobs and posts online',
+      description:
+        'Lorem ipsum dolor Description part comes here dynamically as the company creates Jobs and posts online',
       image: '/truck-01.jpg',
       createdAt: '2025-09-24T09:45:00Z',
     },
@@ -536,7 +539,8 @@ export const companyHomeData = {
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
-      description: 'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
+      description:
+        'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
       image: '/live-truck.gif',
       timeAgo: 'Posted 2 days ago',
     },
@@ -548,7 +552,8 @@ export const companyHomeData = {
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
-      description: 'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
+      description:
+        'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
       image: '/live-truck-01.gif',
       timeAgo: 'Posted 2 days ago',
     },
@@ -560,7 +565,8 @@ export const companyHomeData = {
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
-      description: 'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
+      description:
+        'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
       image: '/live-truck.gif',
       timeAgo: 'Posted 2 days ago',
     },
@@ -572,7 +578,8 @@ export const companyHomeData = {
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
-      description: 'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
+      description:
+        'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
       image: '/live-truck-01.gif',
       timeAgo: 'Posted 2 days ago',
     },
@@ -636,7 +643,8 @@ export const companyFleetData = {
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
-      description: 'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
+      description:
+        'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
       image: '/live-truck-01.gif',
       timeAgo: 'Posted 2 days ago',
     },
@@ -648,7 +656,8 @@ export const companyFleetData = {
         initials: 'M',
       },
       title: 'Vehicle Maintenance Best Practices',
-      description: 'Regular maintenance tips to keep your fleet running smoothly and extend vehicle lifespan',
+      description:
+        'Regular maintenance tips to keep your fleet running smoothly and extend vehicle lifespan',
       image: '/truck-01.jpg',
       timeAgo: 'Posted 3 days ago',
     },
@@ -660,7 +669,8 @@ export const companyFleetData = {
         initials: 'B',
       },
       title: 'Reducing Fuel Costs',
-      description: 'Strategies to optimize fuel efficiency and reduce operational expenses in your fleet',
+      description:
+        'Strategies to optimize fuel efficiency and reduce operational expenses in your fleet',
       image: '/truck-CTA.png',
       timeAgo: 'Posted 5 days ago',
     },
@@ -672,7 +682,8 @@ export const companyFleetData = {
         initials: 'C',
       },
       title: 'Driver Safety Programs',
-      description: 'Implement effective driver safety programs to prevent accidents and improve fleet safety',
+      description:
+        'Implement effective driver safety programs to prevent accidents and improve fleet safety',
       image: '/live-truck.gif',
       timeAgo: 'Posted 1 week ago',
     },
