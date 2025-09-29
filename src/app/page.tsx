@@ -14,6 +14,7 @@ import Contact from '@/components/Contact';
 import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/LoadingScreen';
+import LoginSimulator from '@/components/LoginSimulator';
 import './globals.css';
 
 export default function Page() {
@@ -57,6 +58,9 @@ export default function Page() {
           <CTASection />
         </main>
         <Footer />
+
+        {/* Login Simulator for Testing */}
+        <LoginSimulator />
       </div>
     </div>
   );

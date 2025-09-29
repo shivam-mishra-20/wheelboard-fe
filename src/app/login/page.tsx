@@ -1,18 +1,54 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { mockAPI } from '@/lib/mockApi';
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>(
+    'success'
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log({ email, password, name });
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      const result = await mockAPI.login({ email, password });
+
+      setMessageType(result.success ? 'success' : 'error');
+      setMessage(result.message);
+
+      if (result.success && result.user) {
+        // Redirect to role-specific home page
+        const role = result.user.userType;
+        const target =
+          role === 'company'
+            ? '/company/home'
+            : role === 'business'
+              ? '/business/home'
+              : '/professional/home';
+
+        // Small delay to show success message, then navigate
+        setTimeout(() => {
+          router.push(target);
+        }, 800);
+      }
+    } catch {
+      setMessageType('error');
+      setMessage('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,48 +82,8 @@ export default function LoginPage() {
               <p className="mt-1 text-sm text-gray-600">Welcome back</p>
             </div>
 
-            {/* Toggle Buttons */}
-            <div className="mb-6 flex rounded-lg bg-gray-100 p-1">
-              <button
-                onClick={() => setIsLogin(true)}
-                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                  isLogin
-                    ? 'bg-white text-primary-accent shadow-sm'
-                    : 'text-gray-600 hover:text-primary-accent'
-                }`}
-              >
-                Login
-              </button>
-              <button
-                onClick={() => setIsLogin(false)}
-                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                  !isLogin
-                    ? 'bg-white text-primary-accent shadow-sm'
-                    : 'text-gray-600 hover:text-primary-accent'
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
-
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              {!isLogin && (
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20"
-                    placeholder="Enter your full name"
-                    required={!isLogin}
-                  />
-                </div>
-              )}
-
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">
                   Email Address
@@ -116,30 +112,42 @@ export default function LoginPage() {
                 />
               </div>
 
-              {isLogin && (
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center text-gray-600">
-                    <input
-                      type="checkbox"
-                      className="mr-2 rounded border-gray-300 text-primary-button focus:ring-primary-button"
-                    />
-                    Remember me
-                  </label>
-                  <button
-                    type="button"
-                    className="font-medium text-primary-button hover:text-primary-button/80"
-                  >
-                    Forgot Password?
-                  </button>
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center text-gray-600">
+                  <input
+                    type="checkbox"
+                    className="mr-2 rounded border-gray-300 text-primary-button focus:ring-primary-button"
+                  />
+                  Remember me
+                </label>
+                <button
+                  type="button"
+                  className="font-medium text-primary-button hover:text-primary-button/80"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              {/* Message Display */}
+              {message && (
+                <div
+                  className={`rounded-lg p-3 text-sm ${
+                    messageType === 'success'
+                      ? 'border border-green-200 bg-green-50 text-green-800'
+                      : 'border border-red-200 bg-red-50 text-red-800'
+                  }`}
+                >
+                  {message}
                 </div>
               )}
 
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-primary-button py-3 font-semibold text-white transition-colors hover:bg-primary-button/90"
+                disabled={isLoading}
+                className="w-full rounded-lg bg-primary-button py-3 font-semibold text-white transition-colors hover:bg-primary-button/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isLogin ? 'Sign In' : 'Create Account'}
+                {isLoading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
 
@@ -152,7 +160,32 @@ export default function LoginPage() {
 
             {/* Social Login */}
             <div className="space-y-3">
-              <button className="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-700 hover:bg-gray-50">
+              <button
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const result = await mockAPI.socialLogin('google');
+                    setMessageType(result.success ? 'success' : 'error');
+                    setMessage(result.message);
+                    if (result.success && result.user) {
+                      const role = result.user.userType;
+                      const target =
+                        role === 'company'
+                          ? '/company/home'
+                          : role === 'business'
+                            ? '/business/home'
+                            : '/professional/home';
+                      setTimeout(() => router.push(target), 800);
+                    }
+                  } catch {
+                    setMessageType('error');
+                    setMessage('Social login failed.');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                className="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-700 hover:bg-gray-50"
+              >
                 <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
@@ -173,6 +206,17 @@ export default function LoginPage() {
                 </svg>
                 Continue with Google
               </button>
+            </div>
+
+            {/* Registration Link */}
+            <div className="mt-6 text-center text-sm text-gray-600">
+              Don&apos;t have an account?{' '}
+              <Link
+                href="/register/professional"
+                className="font-medium text-primary-button hover:text-primary-button/80 hover:underline"
+              >
+                Create Account
+              </Link>
             </div>
 
             {/* Footer Text */}

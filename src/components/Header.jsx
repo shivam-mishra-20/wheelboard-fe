@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion'; // motion used throughout
-// Navigation links data moved outside component to avoid recreating on each render
-const NAV_LINKS = [
+import { motion, AnimatePresence } from 'framer-motion';
+import { mockAPI } from '../lib/mockApi';
+// Default navigation links for non-authenticated users
+const DEFAULT_NAV_LINKS = [
   { id: 'home', label: 'Home' },
   // { id: "why-choose", label: "Why Choose" },
   { id: 'about', label: 'About Us' },
@@ -59,7 +60,7 @@ const AuthPopup = ({ isOpen, onClose, navigateTo }) => {
                 className="mb-4 flex items-center justify-center rounded-xl bg-[#FF5A5F] py-5 text-white"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigateTo('/login/professional')}
+                onClick={() => navigateTo('/register/professional')}
               >
                 <span className="mr-3">
                   <svg
@@ -84,7 +85,7 @@ const AuthPopup = ({ isOpen, onClose, navigateTo }) => {
                 className="mb-4 flex items-center justify-center rounded-xl bg-[#1A202C] py-5 text-white"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigateTo('/login/company')}
+                onClick={() => navigateTo('/register/company')}
               >
                 <span className="mr-3">
                   <svg
@@ -109,7 +110,7 @@ const AuthPopup = ({ isOpen, onClose, navigateTo }) => {
                 className="mb-4 flex items-center justify-center rounded-xl bg-[#1A202C] py-5 text-white"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigateTo('/login/business')}
+                onClick={() => navigateTo('/register/business')}
               >
                 <span className="mr-3">
                   <svg
@@ -154,6 +155,8 @@ const Header = () => {
   const [activeLink, setActiveLink] = useState('home');
   const [temporaryExpanded, setTemporaryExpanded] = useState(false);
   const [isAuthPopupOpen, setIsAuthPopupOpen] = useState(false);
+  const [userSession, setUserSession] = useState(null);
+  const [currentNavLinks, setCurrentNavLinks] = useState(DEFAULT_NAV_LINKS);
   const lastScrollYRef = useRef(0);
   const [vw, setVw] = useState(0);
   const router = useRouter();
@@ -171,18 +174,45 @@ const Header = () => {
     return undefined;
   }, []);
 
-  // Centralized nav handler: routes to /partners or back to landing and scrolls to anchor
-  const handleNavClick = (linkId) => {
+  // Check for user session and update navigation
+  useEffect(() => {
+    const session = mockAPI.getCurrentSession();
+    if (session && session.isAuthenticated) {
+      setUserSession(session);
+      setCurrentNavLinks(session.navigationLinks);
+      // Set active link based on current pathname
+      const currentPath = pathname;
+      const matchingLink = session.navigationLinks.find(
+        (link) => currentPath === link.href || currentPath.startsWith(link.href)
+      );
+      if (matchingLink) {
+        setActiveLink(matchingLink.id);
+      }
+    } else {
+      setUserSession(null);
+      setCurrentNavLinks(DEFAULT_NAV_LINKS);
+    }
+  }, [pathname]);
+
+  // Centralized nav handler: routes to different pages based on user session
+  const handleNavClick = (linkId, href = null) => {
     setActiveLink(linkId);
-    // Partners has its own dedicated page
+
+    // If user is authenticated, navigate to the specific href
+    if (userSession && href) {
+      router.push(href);
+      setIsOpen(false);
+      return;
+    }
+
+    // For non-authenticated users, handle partners page separately
     if (linkId === 'partners') {
-      // If already on partners, do nothing
       if (pathname !== '/partners') router.push('/partners');
       setIsOpen(false);
       return;
     }
 
-    // For in-page anchors: if we're not on landing, go there first, then scroll
+    // For in-page anchors on landing page
     const scrollToAnchor = () => {
       const el = document.getElementById(linkId);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -194,7 +224,7 @@ const Header = () => {
       return;
     }
 
-    // navigate to home then scroll after a small delay to allow DOM render
+    // Navigate to home then scroll after a small delay to allow DOM render
     router.push('/');
     setTimeout(scrollToAnchor, 140);
     setIsOpen(false);
@@ -221,20 +251,21 @@ const Header = () => {
       if (isOpen) setIsOpen(false);
 
       // --- Active link highlight based on scroll ---
-      // Get all section elements by id
-      let currentSection = 'home';
-      // Use NAV_LINKS (stable constant) here to avoid referencing navLinks before it's initialized
-      for (const link of NAV_LINKS) {
-        const section = document.getElementById(link.id);
-        if (section) {
-          const rect = section.getBoundingClientRect();
-          if (rect.top <= 80 && rect.bottom > 80) {
-            currentSection = link.id;
-            break;
+      // Only do scroll-based active link detection for non-authenticated users on landing page
+      if (!userSession && (pathname === '/' || pathname === '')) {
+        let currentSection = 'home';
+        for (const link of currentNavLinks) {
+          const section = document.getElementById(link.id);
+          if (section) {
+            const rect = section.getBoundingClientRect();
+            if (rect.top <= 80 && rect.bottom > 80) {
+              currentSection = link.id;
+              break;
+            }
           }
         }
+        setActiveLink(currentSection);
       }
-      setActiveLink(currentSection);
     };
 
     // Bind only in browser
@@ -271,24 +302,25 @@ const Header = () => {
     if (isOpen) setIsOpen(false);
   };
 
-  // Update the renderDesktopNav function to match the image design
+  // Update the renderDesktopNav function to handle authenticated and non-authenticated users
   const renderDesktopNav = () => (
     <nav className="hidden items-center justify-center space-x-8 md:flex">
-      {NAV_LINKS.map((link) => (
+      {currentNavLinks.map((link) => (
         <motion.div
           key={link.id}
           whileHover={{ y: -2 }}
           transition={{ type: 'spring', stiffness: 400, damping: 10 }}
         >
-          {link.id === 'partners' ? (
+          {userSession ? (
+            // Authenticated user navigation
             <Link
-              href="/partners"
+              href={link.href}
               className={`relative text-sm font-medium ${
                 activeLink === link.id
                   ? 'text-[#FF6D1B]'
                   : 'text-gray-700 hover:text-[#0052CC]'
               } transition-colors duration-300`}
-              onClick={() => handleNavClick(link.id)}
+              onClick={() => handleNavClick(link.id, link.href)}
             >
               {link.label}
               {activeLink === link.id && (
@@ -302,26 +334,52 @@ const Header = () => {
               )}
             </Link>
           ) : (
-            <a
-              href={`#${link.id}`}
-              className={`relative text-sm font-medium ${
-                activeLink === link.id
-                  ? 'text-[#FF6D1B]'
-                  : 'text-gray-700 hover:text-[#0052CC]'
-              } transition-colors duration-300`}
-              onClick={() => handleNavClick(link.id)}
-            >
-              {link.label}
-              {activeLink === link.id && (
-                <motion.span
-                  layoutId="activeIndicator"
-                  className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[#FF6D1B]"
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: '100%' }}
-                  transition={{ duration: 0.3 }}
-                />
+            // Non-authenticated user navigation
+            <>
+              {link.id === 'partners' ? (
+                <Link
+                  href="/partners"
+                  className={`relative text-sm font-medium ${
+                    activeLink === link.id
+                      ? 'text-[#FF6D1B]'
+                      : 'text-gray-700 hover:text-[#0052CC]'
+                  } transition-colors duration-300`}
+                  onClick={() => handleNavClick(link.id)}
+                >
+                  {link.label}
+                  {activeLink === link.id && (
+                    <motion.span
+                      layoutId="activeIndicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[#FF6D1B]"
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: '100%' }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
+                </Link>
+              ) : (
+                <a
+                  href={`#${link.id}`}
+                  className={`relative text-sm font-medium ${
+                    activeLink === link.id
+                      ? 'text-[#FF6D1B]'
+                      : 'text-gray-700 hover:text-[#0052CC]'
+                  } transition-colors duration-300`}
+                  onClick={() => handleNavClick(link.id)}
+                >
+                  {link.label}
+                  {activeLink === link.id && (
+                    <motion.span
+                      layoutId="activeIndicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[#FF6D1B]"
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: '100%' }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
+                </a>
               )}
-            </a>
+            </>
           )}
         </motion.div>
       ))}
@@ -369,7 +427,7 @@ const Header = () => {
             className="absolute left-0 right-0 top-full z-50 bg-white shadow-lg"
           >
             <div className="space-y-2 px-4 py-2">
-              {NAV_LINKS.map((link) => (
+              {currentNavLinks.map((link) => (
                 <motion.div
                   key={link.id}
                   initial={{ opacity: 0, x: -10 }}
@@ -377,30 +435,48 @@ const Header = () => {
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {link.id === 'partners' ? (
+                  {userSession ? (
+                    // Authenticated user mobile navigation
                     <Link
-                      href="/partners"
+                      href={link.href}
                       className={`block py-2 text-sm ${
                         activeLink === link.id
                           ? 'text-[#FF6D1B]'
                           : 'text-gray-700'
                       }`}
-                      onClick={() => handleNavClick(link.id)}
+                      onClick={() => handleNavClick(link.id, link.href)}
                     >
                       {link.label}
                     </Link>
                   ) : (
-                    <a
-                      href={`#${link.id}`}
-                      className={`block py-2 text-sm ${
-                        activeLink === link.id
-                          ? 'text-[#FF6D1B]'
-                          : 'text-gray-700'
-                      }`}
-                      onClick={() => handleNavClick(link.id)}
-                    >
-                      {link.label}
-                    </a>
+                    // Non-authenticated user mobile navigation
+                    <>
+                      {link.id === 'partners' ? (
+                        <Link
+                          href="/partners"
+                          className={`block py-2 text-sm ${
+                            activeLink === link.id
+                              ? 'text-[#FF6D1B]'
+                              : 'text-gray-700'
+                          }`}
+                          onClick={() => handleNavClick(link.id)}
+                        >
+                          {link.label}
+                        </Link>
+                      ) : (
+                        <a
+                          href={`#${link.id}`}
+                          className={`block py-2 text-sm ${
+                            activeLink === link.id
+                              ? 'text-[#FF6D1B]'
+                              : 'text-gray-700'
+                          }`}
+                          onClick={() => handleNavClick(link.id)}
+                        >
+                          {link.label}
+                        </a>
+                      )}
+                    </>
                   )}
                 </motion.div>
               ))}
@@ -410,13 +486,47 @@ const Header = () => {
                 exit={{ opacity: 0, y: 5 }}
                 className="pt-2"
               >
-                <a
-                  href="#register"
-                  className="block w-full rounded-xl bg-[#EF4444] px-4 py-2 text-center text-sm font-medium text-white"
-                  onClick={toggleAuthPopup}
-                >
-                  Register/Login
-                </a>
+                {userSession ? (
+                  // Show user profile and logout for authenticated users
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3 px-4 py-2">
+                      <div className="h-8 w-8 overflow-hidden rounded-full bg-amber-500">
+                        <img
+                          src={userSession.profileImage}
+                          alt="Profile"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.target.src = '/profile-pic.png';
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">
+                        {userSession.user.companyName}
+                      </span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await mockAPI.logout();
+                        setUserSession(null);
+                        setCurrentNavLinks(DEFAULT_NAV_LINKS);
+                        setIsOpen(false);
+                        router.push('/');
+                      }}
+                      className="block w-full rounded-xl bg-gray-500 px-4 py-2 text-center text-sm font-medium text-white"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  // Show register/login for non-authenticated users
+                  <a
+                    href="#register"
+                    className="block w-full rounded-xl bg-[#EF4444] px-4 py-2 text-center text-sm font-medium text-white"
+                    onClick={toggleAuthPopup}
+                  >
+                    Register/Login
+                  </a>
+                )}
               </motion.div>
             </div>
           </motion.div>
@@ -435,18 +545,54 @@ const Header = () => {
     </Link>
   );
 
-  // Register/Login button
-  const renderRegisterButton = () => (
-    <motion.a
-      href="#register"
-      className="hidden rounded-xl bg-[#EF4444] px-6 py-2 text-sm font-medium text-white md:block"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={toggleAuthPopup}
-    >
-      Register/Login
-    </motion.a>
-  );
+  // Register/Login button or User Profile
+  const renderAuthSection = () => {
+    if (userSession) {
+      // Show user profile section when authenticated
+      return (
+        <div className="hidden items-center space-x-3 md:flex">
+          <span className="text-sm font-medium text-gray-700">
+            {userSession.user.companyName}
+          </span>
+          <div className="h-8 w-8 overflow-hidden rounded-full bg-amber-500">
+            <img
+              src={userSession.profileImage}
+              alt="Profile"
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                // Fallback to a default image if the profile image fails to load
+                e.target.src = '/profile-pic.png';
+              }}
+            />
+          </div>
+          <button
+            onClick={async () => {
+              await mockAPI.logout();
+              setUserSession(null);
+              setCurrentNavLinks(DEFAULT_NAV_LINKS);
+              router.push('/');
+            }}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Logout
+          </button>
+        </div>
+      );
+    }
+
+    // Show register/login button when not authenticated
+    return (
+      <motion.a
+        href="#register"
+        className="hidden rounded-xl bg-[#EF4444] px-6 py-2 text-sm font-medium text-white md:block"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={toggleAuthPopup}
+      >
+        Register/Login
+      </motion.a>
+    );
+  };
 
   return (
     <>
@@ -463,8 +609,8 @@ const Header = () => {
             {/* Desktop Navigation */}
             {renderDesktopNav()}
 
-            {/* Register/Login Button */}
-            {renderRegisterButton()}
+            {/* Register/Login Button or User Profile */}
+            {renderAuthSection()}
 
             {/* Mobile Navigation */}
             {renderMobileNav()}
