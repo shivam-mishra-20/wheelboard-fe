@@ -7,7 +7,6 @@ interface FeedPost {
   id: string;
   author: {
     name: string;
-    avatar: string;
     initials: string;
   };
   title: string;
@@ -16,9 +15,56 @@ interface FeedPost {
   timeAgo: string;
 }
 
-interface PopularFeedsProps {
-  feeds: FeedPost[];
-}
+const feeds: FeedPost[] = [
+  {
+    id: '1',
+    author: {
+      name: 'Fleet Operations',
+      initials: 'FO',
+    },
+    title: 'Industry Insights',
+    description:
+      'Latest trends in fleet management and logistics optimization strategies',
+    image: '/live-truck.gif',
+    timeAgo: '3 days ago',
+  },
+  {
+    id: '2',
+    author: {
+      name: 'Maintenance Team',
+      initials: 'MT',
+    },
+    title: 'Service Updates',
+    description:
+      'New preventive maintenance schedules and service improvements',
+    image: '/excavator.jpg',
+    timeAgo: '5 days ago',
+  },
+  {
+    id: '3',
+    author: {
+      name: 'Business Network',
+      initials: 'BN',
+    },
+    title: 'Market Trends',
+    description:
+      'Current market dynamics and opportunities in transportation sector',
+    image: '/truck-01.jpg',
+    timeAgo: '7 days ago',
+  },
+  {
+    id: '4',
+    author: {
+      name: 'Operations Hub',
+      initials: 'OH',
+    },
+    title: 'Tech Integration',
+    description:
+      'Digital transformation and technology adoption in fleet management',
+    image: '/yellow-truck.jpg',
+    timeAgo: '10 days ago',
+  },
+];
 
 import type { Variants } from 'framer-motion';
 
@@ -41,7 +87,7 @@ const item: Variants = {
   },
 };
 
-export default function PopularFeeds({ feeds }: PopularFeedsProps) {
+export default function PopularFeeds() {
   return (
     <div className="mb-16">
       <motion.div

@@ -108,7 +108,6 @@ export default function HeroCarousel({
 
   // Get slide styles based on position
   const getSlideStyles = (position: string) => {
-    // Define the return type for slide styles
     type SlideStyle = {
       transformOrigin: string;
       transform: string;
@@ -121,14 +120,12 @@ export default function HeroCarousel({
       opacity?: number;
     };
 
-    // Base styles
     const styles: SlideStyle = {
       transformOrigin: 'center center',
       transform: `perspective(1200px)`,
       aspectRatio: '16/9',
     };
 
-    // Position-specific styles
     if (position === 'center') {
       return {
         ...styles,
@@ -172,7 +169,6 @@ export default function HeroCarousel({
 
   // Render mobile view
   const renderMobileView = () => {
-    // Mobile will render the stacked carousel (touch-friendly) similar to desktop
     return (
       <div
         className="relative overflow-hidden py-0"
@@ -192,7 +188,6 @@ export default function HeroCarousel({
         >
           <div className="absolute inset-0 flex items-center justify-center">
             {slides.map((slide, index) => {
-              // compute position same way as desktop so mobile shows the stacked cards
               const diff =
                 (index - currentSlide + slides.length) % slides.length;
               let position = 'hidden';
@@ -204,7 +199,6 @@ export default function HeroCarousel({
 
               const slideStyles = getSlideStyles(position);
 
-              // derive simple numeric/style values to avoid complex inline ternaries
               const leftVal =
                 position === 'center'
                   ? '50%'
@@ -431,7 +425,6 @@ export default function HeroCarousel({
                       style={{ filter: slideStyles.filter || 'none' }}
                       priority={index === currentSlide}
                     />
-                    {/* Gradient overlay for better text readability */}
                     <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
                   </div>
                 </motion.div>

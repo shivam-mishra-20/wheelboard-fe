@@ -37,35 +37,35 @@ const AuthPopup = ({ isOpen, onClose, navigateTo }) => {
           onClick={onClose}
         >
           <motion.div
-            className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
             transition={{
               type: 'spring',
-              damping: 25,
+              damping: 20,
               stiffness: 300,
             }}
             onClick={handlePopupClick}
           >
-            <div className="flex flex-col p-6">
-              <h2 className="mb-2 text-center text-2xl font-bold text-gray-800">
-                Get Started Today
+            <div className="flex flex-col p-8">
+              <h2 className="mb-2 text-center text-2xl font-bold text-gray-900">
+                Get Started
               </h2>
-              <p className="mb-6 text-center text-gray-600">
-                Choose your registration type
+              <p className="mb-8 text-center text-sm text-gray-500">
+                Choose your account type
               </p>
 
-              <motion.button
-                className="mb-4 flex items-center justify-center rounded-xl bg-[#FF5A5F] py-5 text-white"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigateTo('/register/professional')}
-              >
-                <span className="mr-3">
+              <div className="space-y-3">
+                <motion.button
+                  className="flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3.5 text-sm font-semibold text-white shadow-md transition-shadow hover:shadow-lg"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigateTo('/register/professional')}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -77,20 +77,18 @@ const AuthPopup = ({ isOpen, onClose, navigateTo }) => {
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                   </svg>
-                </span>
-                Register as Professional
-              </motion.button>
+                  <span>Professional</span>
+                </motion.button>
 
-              <motion.button
-                className="mb-4 flex items-center justify-center rounded-xl bg-[#1A202C] py-5 text-white"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigateTo('/register/company')}
-              >
-                <span className="mr-3">
+                <motion.button
+                  className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-gray-200 bg-white px-6 py-3.5 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigateTo('/register/company')}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -102,20 +100,18 @@ const AuthPopup = ({ isOpen, onClose, navigateTo }) => {
                       d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                     />
                   </svg>
-                </span>
-                Register as Company
-              </motion.button>
+                  <span>Company</span>
+                </motion.button>
 
-              <motion.button
-                className="mb-4 flex items-center justify-center rounded-xl bg-[#1A202C] py-5 text-white"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigateTo('/register/business')}
-              >
-                <span className="mr-3">
+                <motion.button
+                  className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-gray-200 bg-white px-6 py-3.5 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigateTo('/register/business')}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
+                    className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -127,15 +123,15 @@ const AuthPopup = ({ isOpen, onClose, navigateTo }) => {
                       d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                     />
                   </svg>
-                </span>
-                Register as Business
-              </motion.button>
+                  <span>Business</span>
+                </motion.button>
+              </div>
 
-              <div className="mt-4 text-center text-gray-600">
-                Already have an account?
+              <div className="mt-6 text-center text-sm text-gray-600">
+                Already have an account?{' '}
                 <motion.span
-                  className="ml-1 cursor-pointer font-medium text-[#FF6D1B]"
-                  whileHover={{ scale: 1.03 }}
+                  className="cursor-pointer font-semibold text-primary-500 hover:text-primary-600"
+                  whileHover={{ scale: 1.05 }}
                   onClick={() => navigateTo('/login')}
                 >
                   Sign in
@@ -304,32 +300,33 @@ const Header = () => {
 
   // Update the renderDesktopNav function to handle authenticated and non-authenticated users
   const renderDesktopNav = () => (
-    <nav className="hidden items-center justify-center space-x-8 md:flex">
+    <nav className="hidden items-center justify-center space-x-1 md:flex">
       {currentNavLinks.map((link) => (
         <motion.div
           key={link.id}
-          whileHover={{ y: -2 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+          whileHover={{ y: -1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
           {userSession ? (
             // Authenticated user navigation
             <Link
               href={link.href}
-              className={`relative text-sm font-medium ${
+              className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                 activeLink === link.id
-                  ? 'text-[#FF6D1B]'
-                  : 'text-gray-700 hover:text-[#0052CC]'
-              } transition-colors duration-300`}
+                  ? 'text-primary-600'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
               onClick={() => handleNavClick(link.id, link.href)}
             >
               {link.label}
               {activeLink === link.id && (
                 <motion.span
                   layoutId="activeIndicator"
-                  className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[#FF6D1B]"
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: '100%' }}
-                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 rounded-lg bg-primary-50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ zIndex: -1 }}
                 />
               )}
             </Link>
@@ -339,42 +336,44 @@ const Header = () => {
               {link.id === 'partners' ? (
                 <Link
                   href="/partners"
-                  className={`relative text-sm font-medium ${
+                  className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                     activeLink === link.id
-                      ? 'text-[#FF6D1B]'
-                      : 'text-gray-700 hover:text-[#0052CC]'
-                  } transition-colors duration-300`}
+                      ? 'text-primary-600'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
                   onClick={() => handleNavClick(link.id)}
                 >
                   {link.label}
                   {activeLink === link.id && (
                     <motion.span
                       layoutId="activeIndicator"
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[#FF6D1B]"
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: '100%' }}
-                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0 rounded-lg bg-primary-50"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ zIndex: -1 }}
                     />
                   )}
                 </Link>
               ) : (
                 <a
                   href={`#${link.id}`}
-                  className={`relative text-sm font-medium ${
+                  className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                     activeLink === link.id
-                      ? 'text-[#FF6D1B]'
-                      : 'text-gray-700 hover:text-[#0052CC]'
-                  } transition-colors duration-300`}
+                      ? 'text-primary-600'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
                   onClick={() => handleNavClick(link.id)}
                 >
                   {link.label}
                   {activeLink === link.id && (
                     <motion.span
                       layoutId="activeIndicator"
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[#FF6D1B]"
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: '100%' }}
-                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0 rounded-lg bg-primary-50"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ zIndex: -1 }}
                     />
                   )}
                 </a>
@@ -441,7 +440,7 @@ const Header = () => {
                       href={link.href}
                       className={`block py-2 text-sm ${
                         activeLink === link.id
-                          ? 'text-[#FF6D1B]'
+                          ? 'text-[#FF7A00]'
                           : 'text-gray-700'
                       }`}
                       onClick={() => handleNavClick(link.id, link.href)}
@@ -456,7 +455,7 @@ const Header = () => {
                           href="/partners"
                           className={`block py-2 text-sm ${
                             activeLink === link.id
-                              ? 'text-[#FF6D1B]'
+                              ? 'text-[#FF7A00]'
                               : 'text-gray-700'
                           }`}
                           onClick={() => handleNavClick(link.id)}
@@ -468,7 +467,7 @@ const Header = () => {
                           href={`#${link.id}`}
                           className={`block py-2 text-sm ${
                             activeLink === link.id
-                              ? 'text-[#FF6D1B]'
+                              ? 'text-[#FF7A00]'
                               : 'text-gray-700'
                           }`}
                           onClick={() => handleNavClick(link.id)}
@@ -550,17 +549,16 @@ const Header = () => {
     if (userSession) {
       // Show user profile section when authenticated
       return (
-        <div className="hidden items-center space-x-3 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
           <span className="text-sm font-medium text-gray-700">
             {userSession.user.companyName}
           </span>
-          <div className="h-8 w-8 overflow-hidden rounded-full bg-amber-500">
+          <div className="h-9 w-9 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100">
             <img
               src={userSession.profileImage}
               alt="Profile"
               className="h-full w-full object-cover"
               onError={(e) => {
-                // Fallback to a default image if the profile image fails to load
                 e.target.src = '/profile-pic.png';
               }}
             />
@@ -572,7 +570,7 @@ const Header = () => {
               setCurrentNavLinks(DEFAULT_NAV_LINKS);
               router.push('/');
             }}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
           >
             Logout
           </button>
@@ -582,26 +580,27 @@ const Header = () => {
 
     // Show register/login button when not authenticated
     return (
-      <motion.a
-        href="#register"
-        className="hidden rounded-xl bg-[#EF4444] px-6 py-2 text-sm font-medium text-white md:block"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      <motion.button
+        className="hidden rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md md:block"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={toggleAuthPopup}
       >
-        Register/Login
-      </motion.a>
+        Get Started
+      </motion.button>
     );
   };
 
   return (
     <>
       <header
-        className={`fixed top-0 z-50 w-full transition-all duration-300 ${
-          scrolled ? 'bg-white shadow-md' : 'bg-white'
+        className={`fixed top-0 z-50 w-full border-b transition-all duration-300 ${
+          scrolled
+            ? 'border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm'
+            : 'border-transparent bg-white'
         }`}
       >
-        <div className="container mx-auto px-4">
+        <div className="mx-auto max-w-7xl px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             {renderLogo()}

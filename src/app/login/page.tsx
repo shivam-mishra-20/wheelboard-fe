@@ -52,39 +52,137 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-primary-bg font-poppins">
-      {/* Subtle Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary-secondary/20"></div>
-        <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-primary-accent/10"></div>
-        <div className="absolute left-1/4 top-1/2 h-32 w-32 rounded-full bg-primary-button/10"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-poppins">
+      {/* Minimal Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.02]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 2px 2px, #000 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
       </div>
 
       {/* Main Container */}
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
+      <div className="relative z-10 flex min-h-screen items-center justify-center gap-6 p-6 lg:gap-8">
+        {/* Demo Accounts Card
+        <div className="hidden w-full max-w-sm lg:block">
+          <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-lg backdrop-blur-sm">
+            <h2 className="mb-4 text-lg font-semibold text-gray-800">
+              Demo Accounts
+            </h2>
+            <p className="mb-4 text-xs text-gray-500">
+              Use any account below to test the application
+            </p>
+            <div className="space-y-3">
+              {[
+                {
+                  type: 'Company',
+                  email: 'john@transport.com',
+                  role: 'Transport',
+                  color: 'bg-gray-50 text-gray-700 border-gray-200',
+                },
+                {
+                  type: 'Professional',
+                  email: 'sarah@mining.com',
+                  role: 'Mining Services',
+                  color: 'bg-gray-50 text-gray-700 border-gray-200',
+                },
+                {
+                  type: 'Business',
+                  email: 'mike@parts.com',
+                  role: 'Parts Supply',
+                  color: 'bg-green-50 text-green-700 border-green-200',
+                },
+                {
+                  type: 'Custom',
+                  email: 'test@company.com',
+                  role: 'Test Account',
+                  color: 'bg-orange-50 text-orange-700 border-orange-200',
+                },
+                {
+                  type: 'Demo',
+                  email: 'demo@business.com',
+                  role: 'Demo User',
+                  color: 'bg-orange-50 text-[#FF7A00] border-orange-200',
+                },
+              ].map((account) => (
+                <button
+                  key={account.email}
+                  onClick={() => {
+                    setEmail(account.email);
+                    setPassword('password123');
+                  }}
+                  className="group w-full rounded-lg border bg-white p-3 text-left transition-all hover:shadow-md"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div
+                        className={`mb-1 inline-block rounded-full border px-2 py-0.5 text-xs font-semibold ${account.color}`}
+                      >
+                        {account.type}
+                      </div>
+                      <p className="text-sm font-medium text-gray-700">
+                        {account.email}
+                      </p>
+                      <p className="text-xs text-gray-500">{account.role}</p>
+                    </div>
+                    <svg
+                      className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 rounded-lg bg-gray-50 p-3">
+              <p className="text-xs text-gray-600">
+                <span className="font-semibold">Password for all:</span>{' '}
+                password123
+              </p>
+            </div>
+          </div>
+        </div> */}
+
+        {/* Login Card */}
         <div className="w-full max-w-md">
-          {/* Clean Card Design */}
-          <div className="rounded-2xl bg-white p-8 shadow-lg">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xl">
             {/* Logo Section */}
             <div className="mb-8 text-center">
-              <div className="inline-block rounded-xl bg-primary-bg p-3">
+              <div className="mb-4 inline-flex items-center gap-3">
                 <Image
-                  src="/Logo.svg"
-                  alt="WheelBoard Logo"
-                  width={60}
-                  height={60}
-                  className="mx-auto"
+                  src="/Logo.png"
+                  alt="Wheelboard Logo"
+                  width={48}
+                  height={48}
+                  className="object-contain"
                 />
+                <h1 className="font-poppins text-2xl font-bold">
+                  <span className="bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                    Wheel
+                  </span>
+                  <span className="text-gray-800">board</span>
+                </h1>
               </div>
-              <h1 className="mt-4 text-2xl font-semibold text-primary-accent">
-                WheelBoard
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">Welcome back</p>
+              <p className="text-sm font-medium text-gray-500">
+                Sign in to your account
+              </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
                   Email Address
                 </label>
@@ -92,13 +190,13 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20"
-                  placeholder="Enter your email"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  placeholder="your@email.com"
                   required
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
                   Password
                 </label>
@@ -106,23 +204,23 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-primary-button focus:outline-none focus:ring-2 focus:ring-primary-button/20"
-                  placeholder="Enter your password"
+                  className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  placeholder="Enter password"
                   required
                 />
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center text-gray-600">
+                <label className="flex cursor-pointer items-center text-gray-600 hover:text-gray-800">
                   <input
                     type="checkbox"
-                    className="mr-2 rounded border-gray-300 text-primary-button focus:ring-primary-button"
+                    className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-2 focus:ring-primary-200 focus:ring-offset-0"
                   />
-                  Remember me
+                  <span className="text-sm">Remember me</span>
                 </label>
                 <button
                   type="button"
-                  className="font-medium text-primary-button hover:text-primary-button/80"
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700"
                 >
                   Forgot Password?
                 </button>
@@ -145,7 +243,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-lg bg-primary-button py-3 font-semibold text-white transition-colors hover:bg-primary-button/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 py-2.5 font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </button>
@@ -184,7 +282,7 @@ export default function LoginPage() {
                     setIsLoading(false);
                   }
                 }}
-                className="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-700 hover:bg-gray-50"
+                className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
               >
                 <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                   <path
@@ -213,7 +311,7 @@ export default function LoginPage() {
               Don&apos;t have an account?{' '}
               <Link
                 href="/register/professional"
-                className="font-medium text-primary-button hover:text-primary-button/80 hover:underline"
+                className="font-semibold text-primary-600 hover:text-primary-700"
               >
                 Create Account
               </Link>
@@ -222,11 +320,11 @@ export default function LoginPage() {
             {/* Footer Text */}
             <p className="mt-6 text-center text-xs text-gray-500">
               By continuing, you agree to our{' '}
-              <button className="text-primary-button hover:underline">
+              <button className="text-primary-600 hover:underline">
                 Terms of Service
               </button>{' '}
               and{' '}
-              <button className="text-primary-button hover:underline">
+              <button className="text-primary-600 hover:underline">
                 Privacy Policy
               </button>
             </p>

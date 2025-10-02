@@ -120,39 +120,61 @@ export default function ProfessionalRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-100 font-poppins">
-      {/* Subtle Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-pink-200/30"></div>
-        <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-purple-200/20"></div>
-        <div className="absolute left-1/4 top-1/2 h-32 w-32 rounded-full bg-pink-300/20"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-poppins">
+      {/* Minimal Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.02]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 2px 2px, #000 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
       </div>
 
       {/* Main Container */}
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
-        <div className="w-full max-w-md">
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-6 py-12">
+        <div className="w-full max-w-2xl">
           {/* Clean Card Design */}
-          <div className="rounded-2xl bg-white p-8 shadow-lg">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xl">
             {/* Header */}
             <div className="mb-8 text-center">
-              <h1 className="text-2xl font-semibold text-gray-800">
-                Register as Professional
+              <div className="mb-4 inline-flex items-center gap-2">
+                <div className="rounded-full bg-gray-100 p-2.5">
+                  <svg
+                    className="h-6 w-6 text-purple-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Professional Registration
               </h1>
               <p className="mt-2 text-sm text-gray-600">
                 Already have an account?{' '}
                 <Link
                   href="/login"
-                  className="font-medium text-orange-500 hover:text-orange-600"
+                  className="font-semibold text-primary-600 hover:text-primary-700"
                 >
-                  Login
+                  Sign in
                 </Link>
               </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
                     Full Name
                   </label>
@@ -160,27 +182,27 @@ export default function ProfessionalRegisterPage() {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
                     placeholder="Enter your full name"
                     required
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
-                    Father name
+                    Father Name
                   </label>
                   <input
                     type="text"
                     value={fatherName}
                     onChange={(e) => setFatherName(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
                     placeholder="Enter father's name"
                     required
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
                     Birth Date
                   </label>
@@ -188,12 +210,12 @@ export default function ProfessionalRegisterPage() {
                     type="date"
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
                     required
                   />
                 </div>
 
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
                     Phone Number
                   </label>
@@ -201,102 +223,110 @@ export default function ProfessionalRegisterPage() {
                     type="tel"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                    placeholder="Eg.(+91) 98734 9864"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    placeholder="(+91) 98734 9864"
                     required
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Select State*
-                    </label>
-                    <select
-                      value={stateName}
-                      onChange={(e) => setStateName(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                      required
-                    >
-                      <option value="">Select state</option>
-                      <option value="state-1">State 1</option>
-                      <option value="state-2">State 2</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Select City *
-                    </label>
-                    <select
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                      required
-                    >
-                      <option value="">Select City</option>
-                      <option value="city-1">City 1</option>
-                      <option value="city-2">City 2</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
-                    Upload Driver Image* JPG/PNG, max 2MB
+                    State
                   </label>
-                  <div className="mt-2 flex items-center gap-3">
-                    <label className="inline-flex cursor-pointer items-center rounded-md border border-dashed border-gray-300 px-4 py-2 hover:bg-gray-50">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) {
-                            return;
-                          }
-                          if (
-                            !['image/jpeg', 'image/png'].includes(file.type)
-                          ) {
-                            return;
-                          }
-                          if (file.size > 2 * 1024 * 1024) {
-                            return;
-                          }
-                          const reader = new FileReader();
-                          reader.onload = (ev) =>
-                            setAvatarPreview(ev.target?.result as string);
-                          reader.readAsDataURL(file);
-                        }}
-                        className="sr-only"
+                  <select
+                    value={stateName}
+                    onChange={(e) => setStateName(e.target.value)}
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    required
+                  >
+                    <option value="">Select state</option>
+                    <option value="state-1">State 1</option>
+                    <option value="state-2">State 2</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">
+                    City
+                  </label>
+                  <select
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    required
+                  >
+                    <option value="">Select city</option>
+                    <option value="city-1">City 1</option>
+                    <option value="city-2">City 2</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-gray-700">
+                  Profile Image{' '}
+                  <span className="text-gray-400">(JPG/PNG, max 2MB)</span>
+                </label>
+                <div className="mt-2 flex items-center gap-4">
+                  <label className="inline-flex cursor-pointer items-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-3 transition-colors hover:border-gray-400 hover:bg-gray-100">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) {
+                          return;
+                        }
+                        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                          return;
+                        }
+                        if (file.size > 2 * 1024 * 1024) {
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (ev) =>
+                          setAvatarPreview(ev.target?.result as string);
+                        reader.readAsDataURL(file);
+                      }}
+                      className="sr-only"
+                    />
+                    <svg
+                      className="mr-2 h-5 w-5 text-gray-500"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        d="M12 5v14M5 12h14"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
-                      <svg
-                        className="mr-2 h-5 w-5 text-gray-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <path
-                          d="M12 5v14M5 12h14"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      Upload
-                    </label>
-                    {avatarPreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
+                    </svg>
+                    <span className="text-sm font-medium text-gray-700">
+                      Choose File
+                    </span>
+                  </label>
+                  {avatarPreview ? (
+                    <div className="flex items-center gap-3 rounded-lg border-2 border-green-200 bg-green-50 px-4 py-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={avatarPreview}
                         alt="Avatar preview"
-                        className="h-14 w-14 rounded-md object-cover"
+                        className="h-12 w-12 rounded-lg object-cover"
                       />
-                    ) : (
-                      <div className="flex h-14 w-44 items-center justify-center rounded-md border border-gray-200 text-gray-400">
-                        No Image Uploaded.
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-800">
+                          Image uploaded
+                        </p>
+                        <p className="text-xs text-green-600">
+                          Ready to submit
+                        </p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-3 text-center">
+                      <p className="text-sm text-gray-500">No image selected</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -317,9 +347,9 @@ export default function ProfessionalRegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-lg bg-gradient-to-r from-red-400 to-red-500 py-3 font-semibold text-white transition-all hover:from-red-500 hover:to-red-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 py-2.5 font-semibold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isLoading ? 'Registering...' : 'Register'}
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
 
@@ -334,7 +364,8 @@ export default function ProfessionalRegisterPage() {
             <div className="space-y-3">
               <button
                 onClick={handleGoogleSignIn}
-                className="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-700 hover:bg-gray-50"
+                disabled={isLoading}
+                className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                   <path
@@ -359,7 +390,8 @@ export default function ProfessionalRegisterPage() {
 
               <button
                 onClick={handleFacebookSignIn}
-                className="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-700 hover:bg-gray-50"
+                disabled={isLoading}
+                className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <svg
                   className="mr-3 h-5 w-5"

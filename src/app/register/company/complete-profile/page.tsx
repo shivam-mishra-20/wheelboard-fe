@@ -205,7 +205,7 @@ export default function CompleteCompanyProfile() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-8 w-full rounded-lg bg-gradient-to-r from-red-400 to-red-500 py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:from-red-500 hover:to-red-600 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-8 w-full rounded-lg bg-gradient-to-r from-[#FF7A00] to-[#E66D00] py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:from-[#E66D00] hover:to-[#CC6100] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center">

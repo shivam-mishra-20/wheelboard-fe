@@ -4,20 +4,20 @@ import { motion } from 'framer-motion';
 const aboutData = [
   {
     img: 'https://media.istockphoto.com/id/517416991/photo/truck-driver.jpg?s=612x612&w=0&k=20&c=e1sbLN1Xof1cibXNfRWwQGBk0Ji0FIUaXRFrtUZ7Nho=', // Driver in truck cab
-    bgColor: 'from-[#0052CC] to-[#0052CC]',
-    dotColor: 'bg-[#0052CC]',
+    bgColor: 'from-[#000000] to-[#000000]',
+    dotColor: 'bg-[#000000]',
     dotPosition: 'top-4 right-4',
   },
   {
     img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80', // Analytics dashboard
-    bgColor: 'from-[#FF6D1B] to-[#FF6D1B]',
-    dotColor: 'bg-[#0052CC]',
+    bgColor: 'from-[#FF7A00] to-[#FF7A00]',
+    dotColor: 'bg-[#000000]',
     dotPosition: 'top-4 left-4',
   },
   {
     img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqXW-_g3LE3jWjvvOnQPKEsRlOQFEEwOY44w&s', // Mechanic working on truck tire
-    bgColor: 'from-[#0052CC] to-[#0052CC]',
-    dotColor: 'bg-[#FF6D1B]',
+    bgColor: 'from-[#000000] to-[#000000]',
+    dotColor: 'bg-[#FF7A00]',
     dotPosition: 'top-4 right-4',
   },
   {
@@ -34,8 +34,8 @@ const aboutData = [
   },
   {
     img: '/black-truck.png', // Strategic Solutions
-    bgColor: 'from-purple-500 to-purple-600',
-    dotColor: 'bg-purple-400',
+    bgColor: 'from-gray-600 to-gray-700',
+    dotColor: 'bg-gray-400',
     dotPosition: 'top-4 left-4',
   },
 ];

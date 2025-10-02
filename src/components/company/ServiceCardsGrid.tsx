@@ -23,10 +23,10 @@ const colorConfig = {
     hoverBg: 'group-hover:bg-blue-100',
   },
   teal: {
-    bg: 'bg-teal-50',
-    iconColor: 'text-teal-500',
-    border: 'border-teal-200',
-    hoverBg: 'group-hover:bg-teal-100',
+    bg: 'bg-gray-50',
+    iconColor: 'text-gray-600',
+    border: 'border-gray-200',
+    hoverBg: 'group-hover:bg-gray-100',
   },
   orange: {
     bg: 'bg-orange-50',
@@ -35,8 +35,8 @@ const colorConfig = {
     hoverBg: 'group-hover:bg-orange-100',
   },
   pink: {
-    bg: 'bg-pink-50',
-    iconColor: 'text-pink-500',
+    bg: 'bg-orange-50',
+    iconColor: 'text-[#FF7A00]',
     border: 'border-pink-200',
     hoverBg: 'group-hover:bg-pink-100',
   },
@@ -76,13 +76,22 @@ const item = {
 export default function ServiceCardsGrid({ services }: ServiceCardsGridProps) {
   return (
     <motion.div
-      className="mb-12"
+      className="mb-16"
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: '-100px' }}
       variants={container}
     >
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="mb-6 text-center">
+        <h2 className="bg-gradient-premium bg-clip-text text-2xl font-bold text-transparent md:text-3xl">
+          Quick Actions
+        </h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Access your most used tools and features
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
         {services.map((service) => {
           const colors = colorConfig[service.color];
           return (
@@ -90,22 +99,35 @@ export default function ServiceCardsGrid({ services }: ServiceCardsGridProps) {
               key={service.id}
               variants={item}
               onClick={service.onClick}
-              className={`group relative cursor-pointer overflow-hidden rounded-2xl border ${colors.border} bg-white p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md`}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
+              className={`group relative cursor-pointer overflow-hidden rounded-3xl border-2 ${colors.border} bg-gradient-to-br from-white to-gray-50 p-7 text-center shadow-premium transition-all duration-500 hover:-translate-y-2 hover:shadow-premium-lg`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <div className="mb-5 flex justify-center">
+              {/* Hover Gradient Overlay */}
+              <div
+                className={`absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 ${colors.bg}`}
+              ></div>
+
+              {/* Icon Container */}
+              <div className="relative mb-6 flex justify-center">
                 <div
-                  className={`rounded-full ${colors.bg} p-3.5 transition-colors duration-300 ${colors.hoverBg}`}
+                  className={`rounded-2xl ${colors.bg} p-4 shadow-lg ring-4 ring-white transition-all duration-500 group-hover:scale-110 group-hover:shadow-xl ${colors.hoverBg}`}
                 >
-                  <div className={`h-8 w-8 ${colors.iconColor}`}>
+                  <div
+                    className={`h-10 w-10 ${colors.iconColor} transition-all duration-300 group-hover:scale-110`}
+                  >
                     {service.icon}
                   </div>
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-gray-800 transition-colors duration-300 group-hover:text-gray-900">
+
+              {/* Title */}
+              <h3 className="relative text-sm font-bold text-gray-800 transition-all duration-300 group-hover:scale-105 group-hover:text-gray-900">
                 {service.title}
               </h3>
+
+              {/* Shine Effect */}
+              <div className="absolute inset-0 -translate-x-full transform bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
             </motion.div>
           );
         })}

@@ -5,13 +5,13 @@ import { FaUserTie, FaCog, FaLightbulb } from 'react-icons/fa';
 const services = [
   {
     icon: FaUserTie,
-    iconColor: '#0052CC',
+    iconColor: '#000000',
     title: 'Skill Management',
     description: 'Build workforce that fits your operation',
   },
   {
     icon: FaCog,
-    iconColor: '#FF6D1B',
+    iconColor: '#FF7A00',
     title: 'Tyre Management',
     description: 'We maintain and manage your tires',
   },
@@ -23,8 +23,8 @@ const services = [
   },
 ];
 
-const highlightStyle = 'text-[#FF6D1B] font-semibold';
-const blueStyle = 'text-[#0052CC] font-bold';
+const highlightStyle = 'text-[#FF7A00] font-semibold';
+const blueStyle = 'text-[#000000] font-bold';
 
 const Services = () => (
   <section id="services" className="bg-white py-10 md:py-10">

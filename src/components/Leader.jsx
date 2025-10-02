@@ -40,18 +40,18 @@ const DesktopView = () => {
               <h3 className="mt-2 text-xl font-semibold text-gray-900">
                 Saloni Singh
               </h3>
-              <p className="mb-4 font-medium text-[#FF6D1B]">
+              <p className="mb-4 font-medium text-[#FF7A00]">
                 Co-founder & CEO
               </p>
               <div className="rounded-xl border border-gray-100 bg-white/80 px-4 py-3 text-sm text-gray-800 shadow-inner">
                 Building an ecosystem <br />
                 <span className="font-semibold text-gray-900">
                   'grounded in{' '}
-                  <span className="text-[#0052CC]">Empowerment</span>,<br />
-                  driven by <span className="text-[#0052CC]">Efficiency</span>,
+                  <span className="text-[#000000]">Empowerment</span>,<br />
+                  driven by <span className="text-[#000000]">Efficiency</span>,
                   <br />
                   united by{' '}
-                  <span className="text-[#FF6D1B]">Shared Success'</span>
+                  <span className="text-[#FF7A00]">Shared Success'</span>
                 </span>
               </div>
               <div className="mt-4 flex justify-center gap-4">
@@ -141,16 +141,16 @@ const MobileView = () => {
               <h3 className="mt-2 text-xl font-semibold text-gray-900">
                 Saloni Singh
               </h3>
-              <p className="mb-3 font-medium text-[#FF6D1B]">
+              <p className="mb-3 font-medium text-[#FF7A00]">
                 Co-founder & CEO
               </p>
               <div className="mb-3 rounded-xl border border-gray-100 bg-white/80 px-4 py-3 text-sm text-gray-800 shadow-inner">
                 Building an ecosystem <br />
                 <span className="font-semibold text-gray-900">
                   'grounded in{' '}
-                  <span className="text-[#0052CC]">Empowerment</span>, driven by{' '}
-                  <span className="text-[#0052CC]">Efficiency</span>, united by{' '}
-                  <span className="text-[#FF6D1B]">Shared Success'</span>
+                  <span className="text-[#000000]">Empowerment</span>, driven by{' '}
+                  <span className="text-[#000000]">Efficiency</span>, united by{' '}
+                  <span className="text-[#FF7A00]">Shared Success'</span>
                 </span>
               </div>
               <div className="mt-3 flex justify-center gap-4">
@@ -174,7 +174,7 @@ const MobileView = () => {
             </div>
 
             {/* Subtle border gradient */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-100 via-transparent to-pink-100 p-[1px] opacity-70" />
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-orange-100 via-transparent to-gray-100 p-[1px] opacity-70" />
           </div>
 
           {/* Visionary Leadership - Mobile */}

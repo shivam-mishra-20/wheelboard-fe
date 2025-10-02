@@ -101,7 +101,7 @@ export default function ContactSection() {
             <div className="mb-8 space-y-6">
               <div className="flex items-center gap-4">
                 <div className="rounded-full bg-white/50 p-3">
-                  <FiPhone className="h-6 w-6 text-[#0052CC]" />
+                  <FiPhone className="h-6 w-6 text-[#000000]" />
                 </div>
                 <div>
                   <div className="font-medium text-gray-800">Phone</div>
@@ -111,7 +111,7 @@ export default function ContactSection() {
 
               <div className="flex items-center gap-4">
                 <div className="rounded-full bg-white/50 p-3">
-                  <FiMail className="h-6 w-6 text-[#FF6D1B]" />
+                  <FiMail className="h-6 w-6 text-[#FF7A00]" />
                 </div>
                 <div>
                   <div className="font-medium text-gray-800">Email</div>
@@ -123,7 +123,7 @@ export default function ContactSection() {
 
               <div className="flex items-start gap-4">
                 <div className="rounded-full bg-white/50 p-3">
-                  <FiMapPin className="h-6 w-6 text-teal-400" />
+                  <FiMapPin className="h-6 w-6 text-[#808080]" />
                 </div>
                 <div>
                   <div className="font-medium text-gray-800">Address</div>
@@ -221,7 +221,7 @@ export default function ContactSection() {
               className={`mt-2 py-3 ${
                 isSubmitting
                   ? 'bg-gray-400'
-                  : 'bg-[#FF6D1B] hover:bg-[#FF6D1B]/90'
+                  : 'bg-[#FF7A00] hover:bg-[#FF7A00]/90'
               } flex items-center justify-center rounded-lg font-medium text-white transition-colors duration-300`}
             >
               {isSubmitting ? (

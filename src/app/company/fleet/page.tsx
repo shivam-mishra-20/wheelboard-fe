@@ -20,11 +20,15 @@ export default function CompanyFleetPage() {
       <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
         {/* Main Content */}
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          {/* Vehicles Listing Section */}
+          {/* Vehicles & Drivers Listing Section */}
           <VehiclesListing
             vehicles={companyFleetData.vehicles.map((vehicle) => ({
               ...vehicle,
               status: vehicle.status as 'Attached' | 'Owned' | 'Rented',
+            }))}
+            drivers={companyFleetData.drivers.map((driver) => ({
+              ...driver,
+              status: driver.status as 'Available' | 'On Trip' | 'Off Duty',
             }))}
           />
 

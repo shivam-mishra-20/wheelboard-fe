@@ -203,12 +203,12 @@ export default function BusinessRegisterPage() {
 
   if (currentStep === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 font-poppins">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-gray-100 font-poppins">
         {/* Subtle Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-purple-200/30"></div>
-          <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-pink-200/20"></div>
-          <div className="absolute left-1/4 top-1/2 h-32 w-32 rounded-full bg-purple-300/20"></div>
+          <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-orange-200/30"></div>
+          <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-gray-200/20"></div>
+          <div className="absolute left-1/4 top-1/2 h-32 w-32 rounded-full bg-orange-300/20"></div>
         </div>
 
         {/* Main Container */}
@@ -350,7 +350,7 @@ export default function BusinessRegisterPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 py-3 font-semibold text-white transition-all hover:from-purple-600 hover:to-pink-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-lg bg-gradient-to-r from-[#FF7A00] to-[#E66D00] py-3 font-semibold text-white transition-all hover:from-[#E66D00] hover:to-[#CC6100] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? 'Processing...' : 'Continue'}
                 </button>
@@ -364,12 +364,12 @@ export default function BusinessRegisterPage() {
 
   // Step 2 - Detailed Business Information
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 font-poppins">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-gray-100 font-poppins">
       {/* Subtle Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-purple-200/30"></div>
-        <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-pink-200/20"></div>
-        <div className="absolute left-1/4 top-1/2 h-32 w-32 rounded-full bg-purple-300/20"></div>
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-orange-200/30"></div>
+        <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-gray-200/20"></div>
+        <div className="absolute left-1/4 top-1/2 h-32 w-32 rounded-full bg-orange-300/20"></div>
       </div>
 
       {/* Main Container */}
@@ -382,7 +382,7 @@ export default function BusinessRegisterPage() {
               <h1 className="text-2xl font-semibold text-gray-800">
                 Business Information
               </h1>
-              <span className="rounded-full bg-purple-100 px-3 py-1 text-sm text-purple-600">
+              <span className="rounded-full bg-orange-100 px-3 py-1 text-sm text-[#FF7A00]">
                 Step 2 of 2
               </span>
             </div>
@@ -587,7 +587,7 @@ export default function BusinessRegisterPage() {
                       onClick={() => toggleSelection(service, 'services')}
                       className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                         step2Data.servicesOffered.includes(service)
-                          ? 'bg-purple-500 text-white'
+                          ? 'bg-[#FF7A00] text-white'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
@@ -621,7 +621,7 @@ export default function BusinessRegisterPage() {
                           }}
                           className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                             selected
-                              ? 'bg-purple-500 text-white'
+                              ? 'bg-[#FF7A00] text-white'
                               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                           }`}
                         >
@@ -781,7 +781,7 @@ export default function BusinessRegisterPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full rounded-lg bg-gradient-to-r from-red-400 to-red-500 py-3 font-semibold text-white transition-all hover:from-red-500 hover:to-red-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-lg bg-gradient-to-r from-[#FF7A00] to-[#E66D00] py-3 font-semibold text-white transition-all hover:from-[#E66D00] hover:to-[#CC6100] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? 'Registering...' : 'Complete Registration'}
                 </button>

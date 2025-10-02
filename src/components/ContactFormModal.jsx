@@ -148,7 +148,7 @@ const ContactFormModal = ({ isOpen, onClose }) => {
                   onChange={handleInputChange}
                   placeholder="Your Name"
                   required
-                  className="w-full rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0052CC]"
+                  className="w-full rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]"
                 />
               </div>
               <div>
@@ -159,7 +159,7 @@ const ContactFormModal = ({ isOpen, onClose }) => {
                   onChange={handleInputChange}
                   placeholder="Email Address"
                   required
-                  className="w-full rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0052CC]"
+                  className="w-full rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]"
                 />
               </div>
               <div>
@@ -169,7 +169,7 @@ const ContactFormModal = ({ isOpen, onClose }) => {
                   value={formData.company}
                   onChange={handleInputChange}
                   placeholder="Company"
-                  className="w-full rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0052CC]"
+                  className="w-full rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]"
                 />
               </div>
               <div>
@@ -180,7 +180,7 @@ const ContactFormModal = ({ isOpen, onClose }) => {
                   rows="4"
                   placeholder="Message"
                   required
-                  className="w-full resize-none rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0052CC]"
+                  className="w-full resize-none rounded-lg bg-gray-50 px-4 py-3 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF7A00]"
                 />
               </div>
               <button
@@ -189,7 +189,7 @@ const ContactFormModal = ({ isOpen, onClose }) => {
                 className={`w-full py-3 ${
                   isSubmitting
                     ? 'bg-gray-400'
-                    : 'bg-[#FF6D1B] hover:bg-[#FF6D1B]/90'
+                    : 'bg-[#FF7A00] hover:bg-[#FF7A00]/90'
                 } flex items-center justify-center rounded-lg font-medium text-white transition-colors duration-300`}
               >
                 {isSubmitting ? (

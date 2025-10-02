@@ -90,6 +90,24 @@ const getMockUsers = (): User[] => {
       userType: 'business',
       createdAt: '2024-01-17T09:15:00Z',
     },
+    {
+      id: '4',
+      email: 'test@company.com',
+      companyName: 'Test Company',
+      phoneNumber: '+1234567893',
+      businessCategory: 'transport',
+      userType: 'company',
+      createdAt: '2024-01-18T11:00:00Z',
+    },
+    {
+      id: '5',
+      email: 'demo@business.com',
+      companyName: 'Demo Business',
+      phoneNumber: '+1234567894',
+      businessCategory: 'service-provider',
+      userType: 'business',
+      createdAt: '2024-01-19T13:45:00Z',
+    },
   ];
 };
 
@@ -231,11 +249,15 @@ export const mockAPI = {
       };
     }
 
+    // For demo purposes, accept "password123" for all accounts
     // In a real app, we'd verify the password hash
-    if (credentials.password.length < 6) {
+    if (
+      credentials.password !== 'password123' &&
+      credentials.password.length < 6
+    ) {
       return {
         success: false,
-        message: 'Invalid password. Please try again.',
+        message: 'Invalid password. Try "password123" for demo accounts.',
       };
     }
 
@@ -477,6 +499,21 @@ export interface FeedPost {
   timeAgo: string;
 }
 
+export interface Driver {
+  id: string;
+  name: string;
+  experience: string;
+  status: 'Available' | 'On Trip' | 'Off Duty';
+  licenseNumber: string;
+  phoneNumber: string;
+  rating: number;
+  totalTrips: number;
+  currentVehicle?: string;
+  location: string;
+  image: string;
+  joinedDate: string;
+}
+
 // Mock data for company home page
 export const companyHomeData = {
   carouselSlides: [
@@ -541,7 +578,7 @@ export const companyHomeData = {
       title: 'Tips For Fleet Management',
       description:
         'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
-      image: '/live-truck.gif',
+      image: '/image.png',
       timeAgo: 'Posted 2 days ago',
     },
     {
@@ -554,7 +591,7 @@ export const companyHomeData = {
       title: 'Tips For Fleet Management',
       description:
         'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
-      image: '/live-truck-01.gif',
+      image: '/truck-01.jpg',
       timeAgo: 'Posted 2 days ago',
     },
     {
@@ -567,7 +604,7 @@ export const companyHomeData = {
       title: 'Tips For Fleet Management',
       description:
         'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
-      image: '/live-truck.gif',
+      image: '/image.png',
       timeAgo: 'Posted 2 days ago',
     },
     {
@@ -580,7 +617,7 @@ export const companyHomeData = {
       title: 'Tips For Fleet Management',
       description:
         'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
-      image: '/live-truck-01.gif',
+      image: '/image.png',
       timeAgo: 'Posted 2 days ago',
     },
   ] as FeedPost[],
@@ -595,7 +632,7 @@ export const companyFleetData = {
       status: 'Attached',
       lastService: 'Last service: 12 Jan',
       location: 'Current: Delhi',
-      image: '/VAN 1.png',
+      image: '/truck-01.jpg',
     },
     {
       id: 'v2',
@@ -634,6 +671,78 @@ export const companyFleetData = {
       image: '/truck-01.jpg',
     },
   ],
+  drivers: [
+    {
+      id: 'd1',
+      name: 'Rajesh Kumar',
+      experience: '8 years',
+      status: 'On Trip',
+      licenseNumber: 'DL-1234567890',
+      phoneNumber: '+91 98765 43210',
+      rating: 4.8,
+      totalTrips: 1245,
+      currentVehicle: 'Omni Van (v1)',
+      location: 'Current: Delhi → Mumbai',
+      image: '/staring-man.jpg',
+      joinedDate: '2017-03-15',
+    },
+    {
+      id: 'd2',
+      name: 'Amit Singh',
+      experience: '5 years',
+      status: 'Available',
+      licenseNumber: 'DL-0987654321',
+      phoneNumber: '+91 98765 43211',
+      rating: 4.6,
+      totalTrips: 876,
+      currentVehicle: undefined,
+      location: 'Current: Mumbai',
+      image: '/staring-man.jpg',
+      joinedDate: '2019-06-20',
+    },
+    {
+      id: 'd3',
+      name: 'Suresh Patel',
+      experience: '12 years',
+      status: 'On Trip',
+      licenseNumber: 'DL-1122334455',
+      phoneNumber: '+91 98765 43212',
+      rating: 4.9,
+      totalTrips: 2134,
+      currentVehicle: 'Mercedes-Benz (v3)',
+      location: 'Current: Bangalore → Chennai',
+      image: '/staring-man.jpg',
+      joinedDate: '2013-01-10',
+    },
+    {
+      id: 'd4',
+      name: 'Vijay Sharma',
+      experience: '6 years',
+      status: 'Available',
+      licenseNumber: 'DL-5566778899',
+      phoneNumber: '+91 98765 43213',
+      rating: 4.7,
+      totalTrips: 1023,
+      currentVehicle: undefined,
+      location: 'Current: Chennai',
+      image: '/staring-man.jpg',
+      joinedDate: '2018-09-05',
+    },
+    {
+      id: 'd5',
+      name: 'Manoj Verma',
+      experience: '3 years',
+      status: 'Off Duty',
+      licenseNumber: 'DL-9988776655',
+      phoneNumber: '+91 98765 43214',
+      rating: 4.5,
+      totalTrips: 542,
+      currentVehicle: undefined,
+      location: 'Current: Hyderabad',
+      image: '/staring-man.jpg',
+      joinedDate: '2021-11-12',
+    },
+  ] as Driver[],
   popularFeeds: [
     {
       id: 'cf1',
@@ -645,7 +754,7 @@ export const companyFleetData = {
       title: 'Tips For Fleet Management',
       description:
         'Learn how to optimize your fleet operations and reduce maintenance costs effectively',
-      image: '/live-truck-01.gif',
+      image: '/image.png',
       timeAgo: 'Posted 2 days ago',
     },
     {
@@ -671,7 +780,7 @@ export const companyFleetData = {
       title: 'Reducing Fuel Costs',
       description:
         'Strategies to optimize fuel efficiency and reduce operational expenses in your fleet',
-      image: '/truck-CTA.png',
+      image: '/image.png',
       timeAgo: 'Posted 5 days ago',
     },
     {
@@ -684,8 +793,142 @@ export const companyFleetData = {
       title: 'Driver Safety Programs',
       description:
         'Implement effective driver safety programs to prevent accidents and improve fleet safety',
-      image: '/live-truck.gif',
+      image: '/image.png',
       timeAgo: 'Posted 1 week ago',
+    },
+  ] as FeedPost[],
+};
+
+// Mock data for professional home page
+export const professionalHomeData = {
+  carouselSlides: [
+    {
+      id: 1,
+      image: '/staring-man.jpg',
+      alt: 'Professional driver',
+    },
+    {
+      id: 2,
+      image: '/logistics-professional.jpg',
+      alt: 'Logistics professional',
+    },
+    {
+      id: 3,
+      image: '/truck-01.jpg',
+      alt: 'Professional transport services',
+    },
+    {
+      id: 4,
+      image: '/Yellow-truck.jpg',
+      alt: 'Commercial driving',
+    },
+  ] as CarouselSlide[],
+
+  nextScheduledTrip: {
+    pickup: {
+      address: '123 Main Street, AnyTown, CA 32132',
+    },
+    destination: {
+      address: '456 Oak Avenue, OtherTown, NY 100001',
+    },
+    dateTime: 'Oct 26, 2024 - 10:00 AM',
+    tripType: 'fragile' as 'cargo' | 'fragile' | 'liftgate',
+  },
+
+  jobListings: [
+    {
+      id: 'job-1',
+      company: 'Concor Bangalore',
+      position: 'Heavy Vehicle Driver',
+      description:
+        'Looking for experienced heavy vehicle drivers for long-haul transportation. Competitive salary and benefits.',
+      image: '/excavator.jpg',
+      likes: 35,
+      applicants: 12,
+      postedAt: 'Posted 2 days ago',
+      location: 'Bangalore, Karnataka',
+      salary: '₹35,000 - ₹45,000/month',
+    },
+    {
+      id: 'job-2',
+      company: 'Delhi Transport',
+      position: 'Logistics Coordinator',
+      description:
+        'Coordinate logistics operations and manage transportation schedules. Excellent opportunity for career growth.',
+      image: '/truck-01.jpg',
+      likes: 20,
+      applicants: 8,
+      postedAt: 'Posted 3 days ago',
+      location: 'Delhi, NCR',
+      salary: '₹30,000 - ₹40,000/month',
+    },
+    {
+      id: 'job-3',
+      company: 'Mumbai Carriers',
+      position: 'Fleet Supervisor',
+      description:
+        'Supervise fleet operations and ensure timely deliveries. Prior experience in transportation industry required.',
+      image: '/Bus.jpg',
+      likes: 28,
+      applicants: 15,
+      postedAt: 'Posted 5 days ago',
+      location: 'Mumbai, Maharashtra',
+      salary: '₹40,000 - ₹55,000/month',
+    },
+  ],
+
+  popularFeeds: [
+    {
+      id: 'pf-1',
+      author: {
+        name: 'Transport Academy',
+        avatar: '/profile-pic.png',
+        initials: 'TA',
+      },
+      title: 'Safe Driving Tips for Professionals',
+      description:
+        'Essential safety tips every professional driver should know to ensure safe and efficient transportation',
+      image: '/truck-01.jpg',
+      timeAgo: 'Posted 1 day ago',
+    },
+    {
+      id: 'pf-2',
+      author: {
+        name: 'Career Growth Hub',
+        avatar: '/profile-pic.png',
+        initials: 'CG',
+      },
+      title: 'Growing Your Career in Logistics',
+      description:
+        'Explore career opportunities and advancement paths in the logistics and transportation industry',
+      image: '/logistics-professional.jpg',
+      timeAgo: 'Posted 2 days ago',
+    },
+    {
+      id: 'pf-3',
+      author: {
+        name: 'Driver Training Institute',
+        avatar: '/profile-pic.png',
+        initials: 'DT',
+      },
+      title: 'Advanced Driving Techniques',
+      description:
+        'Master advanced driving techniques to enhance your professional skills and increase earning potential',
+      image: '/Yellow-truck.jpg',
+      timeAgo: 'Posted 3 days ago',
+    },
+    {
+      id: 'pf-4',
+      author: {
+        name: 'Fleet Management Pro',
+        avatar: '/profile-pic.png',
+        initials: 'FM',
+      },
+      title: 'Vehicle Maintenance Basics',
+      description:
+        'Learn essential vehicle maintenance practices to keep your vehicle in top condition',
+      image: '/excavator.jpg',
+      timeAgo: 'Posted 5 days ago',
     },
   ] as FeedPost[],
 };

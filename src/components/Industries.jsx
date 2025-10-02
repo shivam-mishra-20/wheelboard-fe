@@ -167,7 +167,7 @@ const Industries = () => {
       icon: <FaTruck className="text-3xl text-white" />,
       description:
         'Unlock full potential of your Fleet with Wheelboard smart dashboard. Plan, Grow Sustainably- all without any initial investment.',
-      bgColor: 'from-[#0052CC] to-[#0052CC]',
+      bgColor: 'from-[#000000] to-[#000000]',
       bgImage: '/red-truck.png',
     },
     {
@@ -175,7 +175,7 @@ const Industries = () => {
       icon: <FaHardHat className="text-3xl font-bold text-white" />,
       description:
         'Drive Efficiency. Enhanced Safety. Optimize Asset Utilization',
-      bgColor: 'from-[#FF6D1B] to-[#FF6D1B]',
+      bgColor: 'from-[#FF7A00] to-[#FF7A00]',
       bgImage: '/bulldozer.png',
     },
     {
@@ -265,7 +265,7 @@ const Industries = () => {
                 key={index}
                 className={`rounded-full transition-all duration-300 ${
                   currentIndex === index
-                    ? 'h-[8px] w-[8px] bg-[#0052CC]'
+                    ? 'h-[8px] w-[8px] bg-[#000000]'
                     : 'h-[6px] w-[6px] bg-gray-300'
                 }`}
                 onClick={() => {
@@ -481,7 +481,7 @@ const Industries = () => {
                     key={slide.id}
                     className={`rounded-full transition-all duration-300 ${
                       currentIndex === index
-                        ? 'h-[10px] w-[10px] bg-[#0052CC] shadow-md'
+                        ? 'h-[10px] w-[10px] bg-[#000000] shadow-md'
                         : 'h-[8px] w-[8px] bg-gray-300'
                     }`}
                     onClick={() => {

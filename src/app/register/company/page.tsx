@@ -177,7 +177,7 @@ export default function CompanyRegisterPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-gradient-to-r from-red-400 to-red-500 py-3 font-semibold text-white transition-all hover:from-red-500 hover:to-red-600 hover:shadow-lg"
+                className="w-full rounded-lg bg-gradient-to-r from-[#FF7A00] to-[#E66D00] py-3 font-semibold text-white transition-all hover:from-[#E66D00] hover:to-[#CC6100] hover:shadow-lg"
               >
                 Register
               </button>

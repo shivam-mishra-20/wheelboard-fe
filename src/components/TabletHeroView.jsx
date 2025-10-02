@@ -92,7 +92,7 @@ const TabletHeroView = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="mb-2 mt-2 block text-[2.5rem] font-extrabold leading-[1.1] tracking-[-0.03em] text-[#0052CC]"
+              className="mb-2 mt-2 block text-[2.5rem] font-extrabold leading-[1.1] tracking-[-0.03em] text-[#000000]"
             >
               One Tap Away
             </motion.span>
@@ -129,7 +129,7 @@ const TabletHeroView = () => {
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
               href="#download"
-              className="rounded-lg bg-gradient-to-r from-[#0052CC] via-[#0052CC] to-[#FF6D1B] px-6 py-2.5 text-center font-semibold text-white shadow-[0_4px_24px_0_rgba(0,82,204,0.18)] transition"
+              className="rounded-lg bg-gradient-to-r from-[#FF7A00] via-[#FF7A00] to-[#E66D00] px-6 py-2.5 text-center font-semibold text-white shadow-[0_4px_24px_0_rgba(255,122,0,0.18)] transition"
               style={{ minWidth: 150 }}
             >
               Download the App
@@ -142,7 +142,7 @@ const TabletHeroView = () => {
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
               href="#demo"
-              className="rounded-lg border-2 border-[#0052CC] bg-transparent px-6 py-2.5 text-center font-semibold text-[#0052CC] shadow-[0_4px_24px_0_rgba(0,82,204,0.08)] transition"
+              className="rounded-lg border-2 border-[#000000] bg-transparent px-6 py-2.5 text-center font-semibold text-[#000000] shadow-[0_4px_24px_0_rgba(0,0,0,0.08)] transition"
               style={{ minWidth: 150 }}
             >
               Watch Demo

@@ -77,13 +77,13 @@ const WhyChoose = () => {
         {features.map(({ title, description, Icon, image }, idx) => (
           <div
             key={idx}
-            className="animate-fadeIn hover-colored-shadow relative mx-auto flex min-h-[190px] max-w-[360px] overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm transition-all duration-500 hover:border-blue-300"
+            className="hover-colored-shadow relative mx-auto flex min-h-[190px] max-w-[360px] animate-fadeIn overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm transition-all duration-500 hover:border-blue-300"
             style={{ animationDelay: `${idx * 100}ms` }}
           >
             {/* Left Side (Text) */}
             <div className="group flex w-1/2 flex-col justify-center p-5">
-              <Icon className="mb-3 h-7 w-7 transform text-[#0052CC] transition-all duration-300 group-hover:scale-110 group-hover:text-[#FF6D1B]" />
-              <h3 className="mb-1 text-[15px] font-semibold leading-snug text-gray-900 transition-colors duration-300 group-hover:text-[#0052CC]">
+              <Icon className="mb-3 h-7 w-7 transform text-[#000000] transition-all duration-300 group-hover:scale-110 group-hover:text-[#FF7A00]" />
+              <h3 className="mb-1 text-[15px] font-semibold leading-snug text-gray-900 transition-colors duration-300 group-hover:text-[#000000]">
                 {title}
               </h3>
               <p className="text-[12px] leading-snug text-gray-600 transition-colors duration-300 group-hover:text-gray-700">
