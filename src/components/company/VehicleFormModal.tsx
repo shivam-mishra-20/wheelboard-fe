@@ -153,6 +153,18 @@ export default function VehicleFormModal({
       fuelType: formData.fuelType,
       capacity: formData.capacity,
       mileage: formData.mileage,
+      statusBadge: vehicle?.statusBadge || 'Available',
+      ownership:
+        vehicle?.ownership ||
+        (formData.status === 'Owned' ? 'Owned' : 'Attached'),
+      metrics: vehicle?.metrics || {
+        avgRun: 0,
+        tripEfficiency: 0,
+        monthlyUsage: 0,
+        costPerKM: 0,
+      },
+      recentTrips: vehicle?.recentTrips || [],
+      totalTrips: vehicle?.totalTrips || 0,
     };
 
     onSave(vehicleData);

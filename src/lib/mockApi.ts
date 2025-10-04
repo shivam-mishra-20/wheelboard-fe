@@ -486,6 +486,39 @@ export interface Job {
   createdAt: string;
 }
 
+export interface JobApplication {
+  id: string;
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone: string;
+  experience: string;
+  location: string;
+  avatar?: string;
+  appliedDate: string;
+  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected';
+  coverLetter?: string;
+  resumeUrl?: string;
+}
+
+export interface DetailedJob {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: 'Full-time' | 'Part-time' | 'Contract' | 'Freelance';
+  salary: string;
+  description: string;
+  requirements: string[];
+  benefits: string[];
+  image: string;
+  createdAt: string;
+  updatedAt?: string;
+  status: 'Active' | 'Paused' | 'Closed';
+  urgent?: boolean;
+  applications: JobApplication[];
+  views: number;
+}
+
 export interface FeedPost {
   id: string;
   author: {
@@ -649,6 +682,240 @@ export const companyHomeData = {
       createdAt: '2025-09-24T09:45:00Z',
     },
   ] as Job[],
+
+  allJobs: [
+    {
+      id: 'job-1',
+      title: 'Senior Fleet Manager',
+      department: 'Operations',
+      location: 'Mumbai, Maharashtra',
+      type: 'Full-time',
+      salary: '₹8,00,000 - ₹12,00,000/year',
+      description:
+        'Looking for an experienced fleet manager to oversee our growing transportation operations. Responsible for fleet optimization, driver management, and operational efficiency.',
+      requirements: [
+        '5+ years in fleet management',
+        'Experience with GPS tracking systems',
+        'Strong leadership skills',
+        'Knowledge of transportation regulations',
+      ],
+      benefits: [
+        'Health Insurance',
+        'Performance Bonus',
+        'Flexible Hours',
+        'Professional Development',
+      ],
+      image: '/truck-01.jpg',
+      createdAt: '2025-09-28T10:00:00Z',
+      updatedAt: '2025-10-01T14:30:00Z',
+      status: 'Active',
+      urgent: true,
+      views: 324,
+      applications: [
+        {
+          id: 'app-1',
+          candidateName: 'Rajesh Kumar',
+          candidateEmail: 'rajesh.kumar@email.com',
+          candidatePhone: '+91 98765 43210',
+          experience: '8 years',
+          location: 'Mumbai, Maharashtra',
+          avatar: '/staring-man.jpg',
+          appliedDate: '2025-09-29T09:15:00Z',
+          status: 'shortlisted',
+          coverLetter:
+            'I am excited to apply for the Fleet Manager position. With 8 years of experience managing large fleets...',
+        },
+        {
+          id: 'app-2',
+          candidateName: 'Priya Singh',
+          candidateEmail: 'priya.singh@email.com',
+          candidatePhone: '+91 98765 43211',
+          experience: '6 years',
+          location: 'Mumbai, Maharashtra',
+          avatar: '/profile-pic.png',
+          appliedDate: '2025-09-30T11:20:00Z',
+          status: 'reviewed',
+        },
+        {
+          id: 'app-3',
+          candidateName: 'Amit Patel',
+          candidateEmail: 'amit.patel@email.com',
+          candidatePhone: '+91 98765 43212',
+          experience: '5 years',
+          location: 'Pune, Maharashtra',
+          appliedDate: '2025-10-01T15:45:00Z',
+          status: 'pending',
+        },
+      ],
+    },
+    {
+      id: 'job-2',
+      title: 'Heavy Vehicle Driver',
+      department: 'Operations',
+      location: 'Delhi, NCR',
+      type: 'Full-time',
+      salary: '₹35,000 - ₹45,000/month',
+      description:
+        'Seeking experienced heavy vehicle drivers for long-distance transportation. Must have clean driving record and flexibility for interstate travel.',
+      requirements: [
+        'Valid Heavy Vehicle License',
+        'Minimum 3 years experience',
+        'Clean driving record',
+        'Interstate travel flexibility',
+      ],
+      benefits: [
+        'Fuel Allowance',
+        'Medical Coverage',
+        'Overtime Pay',
+        'Travel Allowance',
+      ],
+      image: '/staring-man.jpg',
+      createdAt: '2025-09-25T08:00:00Z',
+      status: 'Active',
+      urgent: false,
+      views: 567,
+      applications: [
+        {
+          id: 'app-4',
+          candidateName: 'Suresh Yadav',
+          candidateEmail: 'suresh.yadav@email.com',
+          candidatePhone: '+91 98765 43213',
+          experience: '4 years',
+          location: 'Delhi, NCR',
+          avatar: '/staring-man.jpg',
+          appliedDate: '2025-09-26T10:00:00Z',
+          status: 'shortlisted',
+        },
+        {
+          id: 'app-5',
+          candidateName: 'Ramesh Verma',
+          candidateEmail: 'ramesh.verma@email.com',
+          candidatePhone: '+91 98765 43214',
+          experience: '7 years',
+          location: 'Noida, UP',
+          appliedDate: '2025-09-27T14:30:00Z',
+          status: 'reviewed',
+        },
+      ],
+    },
+    {
+      id: 'job-3',
+      title: 'Logistics Coordinator',
+      department: 'Planning',
+      location: 'Bangalore, Karnataka',
+      type: 'Full-time',
+      salary: '₹4,50,000 - ₹6,50,000/year',
+      description:
+        'Coordinate logistics operations, manage supply chain activities, and ensure timely deliveries. Work closely with drivers and customers.',
+      requirements: [
+        "Bachelor's degree preferred",
+        'Logistics experience 2+ years',
+        'Strong communication skills',
+        'Computer proficiency',
+      ],
+      benefits: [
+        'Career Growth',
+        'Training Programs',
+        'Health Benefits',
+        'Team Environment',
+      ],
+      image: '/dashboard.png',
+      createdAt: '2025-09-22T12:00:00Z',
+      status: 'Active',
+      urgent: false,
+      views: 156,
+      applications: [
+        {
+          id: 'app-6',
+          candidateName: 'Sneha Reddy',
+          candidateEmail: 'sneha.reddy@email.com',
+          candidatePhone: '+91 98765 43215',
+          experience: '3 years',
+          location: 'Bangalore, Karnataka',
+          avatar: '/profile-pic.png',
+          appliedDate: '2025-09-23T09:00:00Z',
+          status: 'pending',
+        },
+      ],
+    },
+    {
+      id: 'job-4',
+      title: 'Maintenance Supervisor',
+      department: 'Maintenance',
+      location: 'Chennai, Tamil Nadu',
+      type: 'Full-time',
+      salary: '₹6,00,000 - ₹8,50,000/year',
+      description:
+        'Supervise vehicle maintenance operations, manage workshop staff, and ensure fleet readiness. Focus on preventive maintenance and cost optimization.',
+      requirements: [
+        'Mechanical engineering background',
+        '4+ years supervisory experience',
+        'Knowledge of vehicle systems',
+        'Team management skills',
+      ],
+      benefits: [
+        'Technical Training',
+        'Performance Incentives',
+        'Health Insurance',
+        'Growth Opportunities',
+      ],
+      image: '/excavator.jpg',
+      createdAt: '2025-09-20T10:00:00Z',
+      status: 'Paused',
+      urgent: false,
+      views: 203,
+      applications: [],
+    },
+    {
+      id: 'job-5',
+      title: 'Warehouse Manager',
+      department: 'Logistics',
+      location: 'Kolkata, West Bengal',
+      type: 'Full-time',
+      salary: '₹5,50,000 - ₹7,50,000/year',
+      description:
+        'Manage warehouse operations, inventory control, and coordinate with transportation team for efficient distribution.',
+      requirements: [
+        'Warehouse management experience 3+ years',
+        'Inventory management systems knowledge',
+        'Team leadership skills',
+        'Problem-solving abilities',
+      ],
+      benefits: [
+        'Medical Insurance',
+        'Bonus Structure',
+        'Paid Leave',
+        'Career Development',
+      ],
+      image: '/network.png',
+      createdAt: '2025-09-18T08:30:00Z',
+      status: 'Active',
+      urgent: false,
+      views: 189,
+      applications: [
+        {
+          id: 'app-7',
+          candidateName: 'Arijit Das',
+          candidateEmail: 'arijit.das@email.com',
+          candidatePhone: '+91 98765 43216',
+          experience: '5 years',
+          location: 'Kolkata, West Bengal',
+          appliedDate: '2025-09-19T11:00:00Z',
+          status: 'reviewed',
+        },
+        {
+          id: 'app-8',
+          candidateName: 'Sanjay Ghosh',
+          candidateEmail: 'sanjay.ghosh@email.com',
+          candidatePhone: '+91 98765 43217',
+          experience: '4 years',
+          location: 'Howrah, West Bengal',
+          appliedDate: '2025-09-20T16:20:00Z',
+          status: 'pending',
+        },
+      ],
+    },
+  ] as DetailedJob[],
 
   popularFeeds: [
     {
