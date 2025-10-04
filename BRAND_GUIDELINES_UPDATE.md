@@ -37,8 +37,8 @@ This document outlines all the changes made to align the Wheelboard frontend app
 #### `globals.css`
 
 - Updated CSS variables:
-  - `--primary`: #FF7A00
-  - `--primary-hover`: #E66D00
+  - `--primary`: #F36969
+    9 - `--primary-hover`: #E66D00
   - `--secondary`: #808080
   - `--accent`: #000000
   - `--foreground`: #000000
@@ -53,7 +53,7 @@ This document outlines all the changes made to align the Wheelboard frontend app
 #### `Hero.jsx`
 
 - Replaced all #0052CC (blue) with #000000 (black) for headings and text
-- Replaced all #FF6D1B (old orange) with #FF7A00 (brand orange)
+- Replaced all #FF6D1B (old orange) with #F36969 (brand orange)
 - Updated gradient buttons from blue-orange to orange gradient
 - Updated border colors from blue to black
 - Replaced purple badges with gray

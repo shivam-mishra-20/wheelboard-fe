@@ -30,7 +30,7 @@ const CTASection = () => {
         </div>
 
         {/* Content container */}
-        <div className="rounded-4xl relative z-20 flex h-full items-center px-2 md:px-6">
+        <div className="relative z-20 flex h-full items-center rounded-4xl px-2 md:px-6">
           {/* Text content */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}

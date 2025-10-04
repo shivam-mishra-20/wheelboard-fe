@@ -358,7 +358,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="sm:rounded-t-4xl rounded-t-3xl bg-[#272627] px-4 py-8 font-poppins text-white sm:px-6 sm:py-10 lg:px-16 lg:py-12">
+    <footer className="rounded-t-3xl bg-[#272627] px-4 py-8 font-poppins text-white sm:rounded-t-4xl sm:px-6 sm:py-10 lg:px-16 lg:py-12">
       <div className="mx-auto max-w-[1200px]">
         {/* Main Footer Layout - Two Columns Side by Side on larger screens */}
         <div className="flex flex-col lg:flex-row lg:gap-8 xl:gap-14">

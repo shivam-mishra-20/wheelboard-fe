@@ -3,40 +3,32 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Vehicle {
-  id: string;
-  name: string;
-  year: number;
-  status: 'Attached' | 'Owned' | 'Rented';
-  lastService: string;
-  location: string;
-  image: string;
-}
-
-interface Driver {
-  id: string;
-  name: string;
-  experience: string;
-  status: 'Available' | 'On Trip' | 'Off Duty';
-  licenseNumber: string;
-  phoneNumber: string;
-  rating: number;
-  totalTrips: number;
-  currentVehicle?: string;
-  location: string;
-  image: string;
-  joinedDate: string;
-}
+import { Vehicle, Driver } from '@/lib/mockApi';
 
 interface VehiclesListingProps {
   vehicles: Vehicle[];
   drivers: Driver[];
+  onAddVehicle?: () => void;
+  onEditVehicle?: (vehicle: Vehicle) => void;
+  onDeleteVehicle?: (vehicle: Vehicle) => void;
+  onVehicleClick?: (vehicleId: string) => void;
+  onAddDriver?: () => void;
+  onEditDriver?: (driver: Driver) => void;
+  onDeleteDriver?: (driver: Driver) => void;
+  onDriverClick?: (driverId: string) => void;
 }
 
 export default function VehiclesListing({
   vehicles,
   drivers,
+  onAddVehicle,
+  onEditVehicle,
+  onDeleteVehicle,
+  onVehicleClick,
+  onAddDriver,
+  onEditDriver,
+  onDeleteDriver,
+  onDriverClick,
 }: VehiclesListingProps) {
   const [activeTab, setActiveTab] = useState<'drivers' | 'vehicles'>(
     'vehicles'
@@ -112,6 +104,7 @@ export default function VehiclesListing({
               </select>
 
               <motion.button
+                onClick={onAddVehicle}
                 className="btn-primary flex items-center space-x-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-glow"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -149,6 +142,7 @@ export default function VehiclesListing({
               </select>
 
               <motion.button
+                onClick={onAddDriver}
                 className="btn-primary flex items-center space-x-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-glow"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -193,7 +187,8 @@ export default function VehiclesListing({
                   scale: 1.01,
                   transition: { duration: 0.3 },
                 }}
-                className="flex flex-col overflow-hidden rounded-3xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50/50 shadow-premium transition-all duration-500 hover:border-primary-200 hover:shadow-premium-lg sm:flex-row md:h-[160px]"
+                onClick={() => onVehicleClick?.(vehicle.id)}
+                className="flex cursor-pointer flex-col overflow-hidden rounded-3xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50/50 shadow-premium transition-all duration-500 hover:border-primary-200 hover:shadow-premium-lg sm:flex-row md:h-[160px]"
               >
                 {/* Mobile image for smaller screens */}
                 <div className="relative h-48 sm:hidden">
@@ -212,7 +207,7 @@ export default function VehiclesListing({
                         {vehicle.name} - {vehicle.year}
                       </h3>
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold shadow-sm ${vehicleStatusColors[vehicle.status]}`}
+                        className={`rounded-full px-3 py-1 text-xs font-bold shadow-sm ${vehicleStatusColors[vehicle.status as keyof typeof vehicleStatusColors]}`}
                       >
                         {vehicle.status}
                       </span>
@@ -252,6 +247,10 @@ export default function VehiclesListing({
                   </div>
                   <div className="flex items-center gap-3">
                     <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditVehicle?.(vehicle);
+                      }}
                       className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 p-3 text-blue-600 shadow-sm transition-all hover:from-blue-100 hover:to-blue-200 hover:shadow-md"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
@@ -266,6 +265,10 @@ export default function VehiclesListing({
                       </svg>
                     </motion.button>
                     <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteVehicle?.(vehicle);
+                      }}
                       className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-3 text-[#FF7A00] shadow-sm transition-all hover:from-orange-100 hover:to-orange-200 hover:shadow-md"
                       whileHover={{ scale: 1.1, rotate: -5 }}
                       whileTap={{ scale: 0.9 }}
@@ -318,7 +321,8 @@ export default function VehiclesListing({
                   scale: 1.01,
                   transition: { duration: 0.3 },
                 }}
-                className="flex flex-col overflow-hidden rounded-3xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50/50 shadow-premium transition-all duration-500 hover:border-primary-200 hover:shadow-premium-lg sm:flex-row md:h-[180px]"
+                onClick={() => onDriverClick?.(driver.id)}
+                className="flex cursor-pointer flex-col overflow-hidden rounded-3xl border-2 border-gray-100 bg-gradient-to-br from-white to-gray-50/50 shadow-premium transition-all duration-500 hover:border-primary-200 hover:shadow-premium-lg sm:flex-row md:h-[180px]"
               >
                 {/* Mobile image for smaller screens */}
                 <div className="relative h-48 sm:hidden">
@@ -435,6 +439,10 @@ export default function VehiclesListing({
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3">
                     <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditDriver?.(driver);
+                      }}
                       className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 p-3 text-blue-600 shadow-sm transition-all hover:from-blue-100 hover:to-blue-200 hover:shadow-md"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
@@ -449,8 +457,12 @@ export default function VehiclesListing({
                       </svg>
                     </motion.button>
                     <motion.button
-                      className="rounded-xl bg-gradient-to-br from-green-50 to-green-100 p-3 text-green-600 shadow-sm transition-all hover:from-green-100 hover:to-green-200 hover:shadow-md"
-                      whileHover={{ scale: 1.1 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteDriver?.(driver);
+                      }}
+                      className="rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 p-3 text-[#FF7A00] shadow-sm transition-all hover:from-orange-100 hover:to-orange-200 hover:shadow-md"
+                      whileHover={{ scale: 1.1, rotate: -5 }}
                       whileTap={{ scale: 0.9 }}
                     >
                       <svg
@@ -459,7 +471,11 @@ export default function VehiclesListing({
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
-                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </motion.button>
                   </div>

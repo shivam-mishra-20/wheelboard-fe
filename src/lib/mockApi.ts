@@ -499,6 +499,81 @@ export interface FeedPost {
   timeAgo: string;
 }
 
+export interface VehicleTrip {
+  id: string;
+  route: string;
+  date: string;
+  distance?: string;
+  duration?: string;
+}
+
+export interface VehicleMetrics {
+  avgRun: number; // in KM
+  tripEfficiency: number; // in Rs per KM
+  monthlyUsage: number; // in KM
+  costPerKM: number; // in Rs
+}
+
+export interface Vehicle {
+  id: string;
+  name: string;
+  model?: string;
+  year?: number;
+  registrationNumber?: string;
+  status: string;
+  fuelType?: string;
+  capacity?: string;
+  mileage?: string;
+  lastService?: string;
+  location: string;
+  image: string;
+  // New fields for desktop design
+  statusBadge: 'Assigned' | 'Available' | 'In Transit';
+  ownership: 'Owned' | 'Attached'; // Ownership type of the vehicle
+  onTrip?: boolean; // Whether the vehicle is currently on a trip
+  assignedDriver?: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  metrics: VehicleMetrics;
+  recentTrips: VehicleTrip[];
+  totalTrips: number;
+  manufacturer?: string;
+  // Lease fields
+  isLeased?: boolean;
+  lease?: {
+    startDate: string;
+    endDate: string;
+    monthlyRun: number;
+    odometerStart: number;
+    odometerBookingOnLease: number;
+    pricingModel: 'flat' | 'km-based';
+    flatPricePerDay?: number;
+    pricePerKm?: number;
+    topEfficiency?: number;
+    businessDays: number[];
+    businessHoursStart: string;
+    businessHoursEnd: string;
+    additionalInstructions?: string;
+  };
+}
+
+export interface DriverReview {
+  id: string;
+  reviewerName: string;
+  reviewerAvatar?: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+export interface DriverPerformance {
+  timelyDelivery: number;
+  tripEfficiency: number;
+  safety: number;
+}
+
 export interface Driver {
   id: string;
   name: string;
@@ -506,12 +581,20 @@ export interface Driver {
   status: 'Available' | 'On Trip' | 'Off Duty';
   licenseNumber: string;
   phoneNumber: string;
+  email?: string;
   rating: number;
   totalTrips: number;
   currentVehicle?: string;
   location: string;
   image: string;
   joinedDate: string;
+  address?: string;
+  emergencyContact?: string;
+  statusBadge?: 'Hired' | 'Contract' | 'Freelance';
+  performance: DriverPerformance;
+  feedback?: string;
+  reviews: DriverReview[];
+  isFavorite?: boolean;
 }
 
 // Mock data for company home page
@@ -628,47 +711,165 @@ export const companyFleetData = {
     {
       id: 'v1',
       name: 'Omni Van',
+      model: 'Maruti Omni E MPI',
       year: 1998,
+      registrationNumber: 'DL-01-AB-1234',
       status: 'Attached',
+      fuelType: 'Petrol',
+      capacity: '600 kg',
+      mileage: '15 km/l',
       lastService: 'Last service: 12 Jan',
       location: 'Current: Delhi',
       image: '/truck-01.jpg',
+      statusBadge: 'In Transit',
+      ownership: 'Attached',
+      onTrip: true,
+      manufacturer: 'Maruti',
+      assignedDriver: {
+        id: 'd1',
+        name: 'Rajesh Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      metrics: {
+        avgRun: 12500,
+        tripEfficiency: 2.8,
+        monthlyUsage: 8500,
+        costPerKM: 2.8,
+      },
+      totalTrips: 156,
+      recentTrips: [
+        { id: 'ST0624AD2024', route: 'SURAT-AHMEDABAD', date: '2024-12-20' },
+        { id: 'BR0624PNE2024', route: 'VADODARA-PUNE', date: '2024-12-18' },
+        { id: 'ST0624AD2024', route: 'SURAT-AHMEDABAD', date: '2024-12-15' },
+      ],
     },
     {
       id: 'v2',
       name: 'Tata',
+      model: 'Tata Ace Gold CX',
       year: 2007,
+      registrationNumber: 'MH-12-AB-1234',
       status: 'Owned',
+      fuelType: 'Diesel',
+      capacity: '750 kg',
+      mileage: '20 km/l',
       lastService: 'Last service: 20 Feb',
       location: 'Current: Mumbai',
       image: '/truck-01.jpg',
+      statusBadge: 'Assigned',
+      ownership: 'Owned',
+      onTrip: false,
+      manufacturer: 'Tata',
+      assignedDriver: {
+        id: 'd2',
+        name: 'Deepak Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      metrics: {
+        avgRun: 15002,
+        tripEfficiency: 3,
+        monthlyUsage: 12500,
+        costPerKM: 3,
+      },
+      totalTrips: 234,
+      recentTrips: [
+        { id: 'ST0624AD2024', route: 'SURAT-AHMEDABAD', date: '2024-12-20' },
+        { id: 'DRD0624PNB2024', route: 'DADAR-PUNE', date: '2024-12-19' },
+        { id: 'TN0624AD2024', route: 'CHENNAI-AHMEDABAD', date: '2024-12-17' },
+      ],
     },
     {
       id: 'v3',
       name: 'Mercedes-Benz',
+      model: 'Mercedes-Benz Actros',
       year: 2019,
+      registrationNumber: 'CA-55-XY9782',
       status: 'Rented',
+      fuelType: 'Diesel',
+      capacity: '25 tons',
+      mileage: '8 km/l',
       lastService: 'Last service: 5 Mar',
       location: 'Current: Bangalore',
       image: '/truck-01.jpg',
+      statusBadge: 'Available',
+      ownership: 'Owned',
+      onTrip: false,
+      manufacturer: 'Mercedes-Benz',
+      assignedDriver: undefined,
+      metrics: {
+        avgRun: 18500,
+        tripEfficiency: 4.2,
+        monthlyUsage: 15600,
+        costPerKM: 4.2,
+      },
+      totalTrips: 89,
+      recentTrips: [
+        { id: 'XWK 1107', route: 'BANGALORE-CHENNAI', date: '2024-12-22' },
+        { id: 'ST0624AD2024', route: 'SURAT-AHMEDABAD', date: '2024-12-20' },
+      ],
     },
     {
       id: 'v4',
-      name: 'Tata',
+      name: 'Tata LPT 1613',
+      model: 'Tata LPT 1613 TC',
       year: 2007,
+      registrationNumber: 'CA-55-XY9782',
       status: 'Owned',
+      fuelType: 'Diesel',
+      capacity: '16 tons',
+      mileage: '10 km/l',
       lastService: 'Last service: 18 Apr',
       location: 'Current: Chennai',
       image: '/truck-01.jpg',
+      statusBadge: 'Available',
+      ownership: 'Owned',
+      onTrip: false,
+      manufacturer: 'Tata',
+      assignedDriver: undefined,
+      metrics: {
+        avgRun: 8500,
+        tripEfficiency: 4.5,
+        monthlyUsage: 6200,
+        costPerKM: 4.5,
+      },
+      totalTrips: 67,
+      recentTrips: [
+        { id: 'XWK 1107', route: 'CHENNAI-BANGALORE', date: '2024-12-21' },
+      ],
     },
     {
       id: 'v5',
-      name: 'Tata',
+      name: 'Ashok Leyland',
+      model: 'Ashok Leyland Dost+',
       year: 2007,
+      registrationNumber: 'TS-05-IJ-7890',
       status: 'Owned',
+      fuelType: 'CNG',
+      capacity: '1.5 tons',
+      mileage: '16 km/l',
       lastService: 'Last service: 30 May',
       location: 'Current: Hyderabad',
       image: '/truck-01.jpg',
+      statusBadge: 'In Transit',
+      ownership: 'Owned',
+      onTrip: true,
+      manufacturer: 'Ashok Leyland',
+      assignedDriver: {
+        id: 'd5',
+        name: 'Manoj Verma',
+        avatar: '/staring-man.jpg',
+      },
+      metrics: {
+        avgRun: 11200,
+        tripEfficiency: 3.8,
+        monthlyUsage: 9800,
+        costPerKM: 3.8,
+      },
+      totalTrips: 142,
+      recentTrips: [
+        { id: 'HYD987', route: 'HYDERABAD-VIJAYAWADA', date: '2024-12-22' },
+        { id: 'HYD542', route: 'HYDERABAD-BANGALORE', date: '2024-12-19' },
+      ],
     },
   ],
   drivers: [
@@ -677,70 +878,147 @@ export const companyFleetData = {
       name: 'Rajesh Kumar',
       experience: '8 years',
       status: 'On Trip',
-      licenseNumber: 'DL-1234567890',
+      licenseNumber: 'MH-12-AB-1234',
       phoneNumber: '+91 98765 43210',
+      email: 'rajesh.kumar@wheelboard.com',
       rating: 4.8,
       totalTrips: 1245,
       currentVehicle: 'Omni Van (v1)',
       location: 'Current: Delhi → Mumbai',
       image: '/staring-man.jpg',
       joinedDate: '2017-03-15',
+      address: '123 Main Street, Sector 15, Delhi, India 110001',
+      emergencyContact: '+91 98765 00001',
+      statusBadge: 'Hired',
+      performance: { timelyDelivery: 92, tripEfficiency: 85, safety: 80 },
+      feedback: 'Skilled Driver with good response time.',
+      reviews: [
+        {
+          id: 'r1',
+          reviewerName: 'Amit Sharma',
+          reviewerAvatar: '/profile-pic.png',
+          rating: 5,
+          comment: 'Excellent driver, always on time and very professional.',
+          date: '2025-09-15',
+        },
+        {
+          id: 'r2',
+          reviewerName: 'Priya Singh',
+          reviewerAvatar: '/profile-pic.png',
+          rating: 4,
+          comment: 'Good service, safe driving. Highly recommended.',
+          date: '2025-09-01',
+        },
+      ],
+      isFavorite: true,
     },
     {
       id: 'd2',
-      name: 'Amit Singh',
+      name: 'Deepak Kumar',
       experience: '5 years',
       status: 'Available',
-      licenseNumber: 'DL-0987654321',
+      licenseNumber: 'MH-12-AB-1234',
       phoneNumber: '+91 98765 43211',
-      rating: 4.6,
+      email: 'deepak.kumar@wheelboard.com',
+      rating: 4.0,
       totalTrips: 876,
       currentVehicle: undefined,
       location: 'Current: Mumbai',
       image: '/staring-man.jpg',
       joinedDate: '2019-06-20',
+      address: '456 Park Avenue, Andheri West, Mumbai, India 400058',
+      emergencyContact: '+91 98765 00002',
+      statusBadge: 'Hired',
+      performance: { timelyDelivery: 92, tripEfficiency: 85, safety: 80 },
+      feedback: 'Skilled Driver with good response time.',
+      reviews: [],
+      isFavorite: false,
     },
     {
       id: 'd3',
       name: 'Suresh Patel',
       experience: '12 years',
       status: 'On Trip',
-      licenseNumber: 'DL-1122334455',
+      licenseNumber: 'KA-05-CD-5678',
       phoneNumber: '+91 98765 43212',
+      email: 'suresh.patel@wheelboard.com',
       rating: 4.9,
       totalTrips: 2134,
       currentVehicle: 'Mercedes-Benz (v3)',
       location: 'Current: Bangalore → Chennai',
       image: '/staring-man.jpg',
       joinedDate: '2013-01-10',
+      address: '789 Tech Park Road, Whitefield, Bangalore, India 560066',
+      emergencyContact: '+91 98765 00003',
+      statusBadge: 'Hired',
+      performance: { timelyDelivery: 95, tripEfficiency: 92, safety: 88 },
+      feedback:
+        'Highly experienced and reliable driver with excellent track record.',
+      reviews: [
+        {
+          id: 'r3',
+          reviewerName: 'Rahul Verma',
+          reviewerAvatar: '/profile-pic.png',
+          rating: 5,
+          comment:
+            'Best driver in our fleet. Always professional and punctual.',
+          date: '2025-09-20',
+        },
+      ],
+      isFavorite: true,
     },
     {
       id: 'd4',
       name: 'Vijay Sharma',
       experience: '6 years',
       status: 'Available',
-      licenseNumber: 'DL-5566778899',
+      licenseNumber: 'TN-09-EF-9012',
       phoneNumber: '+91 98765 43213',
+      email: 'vijay.sharma@wheelboard.com',
       rating: 4.7,
       totalTrips: 1023,
       currentVehicle: undefined,
       location: 'Current: Chennai',
       image: '/staring-man.jpg',
       joinedDate: '2018-09-05',
+      address: '321 Beach Road, Adyar, Chennai, India 600020',
+      emergencyContact: '+91 98765 00004',
+      statusBadge: 'Contract',
+      performance: { timelyDelivery: 88, tripEfficiency: 82, safety: 85 },
+      feedback: 'Dependable driver with good customer service skills.',
+      reviews: [],
+      isFavorite: false,
     },
     {
       id: 'd5',
       name: 'Manoj Verma',
       experience: '3 years',
       status: 'Off Duty',
-      licenseNumber: 'DL-9988776655',
+      licenseNumber: 'TS-08-GH-3456',
       phoneNumber: '+91 98765 43214',
+      email: 'manoj.verma@wheelboard.com',
       rating: 4.5,
       totalTrips: 542,
       currentVehicle: undefined,
       location: 'Current: Hyderabad',
       image: '/staring-man.jpg',
       joinedDate: '2021-11-12',
+      address: '654 HITEC City, Madhapur, Hyderabad, India 500081',
+      emergencyContact: '+91 98765 00005',
+      statusBadge: 'Freelance',
+      performance: { timelyDelivery: 78, tripEfficiency: 75, safety: 82 },
+      feedback: 'Improving driver with good potential.',
+      reviews: [
+        {
+          id: 'r4',
+          reviewerName: 'Sneha Reddy',
+          reviewerAvatar: '/profile-pic.png',
+          rating: 4,
+          comment: 'Good driver, needs to improve on time management.',
+          date: '2025-08-25',
+        },
+      ],
+      isFavorite: false,
     },
   ] as Driver[],
   popularFeeds: [
