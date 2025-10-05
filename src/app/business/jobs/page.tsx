@@ -146,7 +146,7 @@ export default function BusinessJobsPage() {
         phone: '+91 98765 43210',
         experience: '8 years',
         location: 'Mumbai, Maharashtra',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
       },
       appliedDate: '2025-09-29',
       status: 'Under Review',

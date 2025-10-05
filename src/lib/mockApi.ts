@@ -11,6 +11,29 @@ export interface User {
   createdAt: string;
 }
 
+// Bid-related types
+export interface Bidder {
+  id: string;
+  name: string;
+  avatar: string;
+  rating: number; // 0-5
+  totalTrips: number;
+  isVerified: boolean;
+  experience: string;
+  phoneNumber: string;
+}
+
+export interface TripBid {
+  id: string;
+  tripId: string;
+  bidder: Bidder;
+  bidAmount: number;
+  proposedDuration: string;
+  message: string;
+  createdAt: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -216,13 +239,13 @@ const getProfileImage = (
 ): string => {
   switch (userType) {
     case 'company':
-      return '/profile-pic.png';
+      return '/profile.png';
     case 'business':
       return '/business-profile.png';
     case 'professional':
       return '/professional-profile.png';
     default:
-      return '/profile-pic.png';
+      return '/profile.png';
   }
 };
 
@@ -525,12 +548,43 @@ export interface FeedPost {
     name: string;
     avatar: string;
     initials: string;
+    userType: 'professional' | 'company' | 'business';
+    id?: string;
+    company?: string;
   };
-  title: string;
-  description: string;
-  image: string;
+  content: string;
+  image?: string;
+  timestamp: string;
   timeAgo: string;
+  likes: number;
+  shares: number;
+  comments: {
+    id: string;
+    author: {
+      name: string;
+      avatar: string;
+      id?: string;
+    };
+    content: string;
+    timestamp: string;
+    timeAgo: string;
+  }[];
+  isLiked?: boolean;
+  // Standardized category values used across the app
+  // Keep values lowercase for consistency when matching/filtering
+  category?: CategoryType;
+  // Legacy fields for backward compatibility
+  title?: string;
+  description?: string;
 }
+
+// Unified category type used application-wide
+export type CategoryType =
+  | 'Promotions'
+  | 'tip'
+  | 'services'
+  | 'question'
+  | 'general';
 
 export interface VehicleTrip {
   id: string;
@@ -628,6 +682,41 @@ export interface Driver {
   feedback?: string;
   reviews: DriverReview[];
   isFavorite?: boolean;
+}
+
+export interface Trip {
+  id: string;
+  title: string;
+  status: 'Completed' | 'In-Process' | 'Upcoming';
+  deliveryType:
+    | 'Express Delivery'
+    | 'Standard'
+    | 'Bulk Transport'
+    | 'Scheduled';
+  from: string;
+  to: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalDate?: string;
+  arrivalTime?: string;
+  distance: string;
+  duration: string;
+  driver: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  vehicle: {
+    id: string;
+    name: string;
+    registrationNumber: string;
+  };
+  image: string;
+  bids?: number;
+  eta?: string;
+  progress?: number; // percentage for in-process trips
+  isAssigned?: boolean; // whether trip has been assigned to a driver
+  createdAt: string;
 }
 
 // Mock data for company home page
@@ -732,7 +821,7 @@ export const companyHomeData = {
           candidatePhone: '+91 98765 43211',
           experience: '6 years',
           location: 'Mumbai, Maharashtra',
-          avatar: '/profile-pic.png',
+          avatar: '/profile.png',
           appliedDate: '2025-09-30T11:20:00Z',
           status: 'reviewed',
         },
@@ -832,7 +921,7 @@ export const companyHomeData = {
           candidatePhone: '+91 98765 43215',
           experience: '3 years',
           location: 'Bangalore, Karnataka',
-          avatar: '/profile-pic.png',
+          avatar: '/profile.png',
           appliedDate: '2025-09-23T09:00:00Z',
           status: 'pending',
         },
@@ -922,7 +1011,7 @@ export const companyHomeData = {
       id: 'feed-1',
       author: {
         name: 'Delhi Transport',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
@@ -935,7 +1024,7 @@ export const companyHomeData = {
       id: 'feed-2',
       author: {
         name: 'Delhi Transport',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
@@ -948,7 +1037,7 @@ export const companyHomeData = {
       id: 'feed-3',
       author: {
         name: 'Delhi Transport',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
@@ -961,7 +1050,7 @@ export const companyHomeData = {
       id: 'feed-4',
       author: {
         name: 'Delhi Transport',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
@@ -971,6 +1060,240 @@ export const companyHomeData = {
       timeAgo: 'Posted 2 days ago',
     },
   ] as FeedPost[],
+
+  allTrips: [
+    {
+      id: 'trip-1',
+      title: 'Trip to Chennai',
+      status: 'Completed',
+      deliveryType: 'Express Delivery',
+      from: 'Hyderabad',
+      to: 'Chennai',
+      departureDate: '2025-10-01',
+      departureTime: '08:00 AM',
+      arrivalDate: '2025-10-01',
+      arrivalTime: '06:30 PM',
+      distance: '628 km',
+      duration: '10h 30m',
+      driver: {
+        id: 'd1',
+        name: 'Rajesh Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v1',
+        name: 'Omni Van',
+        registrationNumber: 'DL-01-AB-1234',
+      },
+      image: '/truck-01.jpg',
+      createdAt: '2025-10-01T08:00:00Z',
+    },
+    {
+      id: 'trip-2',
+      title: 'Mumbai to Pune Delivery',
+      status: 'Completed',
+      deliveryType: 'Standard',
+      from: 'Mumbai',
+      to: 'Pune',
+      departureDate: '2025-09-30',
+      departureTime: '06:00 AM',
+      arrivalDate: '2025-09-30',
+      arrivalTime: '10:00 AM',
+      distance: '148 km',
+      duration: '4h',
+      driver: {
+        id: 'd2',
+        name: 'Deepak Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v2',
+        name: 'Tata',
+        registrationNumber: 'MH-12-AB-1234',
+      },
+      image: '/Yellow-truck.jpg',
+      createdAt: '2025-09-30T06:00:00Z',
+    },
+    {
+      id: 'trip-3',
+      title: 'Delhi to Jaipur Route',
+      status: 'Completed',
+      deliveryType: 'Bulk Transport',
+      from: 'Delhi',
+      to: 'Jaipur',
+      departureDate: '2025-09-28',
+      departureTime: '05:00 AM',
+      arrivalDate: '2025-09-28',
+      arrivalTime: '12:30 PM',
+      distance: '280 km',
+      duration: '7h 30m',
+      driver: {
+        id: 'd5',
+        name: 'Manoj Verma',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v5',
+        name: 'Ashok Leyland',
+        registrationNumber: 'TS-05-IJ-7890',
+      },
+      image: '/mining-truck.jpg',
+      bids: 5,
+      createdAt: '2025-09-28T05:00:00Z',
+    },
+    {
+      id: 'trip-4',
+      title: 'Bangalore to Mysore',
+      status: 'In-Process',
+      deliveryType: 'Express Delivery',
+      from: 'Bangalore',
+      to: 'Mysore',
+      departureDate: '2025-10-05',
+      departureTime: '09:00 AM',
+      distance: '143 km',
+      duration: '3h 30m',
+      driver: {
+        id: 'd1',
+        name: 'Rajesh Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v1',
+        name: 'Omni Van',
+        registrationNumber: 'DL-01-AB-1234',
+      },
+      image: '/black-truck.png',
+      eta: '12:30 PM',
+      progress: 65,
+      createdAt: '2025-10-05T09:00:00Z',
+    },
+    {
+      id: 'trip-5',
+      title: 'Chennai to Bangalore',
+      status: 'In-Process',
+      deliveryType: 'Standard',
+      from: 'Chennai',
+      to: 'Bangalore',
+      departureDate: '2025-10-05',
+      departureTime: '07:00 AM',
+      distance: '346 km',
+      duration: '6h 30m',
+      driver: {
+        id: 'd2',
+        name: 'Deepak Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v2',
+        name: 'Tata',
+        registrationNumber: 'MH-12-AB-1234',
+      },
+      image: '/red-truck.png',
+      eta: '01:30 PM',
+      progress: 45,
+      createdAt: '2025-10-05T07:00:00Z',
+    },
+    {
+      id: 'trip-6',
+      title: 'Kolkata to Bhubaneswar',
+      status: 'In-Process',
+      deliveryType: 'Scheduled',
+      from: 'Kolkata',
+      to: 'Bhubaneswar',
+      departureDate: '2025-10-05',
+      departureTime: '06:30 AM',
+      distance: '442 km',
+      duration: '8h',
+      driver: {
+        id: 'd5',
+        name: 'Manoj Verma',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v3',
+        name: 'Mercedes-Benz',
+        registrationNumber: 'CA-55-XY9782',
+      },
+      image: '/Bus.jpg',
+      eta: '02:30 PM',
+      progress: 30,
+      createdAt: '2025-10-05T06:30:00Z',
+    },
+    {
+      id: 'trip-7',
+      title: 'Ahmedabad to Surat',
+      status: 'Upcoming',
+      deliveryType: 'Express Delivery',
+      from: 'Ahmedabad',
+      to: 'Surat',
+      departureDate: '2025-10-06',
+      departureTime: '08:00 AM',
+      distance: '263 km',
+      duration: '5h',
+      driver: {
+        id: 'd1',
+        name: 'Rajesh Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v4',
+        name: 'Tata LPT 1613',
+        registrationNumber: 'CA-55-XY9782',
+      },
+      image: '/truck-01.jpg',
+      bids: 8,
+      createdAt: '2025-10-04T10:00:00Z',
+    },
+    {
+      id: 'trip-8',
+      title: 'Pune to Nashik',
+      status: 'Upcoming',
+      deliveryType: 'Standard',
+      from: 'Pune',
+      to: 'Nashik',
+      departureDate: '2025-10-06',
+      departureTime: '10:00 AM',
+      distance: '210 km',
+      duration: '4h 30m',
+      driver: {
+        id: 'd2',
+        name: 'Deepak Kumar',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v2',
+        name: 'Tata',
+        registrationNumber: 'MH-12-AB-1234',
+      },
+      image: '/Yellow-truck.jpg',
+      bids: 3,
+      createdAt: '2025-10-04T11:00:00Z',
+    },
+    {
+      id: 'trip-9',
+      title: 'Hyderabad to Vijayawada',
+      status: 'Upcoming',
+      deliveryType: 'Bulk Transport',
+      from: 'Hyderabad',
+      to: 'Vijayawada',
+      departureDate: '2025-10-07',
+      departureTime: '07:00 AM',
+      distance: '275 km',
+      duration: '5h 30m',
+      driver: {
+        id: 'd5',
+        name: 'Manoj Verma',
+        avatar: '/staring-man.jpg',
+      },
+      vehicle: {
+        id: 'v5',
+        name: 'Ashok Leyland',
+        registrationNumber: 'TS-05-IJ-7890',
+      },
+      image: '/mining-truck.jpg',
+      createdAt: '2025-10-04T12:00:00Z',
+    },
+  ] as Trip[],
 };
 
 export const companyFleetData = {
@@ -1163,7 +1486,7 @@ export const companyFleetData = {
         {
           id: 'r1',
           reviewerName: 'Amit Sharma',
-          reviewerAvatar: '/profile-pic.png',
+          reviewerAvatar: '/profile.png',
           rating: 5,
           comment: 'Excellent driver, always on time and very professional.',
           date: '2025-09-15',
@@ -1171,7 +1494,7 @@ export const companyFleetData = {
         {
           id: 'r2',
           reviewerName: 'Priya Singh',
-          reviewerAvatar: '/profile-pic.png',
+          reviewerAvatar: '/profile.png',
           rating: 4,
           comment: 'Good service, safe driving. Highly recommended.',
           date: '2025-09-01',
@@ -1225,7 +1548,7 @@ export const companyFleetData = {
         {
           id: 'r3',
           reviewerName: 'Rahul Verma',
-          reviewerAvatar: '/profile-pic.png',
+          reviewerAvatar: '/profile.png',
           rating: 5,
           comment:
             'Best driver in our fleet. Always professional and punctual.',
@@ -1279,7 +1602,7 @@ export const companyFleetData = {
         {
           id: 'r4',
           reviewerName: 'Sneha Reddy',
-          reviewerAvatar: '/profile-pic.png',
+          reviewerAvatar: '/profile.png',
           rating: 4,
           comment: 'Good driver, needs to improve on time management.',
           date: '2025-08-25',
@@ -1293,7 +1616,7 @@ export const companyFleetData = {
       id: 'cf1',
       author: {
         name: 'Delhi Transport',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'D',
       },
       title: 'Tips For Fleet Management',
@@ -1306,7 +1629,7 @@ export const companyFleetData = {
       id: 'cf2',
       author: {
         name: 'Mumbai Logistics',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'M',
       },
       title: 'Vehicle Maintenance Best Practices',
@@ -1319,7 +1642,7 @@ export const companyFleetData = {
       id: 'cf3',
       author: {
         name: 'Bangalore Transporters',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'B',
       },
       title: 'Reducing Fuel Costs',
@@ -1332,7 +1655,7 @@ export const companyFleetData = {
       id: 'cf4',
       author: {
         name: 'Chennai Carriers',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'C',
       },
       title: 'Driver Safety Programs',
@@ -1427,7 +1750,7 @@ export const professionalHomeData = {
       id: 'pf-1',
       author: {
         name: 'Transport Academy',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'TA',
       },
       title: 'Safe Driving Tips for Professionals',
@@ -1440,7 +1763,7 @@ export const professionalHomeData = {
       id: 'pf-2',
       author: {
         name: 'Career Growth Hub',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'CG',
       },
       title: 'Growing Your Career in Logistics',
@@ -1453,7 +1776,7 @@ export const professionalHomeData = {
       id: 'pf-3',
       author: {
         name: 'Driver Training Institute',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'DT',
       },
       title: 'Advanced Driving Techniques',
@@ -1466,7 +1789,7 @@ export const professionalHomeData = {
       id: 'pf-4',
       author: {
         name: 'Fleet Management Pro',
-        avatar: '/profile-pic.png',
+        avatar: '/profile.png',
         initials: 'FM',
       },
       title: 'Vehicle Maintenance Basics',
@@ -1476,4 +1799,649 @@ export const professionalHomeData = {
       timeAgo: 'Posted 5 days ago',
     },
   ] as FeedPost[],
+};
+
+// Comprehensive Feeds Data for Fleet Management Community
+export const communityFeeds: FeedPost[] = [
+  {
+    id: 'feed-1',
+    author: {
+      name: 'Rajesh Kumar',
+      avatar: '/profile.png',
+      initials: 'RK',
+      userType: 'company',
+      company: 'Kumar Logistics Pvt Ltd',
+    },
+    content:
+      '🚛 Just upgraded our fleet with 5 new electric trucks! Excited to reduce our carbon footprint while maintaining delivery efficiency. The future of logistics is sustainable! #GreenFleet #ElectricVehicles',
+    image: '/image.png',
+    timestamp: '2024-03-15T10:30:00Z',
+    timeAgo: '2 hours ago',
+    likes: 245,
+    shares: 38,
+    comments: [
+      {
+        id: 'c1',
+        author: {
+          name: 'Priya Sharma',
+          avatar: '/profile.png',
+          id: 'user-101',
+        },
+        content: 'Congratulations! How is the charging infrastructure setup?',
+        timestamp: '2024-03-15T11:00:00Z',
+        timeAgo: '1 hour ago',
+      },
+      {
+        id: 'c2',
+        author: {
+          name: 'Amit Patel',
+          avatar: '/profile.png',
+          id: 'user-102',
+        },
+        content: 'Great move! We are considering the same transition.',
+        timestamp: '2024-03-15T11:30:00Z',
+        timeAgo: '30 minutes ago',
+      },
+    ],
+    isLiked: false,
+    category: 'services',
+  },
+  {
+    id: 'feed-2',
+    author: {
+      name: 'Sarah Johnson',
+      avatar: '/profile.png',
+      initials: 'SJ',
+      userType: 'business',
+      company: 'FleetCare Solutions',
+    },
+    content:
+      "📊 Fleet Management Tip: Regular tire pressure checks can improve fuel efficiency by up to 3%. Small habits, big savings! Here's our monthly maintenance checklist that has helped reduce operational costs by 15%.",
+    image: '/truck-01.jpg',
+    timestamp: '2024-03-15T08:15:00Z',
+    timeAgo: '4 hours ago',
+    likes: 189,
+    shares: 52,
+    comments: [
+      {
+        id: 'c3',
+        author: {
+          name: 'David Lee',
+          avatar: '/profile.png',
+          id: 'user-103',
+        },
+        content:
+          'This is really helpful! Can you share the complete checklist?',
+        timestamp: '2024-03-15T09:00:00Z',
+        timeAgo: '3 hours ago',
+      },
+    ],
+    isLiked: true,
+    category: 'tip',
+  },
+  {
+    id: 'feed-3',
+    author: {
+      name: 'Michael Chen',
+      avatar: '/profile.png',
+      initials: 'MC',
+      userType: 'company',
+      company: 'TransGlobal Express',
+    },
+    content:
+      '🎯 Q1 Results are in! Our team completed 2,547 deliveries with a 99.2% on-time rate. Proud of every driver and dispatcher who made this possible. Excellence is a team effort! 💪',
+    timestamp: '2024-03-14T16:45:00Z',
+    timeAgo: '18 hours ago',
+    likes: 412,
+    shares: 67,
+    comments: [
+      {
+        id: 'c4',
+        author: {
+          name: 'Lisa Wong',
+          avatar: '/profile.png',
+        },
+        content:
+          'Impressive numbers! What tools do you use for route optimization?',
+        timestamp: '2024-03-14T17:30:00Z',
+        timeAgo: '17 hours ago',
+      },
+      {
+        id: 'c5',
+        author: {
+          name: 'John Smith',
+          avatar: '/profile.png',
+        },
+        content: 'Congratulations to the entire team! 🎉',
+        timestamp: '2024-03-14T18:00:00Z',
+        timeAgo: '16 hours ago',
+      },
+      {
+        id: 'c6',
+        author: {
+          name: 'Emma Davis',
+          avatar: '/profile.png',
+        },
+        content: 'Would love to connect and learn from your best practices.',
+        timestamp: '2024-03-15T10:00:00Z',
+        timeAgo: '2 hours ago',
+      },
+    ],
+    isLiked: true,
+    category: 'Promotions',
+  },
+  {
+    id: 'feed-4',
+    author: {
+      name: 'Anita Desai',
+      avatar: '/profile.png',
+      initials: 'AD',
+      userType: 'professional',
+      company: 'Independent Driver',
+    },
+    content:
+      "🤔 Question for fleet managers: What's your preferred telematics solution? Looking to upgrade my vehicle tracking system. Budget-friendly options welcome!",
+    timestamp: '2024-03-14T14:20:00Z',
+    timeAgo: '22 hours ago',
+    likes: 76,
+    shares: 12,
+    comments: [
+      {
+        id: 'c7',
+        author: {
+          name: 'Vikram Singh',
+          avatar: '/profile.png',
+        },
+        content: 'We use GPS Insight. Good balance of features and price.',
+        timestamp: '2024-03-14T15:00:00Z',
+        timeAgo: '21 hours ago',
+      },
+      {
+        id: 'c8',
+        author: {
+          name: 'Ravi Verma',
+          avatar: '/profile.png',
+        },
+        content: 'Check out Verizon Connect. They have excellent support.',
+        timestamp: '2024-03-14T16:00:00Z',
+        timeAgo: '20 hours ago',
+      },
+    ],
+    isLiked: false,
+    category: 'question',
+  },
+  {
+    id: 'feed-5',
+    author: {
+      name: 'Global Fleet Summit',
+      avatar: '/network.png',
+      initials: 'GF',
+      userType: 'business',
+      company: 'Industry Events',
+    },
+    content:
+      '📢 Registration open for Global Fleet Management Summit 2024! Join 500+ industry leaders, explore latest technologies, and network with professionals. Early bird discount ends this Friday! Link in bio.',
+    image: '/image.png',
+    timestamp: '2024-03-14T09:00:00Z',
+    timeAgo: '1 day ago',
+    likes: 523,
+    shares: 156,
+    comments: [
+      {
+        id: 'c9',
+        author: {
+          name: 'Suresh Reddy',
+          avatar: '/profile.png',
+        },
+        content: 'Already registered! Looking forward to the keynote sessions.',
+        timestamp: '2024-03-14T10:00:00Z',
+        timeAgo: '1 day ago',
+      },
+    ],
+    isLiked: false,
+    category: 'services',
+  },
+  {
+    id: 'feed-6',
+    author: {
+      name: 'TechFleet Innovations',
+      avatar: '/profile.png',
+      initials: 'TF',
+      userType: 'business',
+      company: 'TechFleet Innovations',
+    },
+    content:
+      '🚀 Introducing our new AI-powered route optimization platform! Reduce fuel costs by 20%, improve delivery times by 15%. Free trial for the first 100 companies. DM for details!',
+    image: '/image.png',
+    timestamp: '2024-03-13T13:30:00Z',
+    timeAgo: '2 days ago',
+    likes: 198,
+    shares: 89,
+    comments: [
+      {
+        id: 'c10',
+        author: {
+          name: 'Meera Joshi',
+          avatar: '/profile.png',
+        },
+        content:
+          'Sounds interesting! Does it integrate with existing fleet management systems?',
+        timestamp: '2024-03-13T14:00:00Z',
+        timeAgo: '2 days ago',
+      },
+    ],
+    isLiked: true,
+    category: 'services',
+  },
+  {
+    id: 'feed-7',
+    author: {
+      name: 'Deepak Malhotra',
+      avatar: '/profile.png',
+      initials: 'DM',
+      userType: 'company',
+      company: 'Malhotra Transport Services',
+    },
+    content:
+      '⚠️ Safety First! Implemented mandatory dashcam installation across our entire fleet. Driver safety and accountability have improved significantly. Highly recommend to all fleet operators.',
+    image: '/truck-01.jpg',
+    timestamp: '2024-03-13T07:45:00Z',
+    timeAgo: '2 days ago',
+    likes: 267,
+    shares: 43,
+    comments: [
+      {
+        id: 'c11',
+        author: {
+          name: 'Neha Gupta',
+          avatar: '/profile.png',
+        },
+        content:
+          'Which dashcam model are you using? Looking for reliable options.',
+        timestamp: '2024-03-13T08:30:00Z',
+        timeAgo: '2 days ago',
+      },
+      {
+        id: 'c12',
+        author: {
+          name: 'Rohit Kapoor',
+          avatar: '/profile.png',
+        },
+        content: 'Great initiative! Safety should always be the priority.',
+        timestamp: '2024-03-13T09:00:00Z',
+        timeAgo: '2 days ago',
+      },
+    ],
+    isLiked: false,
+    category: 'Promotions',
+  },
+  {
+    id: 'feed-8',
+    author: {
+      name: 'FleetPro Academy',
+      avatar: '/profile.png',
+      initials: 'FP',
+      userType: 'business',
+      company: 'FleetPro Training',
+    },
+    content:
+      '📚 New Course Alert: "Advanced Fleet Operations Management" - Learn from industry experts, get certified, advance your career. Limited seats available. Enroll now!',
+    timestamp: '2024-03-12T11:00:00Z',
+    timeAgo: '3 days ago',
+    likes: 145,
+    shares: 67,
+    comments: [],
+    isLiked: false,
+    category: 'services',
+  },
+  {
+    id: 'feed-9',
+    author: {
+      name: 'Kavita Rao',
+      avatar: '/profile.png',
+      initials: 'KR',
+      userType: 'company',
+      company: 'Rao Logistics Hub',
+    },
+    content:
+      "🎉 Celebrating 10 years in the logistics industry! From 2 trucks to 50+ vehicles, the journey has been incredible. Grateful to every client, driver, and team member. Here's to the next decade! 🚛",
+    image: '/mining-truck.jpg',
+    timestamp: '2024-03-12T08:30:00Z',
+    timeAgo: '3 days ago',
+    likes: 634,
+    shares: 94,
+    comments: [
+      {
+        id: 'c13',
+        author: {
+          name: 'Arjun Nair',
+          avatar: '/profile.png',
+        },
+        content: 'Congratulations! Inspiring growth story! 🎊',
+        timestamp: '2024-03-12T09:00:00Z',
+        timeAgo: '3 days ago',
+      },
+      {
+        id: 'c14',
+        author: {
+          name: 'Pooja Shah',
+          avatar: '/profile.png',
+        },
+        content: 'Amazing milestone! Wishing you continued success! 🌟',
+        timestamp: '2024-03-12T10:00:00Z',
+        timeAgo: '3 days ago',
+      },
+    ],
+    isLiked: true,
+    category: 'services',
+  },
+  {
+    id: 'feed-10',
+    author: {
+      name: 'Sanjay Mehta',
+      avatar: '/profile.png',
+      initials: 'SM',
+      userType: 'professional',
+      company: 'Freelance Driver',
+    },
+    content:
+      '💡 Pro Tip: Always do a pre-trip inspection. Today I caught a small tire issue that could have become a major problem on the highway. 15 minutes of checking can save hours of trouble!',
+    timestamp: '2024-03-11T15:20:00Z',
+    timeAgo: '4 days ago',
+    likes: 312,
+    shares: 78,
+    comments: [
+      {
+        id: 'c15',
+        author: {
+          name: 'Manish Kumar',
+          avatar: '/profile.png',
+        },
+        content: 'Absolutely right! Prevention is better than cure.',
+        timestamp: '2024-03-11T16:00:00Z',
+        timeAgo: '4 days ago',
+      },
+    ],
+    isLiked: true,
+    category: 'tip',
+  },
+];
+
+// Mock Bids Data
+export const mockBidsData: Record<string, TripBid[]> = {
+  'trip-1': [
+    {
+      id: 'bid-1',
+      tripId: 'trip-1',
+      bidder: {
+        id: 'prof-1',
+        name: 'Rajesh Kumar',
+        avatar: '/profile.png',
+        rating: 4.8,
+        totalTrips: 245,
+        isVerified: true,
+        experience: '8 years',
+        phoneNumber: '+91 98765 43210',
+      },
+      bidAmount: 45000,
+      proposedDuration: '18 hours',
+      message:
+        'I have extensive experience with long-haul trips on this route. I can ensure safe and timely delivery.',
+      createdAt: '2024-03-15T10:30:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-2',
+      tripId: 'trip-1',
+      bidder: {
+        id: 'prof-2',
+        name: 'Suresh Patel',
+        avatar: '/profile.png',
+        rating: 4.5,
+        totalTrips: 180,
+        isVerified: true,
+        experience: '6 years',
+        phoneNumber: '+91 98765 43211',
+      },
+      bidAmount: 42000,
+      proposedDuration: '20 hours',
+      message:
+        'Competitive pricing with guaranteed delivery. I know this route very well and can handle all cargo types.',
+      createdAt: '2024-03-15T11:00:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-3',
+      tripId: 'trip-1',
+      bidder: {
+        id: 'prof-3',
+        name: 'Vikram Singh',
+        avatar: '/profile.png',
+        rating: 4.9,
+        totalTrips: 320,
+        isVerified: true,
+        experience: '12 years',
+        phoneNumber: '+91 98765 43212',
+      },
+      bidAmount: 48000,
+      proposedDuration: '16 hours',
+      message:
+        'Premium service with real-time tracking and insurance. I have the fastest delivery record on this route.',
+      createdAt: '2024-03-15T09:45:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-4',
+      tripId: 'trip-1',
+      bidder: {
+        id: 'prof-4',
+        name: 'Amit Sharma',
+        avatar: '/professional-profile.png',
+        rating: 4.2,
+        totalTrips: 95,
+        isVerified: false,
+        experience: '3 years',
+        phoneNumber: '+91 98765 43213',
+      },
+      bidAmount: 38000,
+      proposedDuration: '22 hours',
+      message:
+        'New to the platform but experienced driver. Offering competitive rates to build my reputation.',
+      createdAt: '2024-03-15T12:15:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-5',
+      tripId: 'trip-1',
+      bidder: {
+        id: 'prof-5',
+        name: 'Mohammed Ali',
+        avatar: '/profile.png',
+        rating: 4.7,
+        totalTrips: 210,
+        isVerified: true,
+        experience: '7 years',
+        phoneNumber: '+91 98765 43214',
+      },
+      bidAmount: 44000,
+      proposedDuration: '19 hours',
+      message:
+        'Reliable and professional service. I have excellent customer reviews and always deliver on time.',
+      createdAt: '2024-03-15T10:00:00Z',
+      status: 'pending',
+    },
+  ],
+  'trip-2': [
+    {
+      id: 'bid-6',
+      tripId: 'trip-2',
+      bidder: {
+        id: 'prof-6',
+        name: 'Deepak Verma',
+        avatar: '/profile.png',
+        rating: 4.6,
+        totalTrips: 150,
+        isVerified: true,
+        experience: '5 years',
+        phoneNumber: '+91 98765 43215',
+      },
+      bidAmount: 32000,
+      proposedDuration: '12 hours',
+      message:
+        'Experienced with express deliveries. Ready to start immediately.',
+      createdAt: '2024-03-14T14:00:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-7',
+      tripId: 'trip-2',
+      bidder: {
+        id: 'prof-7',
+        name: 'Prakash Yadav',
+        avatar: '/profile.png',
+        rating: 4.4,
+        totalTrips: 125,
+        isVerified: true,
+        experience: '4 years',
+        phoneNumber: '+91 98765 43216',
+      },
+      bidAmount: 30000,
+      proposedDuration: '14 hours',
+      message:
+        'Cost-effective solution with quality service. I have handled similar routes multiple times.',
+      createdAt: '2024-03-14T15:30:00Z',
+      status: 'pending',
+    },
+  ],
+  'trip-3': [
+    {
+      id: 'bid-8',
+      tripId: 'trip-3',
+      bidder: {
+        id: 'prof-8',
+        name: 'Ramesh Gupta',
+        avatar: '/profile.png',
+        rating: 4.9,
+        totalTrips: 280,
+        isVerified: true,
+        experience: '10 years',
+        phoneNumber: '+91 98765 43217',
+      },
+      bidAmount: 55000,
+      proposedDuration: '24 hours',
+      message:
+        'Top-rated driver with excellent safety record. Specialized in bulk transport.',
+      createdAt: '2024-03-13T08:00:00Z',
+      status: 'pending',
+    },
+  ],
+  'trip-7': [
+    {
+      id: 'bid-9',
+      tripId: 'trip-7',
+      bidder: {
+        id: 'prof-9',
+        name: 'Karan Mehta',
+        avatar: '/profile.png',
+        rating: 4.6,
+        totalTrips: 167,
+        isVerified: true,
+        experience: '5 years',
+        phoneNumber: '+91 98765 43218',
+      },
+      bidAmount: 28000,
+      proposedDuration: '5 hours',
+      message:
+        'I regularly travel this route and know it very well. Can ensure timely delivery.',
+      createdAt: '2024-10-04T11:00:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-10',
+      tripId: 'trip-7',
+      bidder: {
+        id: 'prof-10',
+        name: 'Dinesh Shah',
+        avatar: '/profile.png',
+        rating: 4.8,
+        totalTrips: 225,
+        isVerified: true,
+        experience: '7 years',
+        phoneNumber: '+91 98765 43219',
+      },
+      bidAmount: 26000,
+      proposedDuration: '4.5 hours',
+      message:
+        'Express delivery specialist. I can complete this trip faster than estimated time with complete safety.',
+      createdAt: '2024-10-04T12:30:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-11',
+      tripId: 'trip-7',
+      bidder: {
+        id: 'prof-11',
+        name: 'Harish Joshi',
+        avatar: '/profile.png',
+        rating: 4.3,
+        totalTrips: 112,
+        isVerified: false,
+        experience: '4 years',
+        phoneNumber: '+91 98765 43220',
+      },
+      bidAmount: 24000,
+      proposedDuration: '5.5 hours',
+      message:
+        'Competitive pricing with reliable service. Ready to start immediately.',
+      createdAt: '2024-10-04T14:00:00Z',
+      status: 'pending',
+    },
+  ],
+  'trip-8': [
+    {
+      id: 'bid-12',
+      tripId: 'trip-8',
+      bidder: {
+        id: 'prof-12',
+        name: 'Sandeep Rathore',
+        avatar: '/profile.png',
+        rating: 4.7,
+        totalTrips: 198,
+        isVerified: true,
+        experience: '6 years',
+        phoneNumber: '+91 98765 43221',
+      },
+      bidAmount: 22000,
+      proposedDuration: '4 hours',
+      message:
+        'Experienced with standard deliveries on this route. Professional and punctual service guaranteed.',
+      createdAt: '2024-10-04T13:00:00Z',
+      status: 'pending',
+    },
+    {
+      id: 'bid-13',
+      tripId: 'trip-8',
+      bidder: {
+        id: 'prof-13',
+        name: 'Anil Kumar',
+        avatar: '/profile.png',
+        rating: 4.5,
+        totalTrips: 143,
+        isVerified: true,
+        experience: '5 years',
+        phoneNumber: '+91 98765 43222',
+      },
+      bidAmount: 20000,
+      proposedDuration: '4.5 hours',
+      message:
+        'Cost-effective solution with quality service. I have handled similar cargo many times.',
+      createdAt: '2024-10-04T15:30:00Z',
+      status: 'pending',
+    },
+  ],
+};
+
+// Helper function to get bids for a trip
+export const getBidsForTrip = (tripId: string): TripBid[] => {
+  return mockBidsData[tripId] || [];
 };

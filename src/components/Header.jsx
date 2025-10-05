@@ -495,7 +495,7 @@ const Header = () => {
                           alt="Profile"
                           className="h-full w-full object-cover"
                           onError={(e) => {
-                            e.target.src = '/profile-pic.png';
+                            e.target.src = '/profile.png';
                           }}
                         />
                       </div>
@@ -559,7 +559,7 @@ const Header = () => {
               alt="Profile"
               className="h-full w-full object-cover"
               onError={(e) => {
-                e.target.src = '/profile-pic.png';
+                e.target.src = '/profile.png';
               }}
             />
           </div>

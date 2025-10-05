@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   Share2,
 } from 'lucide-react';
-import { BusinessProtected } from '@/components/ProtectedRoute';
+import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -29,7 +29,7 @@ const container = {
   },
 };
 
-export default function BusinessFeedsPage() {
+export default function CompanyFeedsPage() {
   const [feeds, setFeeds] = useState<FeedPost[]>(communityFeeds);
   const session = mockAPI.getCurrentSession();
   const currentUserId = session?.user?.id || null;
@@ -38,6 +38,7 @@ export default function BusinessFeedsPage() {
   const [showShareToast, setShowShareToast] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
   const handlePostCreated = (
     content: string,
     category: CategoryType,
@@ -46,12 +47,12 @@ export default function BusinessFeedsPage() {
     const newPost: FeedPost = {
       id: `feed-${Date.now()}`,
       author: {
-        name: 'Business Account',
+        name: 'John Transport Co.',
         id: currentUserId || `user-${Date.now()}`,
-        avatar: '/business-profile.png',
-        initials: 'BA',
-        userType: 'business',
-        company: 'Business Account',
+        avatar: '/profile.png',
+        initials: 'JT',
+        userType: 'company',
+        company: 'John Transport Co.',
       },
       content,
       image,
@@ -119,8 +120,8 @@ export default function BusinessFeedsPage() {
                 {
                   id: `comment-${Date.now()}`,
                   author: {
-                    name: 'Business Account',
-                    avatar: '/business-profile.png',
+                    name: 'John Transport Co.',
+                    avatar: '/profile.png',
                     id: currentUserId || `user-${Date.now()}`,
                   },
                   content: commentText,
@@ -164,7 +165,7 @@ export default function BusinessFeedsPage() {
   ];
 
   return (
-    <BusinessProtected>
+    <CompanyProtected>
       {/* Unified Header */}
       <Header />
 
@@ -183,7 +184,7 @@ export default function BusinessFeedsPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="mb-2 text-3xl font-bold text-gray-900">
-                  Business Feeds
+                  Community Feeds
                 </h1>
                 <p className="text-gray-600">
                   Stay connected with the fleet management community
@@ -267,6 +268,7 @@ export default function BusinessFeedsPage() {
               ))}
             </div>
 
+            {/* Mobile: show a Filters button that toggles a collapsible panel */}
             <div className="flex items-center justify-between sm:hidden">
               <button
                 onClick={() => setMobileFiltersOpen((s) => !s)}
@@ -416,6 +418,6 @@ export default function BusinessFeedsPage() {
         {/* Shared Footer */}
         <Footer />
       </div>
-    </BusinessProtected>
+    </CompanyProtected>
   );
 }
