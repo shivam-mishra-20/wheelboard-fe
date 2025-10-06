@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import Header from '../../../components/Header';
 import LoginSimulator from '../../../components/LoginSimulator';
 import Footer from '../../../components/Footer';
@@ -18,6 +19,8 @@ import PopularFeeds from '../../../components/company/PopularFeeds';
 import { companyHomeData } from '../../../lib/mockApi';
 
 export default function CompanyHomePage() {
+  const router = useRouter();
+
   // Service cards configuration matching the design
   const serviceCards = [
     {
@@ -25,42 +28,42 @@ export default function CompanyHomePage() {
       title: 'Vehicles',
       icon: <VehicleIcon />,
       color: 'blue' as const,
-      onClick: () => console.log('Vehicles clicked'),
+      onClick: () => router.push('/company/fleet'),
     },
     {
       id: 'professional',
       title: 'Professional',
       icon: <ProfessionalIcon />,
       color: 'teal' as const,
-      onClick: () => console.log('Professional clicked'),
+      onClick: () => router.push('/company/professionals'),
     },
     {
       id: 'expenses',
       title: 'Expenses',
       icon: <ExpensesIcon />,
       color: 'orange' as const,
-      onClick: () => console.log('Expenses clicked'),
+      onClick: () => router.push('/company/expenses'),
     },
     {
       id: 'hire',
       title: 'Hire',
       icon: <HireIcon />,
       color: 'pink' as const,
-      onClick: () => console.log('Hire clicked'),
+      onClick: () => router.push('/company/jobs'),
     },
     {
       id: 'services',
       title: 'Services',
       icon: <ServicesIcon />,
       color: 'yellow' as const,
-      onClick: () => console.log('Services clicked'),
+      onClick: () => router.push('/company/services'),
     },
     {
       id: 'dashboard',
       title: 'DashBoard',
       icon: <DashboardIcon />,
       color: 'gray' as const,
-      onClick: () => console.log('Dashboard clicked'),
+      onClick: () => router.push('/company/dashboard'),
     },
   ];
 

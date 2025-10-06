@@ -719,6 +719,97 @@ export interface Trip {
   createdAt: string;
 }
 
+// Service Listings (created by Business users)
+export interface Service {
+  id: string;
+  businessId: string;
+  businessName: string;
+  businessAvatar?: string;
+  serviceName: string;
+  category:
+    | 'maintenance'
+    | 'parts-supply'
+    | 'fuel'
+    | 'insurance'
+    | 'financing'
+    | 'logistics-support'
+    | 'training'
+    | 'other';
+  description: string;
+  detailedDescription?: string;
+  pricing: {
+    type: 'fixed' | 'hourly' | 'quote-based' | 'subscription';
+    amount?: number;
+    currency?: string;
+    details?: string;
+  };
+  availability: {
+    status: 'available' | 'busy' | 'unavailable';
+    coverage: string[]; // e.g., ['Pan India', 'North India']
+    responseTime: string; // e.g., '< 2 hours', '24 hours'
+  };
+  rating: number;
+  reviewCount: number;
+  certifications?: string[];
+  isVerified: boolean;
+  contactInfo: {
+    phone: string;
+    email: string;
+    website?: string;
+  };
+  images?: string[];
+  featuredImage?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Service Assignment (Company assigns a service)
+export interface ServiceAssignment {
+  id: string;
+  serviceId: string;
+  service: Service;
+  companyId: string;
+  companyName: string;
+  assignedDate: string;
+  startDate?: string;
+  endDate?: string;
+  status: 'pending' | 'active' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  requirements?: string;
+  assignedTo?: {
+    vehicleId?: string;
+    driverId?: string;
+  };
+  cost?: number;
+  notes?: string;
+  lastUpdated: string;
+}
+
+// Service Enquiry (Company raises enquiry for a service)
+export interface ServiceEnquiry {
+  id: string;
+  serviceId: string;
+  service: Service;
+  companyId: string;
+  companyName: string;
+  enquiryDate: string;
+  status: 'pending' | 'responded' | 'closed' | 'converted';
+  subject: string;
+  message: string;
+  response?: {
+    message: string;
+    respondedBy: string;
+    respondedAt: string;
+  };
+  followUps?: {
+    message: string;
+    by: 'company' | 'business';
+    timestamp: string;
+  }[];
+  priority: 'low' | 'medium' | 'high';
+}
+
 // Mock data for company home page
 export const companyHomeData = {
   carouselSlides: [
@@ -2444,4 +2535,770 @@ export const mockBidsData: Record<string, TripBid[]> = {
 // Helper function to get bids for a trip
 export const getBidsForTrip = (tripId: string): TripBid[] => {
   return mockBidsData[tripId] || [];
+};
+
+// Mock Services Data (Listed by Business users)
+export const mockServices: Service[] = [
+  {
+    id: 'srv-1',
+    businessId: 'bus-1',
+    businessName: 'AutoCare Pro Services',
+    businessAvatar: '/profile.png',
+    serviceName: 'Comprehensive Fleet Maintenance',
+    category: 'maintenance',
+    description:
+      'Complete maintenance and repair services for commercial vehicles including routine servicing, diagnostics, and emergency repairs.',
+    detailedDescription:
+      'Our certified technicians provide 24/7 maintenance support with genuine parts, preventive maintenance schedules, and quick turnaround times. We specialize in heavy commercial vehicles and mining equipment.',
+    pricing: {
+      type: 'quote-based',
+      details:
+        'Custom quotes based on vehicle type and service requirements. Starting from ₹5,000 per service.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Pan India', 'Major Cities'],
+      responseTime: '< 4 hours',
+    },
+    rating: 4.8,
+    reviewCount: 234,
+    certifications: ['ISO 9001:2015', 'Authorized Service Center'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12345',
+      email: 'contact@autocarepro.com',
+      website: 'www.autocarepro.com',
+    },
+    images: ['/truck-01.jpg', '/mining-truck.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: [
+      'Fleet Maintenance',
+      'Emergency Repairs',
+      '24/7 Service',
+      'Certified',
+    ],
+    createdAt: '2024-01-15T10:00:00Z',
+    updatedAt: '2024-09-20T14:30:00Z',
+  },
+  {
+    id: 'srv-2',
+    businessId: 'bus-2',
+    businessName: 'Premium Parts Solutions',
+    businessAvatar: '/profile.png',
+    serviceName: 'Genuine Vehicle Parts Supply',
+    category: 'parts-supply',
+    description:
+      'Supplier of genuine OEM parts for trucks, buses, and heavy vehicles with pan-India delivery.',
+    detailedDescription:
+      'We stock over 50,000 genuine parts from leading manufacturers. Same-day delivery available in metro cities. Bulk discounts for fleet owners.',
+    pricing: {
+      type: 'fixed',
+      amount: 0,
+      currency: 'INR',
+      details:
+        'Competitive pricing on all parts. Volume discounts available. Request quote for specific parts.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Pan India', 'Express Delivery Available'],
+      responseTime: '< 2 hours',
+    },
+    rating: 4.9,
+    reviewCount: 456,
+    certifications: ['Authorized Dealer', 'Quality Assured'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12346',
+      email: 'sales@premiumparts.com',
+      website: 'www.premiumparts.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: ['Genuine Parts', 'OEM', 'Fast Delivery', 'Bulk Discounts'],
+    createdAt: '2024-02-10T09:00:00Z',
+    updatedAt: '2024-10-01T11:00:00Z',
+  },
+  {
+    id: 'srv-3',
+    businessId: 'bus-3',
+    businessName: 'FuelFlow Networks',
+    businessAvatar: '/profile.png',
+    serviceName: 'Bulk Fuel Supply & Management',
+    category: 'fuel',
+    description:
+      'Reliable bulk fuel supply with competitive pricing and doorstep delivery for fleet operations.',
+    detailedDescription:
+      'We provide diesel and petrol in bulk quantities with transparent pricing, fuel management systems, and digital payment options. Perfect for logistics companies and fleet operators.',
+    pricing: {
+      type: 'quote-based',
+      details:
+        'Market-linked pricing with volume discounts. Daily/weekly delivery schedules available.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['North India', 'Central India'],
+      responseTime: '24 hours',
+    },
+    rating: 4.6,
+    reviewCount: 189,
+    certifications: ['Licensed Supplier', 'Safety Certified'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12347',
+      email: 'orders@fuelflow.com',
+      website: 'www.fuelflow.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: ['Bulk Fuel', 'Diesel', 'Petrol', 'Doorstep Delivery'],
+    createdAt: '2024-03-05T08:00:00Z',
+    updatedAt: '2024-09-28T16:00:00Z',
+  },
+  {
+    id: 'srv-4',
+    businessId: 'bus-4',
+    businessName: 'Shield Insurance Co.',
+    businessAvatar: '/profile.png',
+    serviceName: 'Comprehensive Fleet Insurance',
+    category: 'insurance',
+    description:
+      'Complete insurance solutions for commercial vehicles with comprehensive coverage and quick claim processing.',
+    detailedDescription:
+      'We offer customized insurance packages for fleet owners including third-party, comprehensive, and add-on covers. Zero depreciation available. 24/7 claim support.',
+    pricing: {
+      type: 'quote-based',
+      details:
+        'Premium calculated based on vehicle type, age, and coverage. Starting from ₹15,000/year per vehicle.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Pan India'],
+      responseTime: 'Instant',
+    },
+    rating: 4.9,
+    reviewCount: 567,
+    certifications: ['IRDAI Registered', 'ISO Certified'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12348',
+      email: 'support@shieldinsurance.com',
+      website: 'www.shieldinsurance.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: [
+      'Vehicle Insurance',
+      'Fleet Coverage',
+      'Quick Claims',
+      'Zero Depreciation',
+    ],
+    createdAt: '2024-01-20T10:00:00Z',
+    updatedAt: '2024-10-02T09:00:00Z',
+  },
+  {
+    id: 'srv-5',
+    businessId: 'bus-5',
+    businessName: 'EasyLease Finance',
+    businessAvatar: '/profile.png',
+    serviceName: 'Vehicle Financing & Leasing',
+    category: 'financing',
+    description:
+      'Flexible financing and leasing options for commercial vehicles with competitive interest rates.',
+    detailedDescription:
+      'Get your fleet financed with minimal documentation. We offer loans up to 90% of vehicle value with flexible repayment options. Quick approval within 48 hours.',
+    pricing: {
+      type: 'quote-based',
+      details:
+        'Interest rates starting from 8.5% p.a. Processing fee: 1% of loan amount.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Pan India'],
+      responseTime: '< 24 hours',
+    },
+    rating: 4.7,
+    reviewCount: 298,
+    certifications: ['RBI Registered NBFC', 'CIBIL Certified'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12349',
+      email: 'loans@easylease.com',
+      website: 'www.easylease.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: ['Vehicle Finance', 'Leasing', 'Low Interest', 'Quick Approval'],
+    createdAt: '2024-02-15T11:00:00Z',
+    updatedAt: '2024-09-25T15:00:00Z',
+  },
+  {
+    id: 'srv-6',
+    businessId: 'bus-6',
+    businessName: 'LogiTrack Solutions',
+    businessAvatar: '/profile.png',
+    serviceName: 'GPS Tracking & Fleet Management',
+    category: 'logistics-support',
+    description:
+      'Advanced GPS tracking systems with real-time monitoring and fleet management software.',
+    detailedDescription:
+      'Monitor your entire fleet in real-time with our IoT-enabled tracking devices. Get alerts, route optimization, fuel monitoring, and detailed analytics dashboard.',
+    pricing: {
+      type: 'subscription',
+      amount: 500,
+      currency: 'INR',
+      details:
+        '₹500 per vehicle per month. Device installation: ₹3,000 (one-time)',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Pan India'],
+      responseTime: '< 48 hours',
+    },
+    rating: 4.8,
+    reviewCount: 412,
+    certifications: ['ISO 27001', 'AIS 140 Certified'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12350',
+      email: 'sales@logitrack.com',
+      website: 'www.logitrack.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: ['GPS Tracking', 'Fleet Management', 'Real-time Monitoring', 'IoT'],
+    createdAt: '2024-03-01T10:00:00Z',
+    updatedAt: '2024-10-03T12:00:00Z',
+  },
+  {
+    id: 'srv-7',
+    businessId: 'bus-7',
+    businessName: 'DriveSkill Academy',
+    businessAvatar: '/profile.png',
+    serviceName: 'Commercial Driver Training',
+    category: 'training',
+    description:
+      'Professional training programs for commercial vehicle drivers with certification.',
+    detailedDescription:
+      'We offer comprehensive training covering safe driving practices, vehicle handling, route planning, and regulatory compliance. Government-certified courses available.',
+    pricing: {
+      type: 'fixed',
+      amount: 15000,
+      currency: 'INR',
+      details: '₹15,000 per driver for complete certification course (4 weeks)',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Major Cities', 'Training Centers Available'],
+      responseTime: '< 72 hours',
+    },
+    rating: 4.9,
+    reviewCount: 523,
+    certifications: ['Government Certified', 'NSDC Approved'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12351',
+      email: 'admission@driveskill.com',
+      website: 'www.driveskill.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: [
+      'Driver Training',
+      'Certification',
+      'Safety Training',
+      'Professional',
+    ],
+    createdAt: '2024-01-25T09:00:00Z',
+    updatedAt: '2024-09-30T10:00:00Z',
+  },
+  {
+    id: 'srv-8',
+    businessId: 'bus-8',
+    businessName: 'TireCare Express',
+    businessAvatar: '/profile.png',
+    serviceName: 'Mobile Tire Service & Sales',
+    category: 'maintenance',
+    description:
+      'On-site tire replacement, repair, and sales service with 24/7 emergency support.',
+    detailedDescription:
+      'We bring the tire service to your location. Wide range of commercial vehicle tires from top brands. Emergency puncture repair and replacement available round the clock.',
+    pricing: {
+      type: 'fixed',
+      amount: 0,
+      currency: 'INR',
+      details:
+        'Tire prices vary by brand and size. Emergency service fee: ₹1,000. Free inspection.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Metro Cities', 'Highway Network'],
+      responseTime: '< 3 hours',
+    },
+    rating: 4.7,
+    reviewCount: 287,
+    certifications: ['Authorized Dealer', 'Safety Certified'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12352',
+      email: 'service@tirecare.com',
+      website: 'www.tirecare.com',
+    },
+    images: ['/tires.png'],
+    featuredImage: '/tires.png',
+    tags: ['Tire Service', '24/7 Emergency', 'Mobile Service', 'Top Brands'],
+    createdAt: '2024-02-20T08:00:00Z',
+    updatedAt: '2024-10-04T14:00:00Z',
+  },
+  {
+    id: 'srv-9',
+    businessId: 'bus-9',
+    businessName: 'SafeHaul Consulting',
+    businessAvatar: '/profile.png',
+    serviceName: 'Logistics Compliance Consulting',
+    category: 'logistics-support',
+    description:
+      'Expert consulting for logistics compliance, permits, and regulatory documentation.',
+    detailedDescription:
+      'Navigate complex transport regulations with our expert guidance. We handle permits, licenses, compliance audits, and documentation for smooth operations.',
+    pricing: {
+      type: 'hourly',
+      amount: 2000,
+      currency: 'INR',
+      details:
+        '₹2,000 per hour consultation. Package deals available for ongoing support.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Pan India', 'Remote Consulting'],
+      responseTime: '< 12 hours',
+    },
+    rating: 4.8,
+    reviewCount: 156,
+    certifications: ['Legal Expert', 'Transport Authority Certified'],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12353',
+      email: 'consult@safehaul.com',
+      website: 'www.safehaul.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: ['Compliance', 'Permits', 'Legal Support', 'Consulting'],
+    createdAt: '2024-03-10T11:00:00Z',
+    updatedAt: '2024-09-27T13:00:00Z',
+  },
+  {
+    id: 'srv-10',
+    businessId: 'bus-10',
+    businessName: 'CargoCare Insurance',
+    businessAvatar: '/profile.png',
+    serviceName: 'Cargo & Goods Transit Insurance',
+    category: 'insurance',
+    description:
+      'Specialized insurance coverage for goods in transit with comprehensive protection.',
+    detailedDescription:
+      'Protect your cargo with our comprehensive transit insurance. Coverage for all types of goods, natural calamities, theft, and accidents. Quick claim settlement.',
+    pricing: {
+      type: 'quote-based',
+      details:
+        'Premium based on cargo value and route. Typically 0.5% to 2% of cargo value.',
+    },
+    availability: {
+      status: 'available',
+      coverage: ['Pan India', 'International Routes'],
+      responseTime: 'Instant',
+    },
+    rating: 4.9,
+    reviewCount: 378,
+    certifications: ['IRDAI Registered', "Lloyd's Approved"],
+    isVerified: true,
+    contactInfo: {
+      phone: '+91 98765 12354',
+      email: 'claims@cargocare.com',
+      website: 'www.cargocare.com',
+    },
+    images: ['/truck-01.jpg'],
+    featuredImage: '/truck-01.jpg',
+    tags: [
+      'Cargo Insurance',
+      'Transit Coverage',
+      'Quick Claims',
+      'International',
+    ],
+    createdAt: '2024-01-30T10:00:00Z',
+    updatedAt: '2024-10-05T09:00:00Z',
+  },
+];
+
+// Mock Service Assignments
+export const mockServiceAssignments: ServiceAssignment[] = [
+  {
+    id: 'asg-1',
+    serviceId: 'srv-1',
+    service: mockServices[0],
+    companyId: 'comp-1',
+    companyName: 'LogiTrans Corp',
+    assignedDate: '2024-09-15T10:00:00Z',
+    startDate: '2024-09-20T08:00:00Z',
+    status: 'active',
+    priority: 'high',
+    requirements: 'Monthly maintenance schedule for 5 vehicles',
+    assignedTo: {
+      vehicleId: 'veh-1',
+    },
+    cost: 25000,
+    notes: 'Service scheduled for 3rd week of every month',
+    lastUpdated: '2024-10-01T14:00:00Z',
+  },
+  {
+    id: 'asg-2',
+    serviceId: 'srv-6',
+    service: mockServices[5],
+    companyId: 'comp-1',
+    companyName: 'LogiTrans Corp',
+    assignedDate: '2024-08-10T11:00:00Z',
+    startDate: '2024-08-15T09:00:00Z',
+    status: 'active',
+    priority: 'medium',
+    requirements: 'GPS tracking installation for entire fleet (15 vehicles)',
+    cost: 52500,
+    notes: 'Subscription active, monthly billing',
+    lastUpdated: '2024-10-04T10:00:00Z',
+  },
+  {
+    id: 'asg-3',
+    serviceId: 'srv-4',
+    service: mockServices[3],
+    companyId: 'comp-1',
+    companyName: 'LogiTrans Corp',
+    assignedDate: '2024-07-01T10:00:00Z',
+    startDate: '2024-07-05T00:00:00Z',
+    endDate: '2025-07-04T23:59:59Z',
+    status: 'active',
+    priority: 'high',
+    requirements: 'Comprehensive insurance for 20 vehicles',
+    cost: 380000,
+    notes: 'Annual policy, renewal due July 2025',
+    lastUpdated: '2024-09-15T12:00:00Z',
+  },
+];
+
+// Mock Service Enquiries
+export const mockServiceEnquiries: ServiceEnquiry[] = [
+  {
+    id: 'enq-1',
+    serviceId: 'srv-5',
+    service: mockServices[4],
+    companyId: 'comp-1',
+    companyName: 'LogiTrans Corp',
+    enquiryDate: '2024-10-03T14:30:00Z',
+    status: 'responded',
+    subject: 'Financing for 3 new trucks',
+    message:
+      'We are looking to finance 3 new Tata trucks. Please provide loan terms, interest rates, and required documentation.',
+    response: {
+      message:
+        "Thank you for your enquiry. We can offer financing up to 85% of vehicle value at 8.7% p.a. for 5 years. I've sent detailed information to your email. We can process your application within 48 hours.",
+      respondedBy: 'Rakesh Kumar - EasyLease Finance',
+      respondedAt: '2024-10-03T16:00:00Z',
+    },
+    priority: 'high',
+  },
+  {
+    id: 'enq-2',
+    serviceId: 'srv-7',
+    service: mockServices[6],
+    companyId: 'comp-1',
+    companyName: 'LogiTrans Corp',
+    enquiryDate: '2024-10-05T10:15:00Z',
+    status: 'pending',
+    subject: 'Bulk training for 8 new drivers',
+    message:
+      'We need to train 8 newly hired drivers for commercial vehicle operation. Can you accommodate bulk training and offer any group discounts?',
+    priority: 'medium',
+  },
+  {
+    id: 'enq-3',
+    serviceId: 'srv-10',
+    service: mockServices[9],
+    companyId: 'comp-1',
+    companyName: 'LogiTrans Corp',
+    enquiryDate: '2024-09-28T11:00:00Z',
+    status: 'converted',
+    subject: 'Transit insurance for high-value cargo',
+    message:
+      'Need comprehensive transit insurance for electronics cargo worth ₹50 lakhs from Mumbai to Delhi.',
+    response: {
+      message:
+        'We can provide complete coverage for your cargo. Premium would be 1.2% of cargo value (₹60,000). Policy documents sent for your review.',
+      respondedBy: 'Priya Sharma - CargoCare Insurance',
+      respondedAt: '2024-09-28T14:00:00Z',
+    },
+    followUps: [
+      {
+        message:
+          'Approved and proceeding with the policy. Please send payment link.',
+        by: 'company',
+        timestamp: '2024-09-29T09:00:00Z',
+      },
+      {
+        message:
+          'Payment link sent. Policy will be active immediately upon payment confirmation.',
+        by: 'business',
+        timestamp: '2024-09-29T09:30:00Z',
+      },
+    ],
+    priority: 'high',
+  },
+];
+
+// Company Dashboard Data Structure
+export interface DashboardStats {
+  activeTrips: {
+    value: number;
+    scheduledToday: number;
+    inMaintenance: number;
+  };
+  monthlyExpenses: {
+    value: number;
+    highestSpending: string;
+  };
+  tripEfficiency: {
+    value: string;
+    unit: string;
+  };
+  vehiclesOnRent: {
+    value: number;
+  };
+}
+
+export interface VehicleAvailability {
+  available: number;
+  onTrip: number;
+  onRent: number;
+}
+
+export interface TopRatedPerson {
+  id: string;
+  name: string;
+  role: 'Driver' | 'Technician' | 'Helper';
+  rating: number;
+  location: string;
+  avatar: string;
+}
+
+export interface JobPosted {
+  id: string;
+  title: string;
+  applicants: number;
+  likes: number;
+  status: 'Active' | 'Paused' | 'Closed';
+}
+
+export interface ExpenseCategory {
+  category: 'Advance' | 'Fuel' | 'Chalan' | 'Food' | 'Salary' | 'Enroute';
+  amount: number;
+  color: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: 'Fuel' | 'Maintenance' | 'Salary' | 'Other';
+  description: string;
+  date: string;
+  amount: number;
+  icon: string;
+}
+
+export interface AssignedService {
+  id: string;
+  title: string;
+  description: string;
+  status: 'Tyre Repair!' | 'Engine' | 'Active';
+  updatedAt: string;
+  backgroundColor: string;
+}
+
+export interface TripCompletionData {
+  day: string;
+  trips: number;
+}
+
+export interface CompanyDashboardData {
+  stats: DashboardStats;
+  vehicleAvailability: VehicleAvailability;
+  topRated: {
+    drivers: TopRatedPerson[];
+    technicians: TopRatedPerson[];
+    helpers: TopRatedPerson[];
+  };
+  jobsPosted: JobPosted[];
+  expenseOverview: {
+    total: number;
+    categories: ExpenseCategory[];
+  };
+  recentTransactions: Transaction[];
+  assignedServices: AssignedService[];
+  tripCompletionTrend: TripCompletionData[];
+  upcomingTrips: Array<{
+    id: string;
+    title: string;
+    time: string;
+    driver: string;
+    route: string;
+  }>;
+}
+
+export const companyDashboardData: CompanyDashboardData = {
+  stats: {
+    activeTrips: {
+      value: 25,
+      scheduledToday: 5,
+      inMaintenance: 2,
+    },
+    monthlyExpenses: {
+      value: 265000,
+      highestSpending: 'Fuel',
+    },
+    tripEfficiency: {
+      value: '₹3/km Avg',
+      unit: '15,002 km',
+    },
+    vehiclesOnRent: {
+      value: 4,
+    },
+  },
+  vehicleAvailability: {
+    available: 12,
+    onTrip: 5,
+    onRent: 1,
+  },
+  topRated: {
+    drivers: [
+      {
+        id: 'd1',
+        name: 'Sanjana Mehta',
+        role: 'Driver',
+        rating: 4.8,
+        location: 'South Zone',
+        avatar: '/staring-man.jpg',
+      },
+      {
+        id: 'd2',
+        name: 'Kiran Kumar',
+        role: 'Driver',
+        rating: 4.7,
+        location: 'North Zone',
+        avatar: '/staring-man.jpg',
+      },
+    ],
+    technicians: [
+      {
+        id: 't1',
+        name: 'Rahul Sharma',
+        role: 'Technician',
+        rating: 4.9,
+        location: 'Workshop A',
+        avatar: '/staring-man.jpg',
+      },
+    ],
+    helpers: [
+      {
+        id: 'h1',
+        name: 'Amit Singh',
+        role: 'Helper',
+        rating: 4.6,
+        location: 'Warehouse',
+        avatar: '/staring-man.jpg',
+      },
+    ],
+  },
+  jobsPosted: [
+    {
+      id: 'job-1',
+      title: 'Driver Mumbai',
+      applicants: 8,
+      likes: 35,
+      status: 'Active',
+    },
+    {
+      id: 'job-2',
+      title: 'Technician Pune',
+      applicants: 4,
+      likes: 10,
+      status: 'Active',
+    },
+  ],
+  expenseOverview: {
+    total: 12340,
+    categories: [
+      { category: 'Advance', amount: 2500, color: '#FF6B6B' },
+      { category: 'Fuel', amount: 3200, color: '#4ECDC4' },
+      { category: 'Chalan', amount: 800, color: '#FFE66D' },
+      { category: 'Food', amount: 1500, color: '#95E1D3' },
+      { category: 'Salary', amount: 3500, color: '#A8E6CF' },
+      { category: 'Enroute', amount: 840, color: '#C7CEEA' },
+    ],
+  },
+  recentTransactions: [
+    {
+      id: 'txn-1',
+      type: 'Fuel',
+      description: 'Petrol • Diesel',
+      date: '25 May',
+      amount: 12000,
+      icon: 'fuel',
+    },
+    {
+      id: 'txn-2',
+      type: 'Maintenance',
+      description: 'Break Repair!',
+      date: '24 May',
+      amount: 3500,
+      icon: 'maintenance',
+    },
+  ],
+  assignedServices: [
+    {
+      id: 'srv-1',
+      title: 'Tyre Replacement',
+      description: 'Professional tyre replacement service for all vehicle types',
+      status: 'Tyre Repair!',
+      updatedAt: '2 days ago',
+      backgroundColor: '#FFF5F5',
+    },
+    {
+      id: 'srv-2',
+      title: 'Engine Diagnostics',
+      description: 'Complete diagnostic and repair services',
+      status: 'Engine',
+      updatedAt: '1 day ago',
+      backgroundColor: '#F0F9FF',
+    },
+  ],
+  tripCompletionTrend: [
+    { day: 'Mon', trips: 18 },
+    { day: 'Tue', trips: 22 },
+    { day: 'Wed', trips: 24 },
+    { day: 'Thurs', trips: 19 },
+    { day: 'Fri', trips: 26 },
+    { day: 'Sat', trips: 24 },
+    { day: 'Sun', trips: 16 },
+  ],
+  upcomingTrips: [
+    {
+      id: 'trip-1',
+      title: 'Trip #TR1042',
+      time: '28 May, 07:00 AM',
+      driver: 'Driver: A. Rojan',
+      route: 'Chennai → Pune',
+    },
+    {
+      id: 'trip-2',
+      title: 'Trip #TR1042',
+      time: '28 May, 07:00 AM',
+      driver: 'Driver: A. Rojan',
+      route: 'Chennai → Pune',
+    },
+  ],
 };
