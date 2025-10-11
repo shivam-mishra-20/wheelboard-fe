@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,7 +42,7 @@ const item = {
   },
 };
 
-export default function TripBidsPage() {
+function TripBidsInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tripId = searchParams.get('tripId');
@@ -330,5 +330,17 @@ export default function TripBidsPage() {
         <Footer />
       </div>
     </CompanyProtected>
+  );
+}
+
+const LoadingFallback = () => (
+  <div className="p-6 text-sm text-gray-500">Loading…</div>
+);
+
+export default function TripBidsPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <TripBidsInner />
+    </Suspense>
   );
 }

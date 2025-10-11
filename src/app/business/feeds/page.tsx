@@ -48,7 +48,7 @@ export default function BusinessFeedsPage() {
       author: {
         name: 'Business Account',
         id: currentUserId || `user-${Date.now()}`,
-        avatar: '/business-profile.png',
+        avatar: 'profile.png',
         initials: 'BA',
         userType: 'business',
         company: 'Business Account',
@@ -120,7 +120,7 @@ export default function BusinessFeedsPage() {
                   id: `comment-${Date.now()}`,
                   author: {
                     name: 'Business Account',
-                    avatar: '/business-profile.png',
+                    avatar: 'profile.png',
                     id: currentUserId || `user-${Date.now()}`,
                   },
                   content: commentText,

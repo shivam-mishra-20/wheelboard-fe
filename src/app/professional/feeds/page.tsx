@@ -51,7 +51,7 @@ export default function ProfessionalFeedsPage() {
                   id: `comment-${Date.now()}`,
                   author: {
                     name: session?.user?.companyName || 'Professional',
-                    avatar: '/professional-profile.png',
+                    avatar: 'profile.png',
                     id: currentUserId || `user-${Date.now()}`,
                   },
                   content: commentText,

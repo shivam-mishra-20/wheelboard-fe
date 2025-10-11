@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -38,7 +38,7 @@ const getDriverById = (id: string) => {
   };
 };
 
-export default function TripAssignmentPage() {
+function TripAssignmentInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const driverId = searchParams.get('driverId');
@@ -548,5 +548,17 @@ export default function TripAssignmentPage() {
         <Footer />
       </div>
     </CompanyProtected>
+  );
+}
+
+const LoadingFallback = () => (
+  <div className="p-6 text-sm text-gray-500">Loading…</div>
+);
+
+export default function TripAssignmentPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <TripAssignmentInner />
+    </Suspense>
   );
 }

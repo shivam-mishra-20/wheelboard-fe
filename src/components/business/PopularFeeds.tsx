@@ -25,7 +25,7 @@ const feeds: FeedPost[] = [
     title: 'Industry Insights',
     description:
       'Latest trends in fleet management and logistics optimization strategies',
-    image: '/live-truck.gif',
+    image: '/image.png',
     timeAgo: '3 days ago',
   },
   {
@@ -101,9 +101,12 @@ export default function PopularFeeds() {
           Popular Feeds
         </h2>
         <motion.button
-          className="group flex items-center space-x-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 px-4 py-2 text-sm font-medium text-white shadow-premium transition-all hover:shadow-glow"
+          className="group flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium text-primary-600 transition-all hover:shadow-glow"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            window.location.href = '/business/feeds';
+          }}
         >
           <span>View All</span>
           <svg

@@ -1,269 +1,189 @@
 'use client';
 
+import React, { useState } from 'react';
 import Image from 'next/image';
-import Header from '../../../components/Header';
-import LoginSimulator from '../../../components/LoginSimulator';
-import Footer from '../../../components/Footer';
-import { BusinessProtected } from '../../../components/ProtectedRoute';
-import { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Plus,
+  Search,
+  Filter,
+  Eye,
+  Users,
+  Calendar,
+  MapPin,
+  Briefcase,
+  DollarSign,
+  Edit,
+  Trash2,
+  AlertCircle,
+} from 'lucide-react';
+import { BusinessProtected } from '@/components/ProtectedRoute';
+import LoginSimulator from '@/components/LoginSimulator';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import CreateJobModal from '@/components/company/CreateJobModal';
+import ConfirmDeleteModal from '@/components/company/ConfirmDeleteModal';
+import JobApplicationsModal from '@/components/business/JobApplicationsModal';
+import { businessJobsData, type BusinessJob } from '@/lib/mockApi';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 100 },
+  },
+};
+
+type ModalJobType = '' | 'Technician' | 'Helper';
 
 export default function BusinessJobsPage() {
-  const [activeTab, setActiveTab] = useState('posted');
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<
+    'all' | 'Active' | 'Paused' | 'Closed'
+  >('all');
+  const [jobs, setJobs] = useState<BusinessJob[]>(businessJobsData);
+  const [isCreateJobModalOpen, setIsCreateJobModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [jobToEdit, setJobToEdit] = useState<BusinessJob | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<BusinessJob | null>(null);
+  const [isApplicationsModalOpen, setIsApplicationsModalOpen] = useState(false);
+  const [selectedJobForApplications, setSelectedJobForApplications] =
+    useState<BusinessJob | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type?: 'success' | 'error';
+  } | null>(null);
 
-  const slides = [
-    { id: 1, image: '/Hire.png', alt: 'Hiring solutions' },
-    { id: 2, image: '/support.png', alt: 'Job management' },
-    { id: 3, image: '/challenges.png', alt: 'Talent acquisition' },
-  ];
+  // Filter jobs based on search and status
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch =
+      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || job.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
-  const nextSlide = () => setCurrentSlide((s) => (s + 1) % slides.length);
-  const prevSlide = () =>
-    setCurrentSlide((s) => (s - 1 + slides.length) % slides.length);
-
-  const postedJobs = [
-    {
-      id: 1,
-      title: 'Senior Fleet Manager',
-      department: 'Operations',
-      location: 'Mumbai, Maharashtra',
-      type: 'Full-time',
-      salary: '₹8,00,000 - ₹12,00,000/year',
-      description:
-        'Looking for an experienced fleet manager to oversee our growing transportation operations. Responsible for fleet optimization, driver management, and operational efficiency.',
-      requirements: [
-        '5+ years in fleet management',
-        'Experience with GPS tracking systems',
-        'Strong leadership skills',
-        'Knowledge of transportation regulations',
-      ],
-      benefits: [
-        'Health Insurance',
-        'Performance Bonus',
-        'Flexible Hours',
-        'Professional Development',
-      ],
-      postedDate: '2025-09-28',
-      applications: 47,
-      views: 324,
+  const handleCreateJob = (jobData: {
+    jobType: string;
+    duration: string;
+    openings: string;
+    salary: string;
+    city: string;
+    type: string;
+    description: string;
+    images: File[];
+  }) => {
+    const newJob: BusinessJob = {
+      id: 'job-' + Date.now(),
+      title: jobData.jobType || 'New Job',
+      department: 'Service',
+      location: jobData.city || 'Unknown',
+      type: (jobData.type as BusinessJob['type']) || 'Full-time',
+      salary: jobData.salary || 'Not specified',
+      description: jobData.description || '',
+      requirements: [],
+      benefits: [],
+      image: jobData.images?.[0]
+        ? URL.createObjectURL(jobData.images[0])
+        : '/tires.png',
+      createdAt: new Date().toISOString(),
       status: 'Active',
-      urgent: true,
-      image: '/truck-01.jpg',
-    },
-    {
-      id: 2,
-      title: 'Heavy Vehicle Driver',
-      department: 'Operations',
-      location: 'Delhi, NCR',
-      type: 'Full-time',
-      salary: '₹35,000 - ₹45,000/month',
-      description:
-        'Seeking experienced heavy vehicle drivers for long-distance transportation. Must have clean driving record and flexibility for interstate travel.',
-      requirements: [
-        'Valid Heavy Vehicle License',
-        'Minimum 3 years experience',
-        'Clean driving record',
-        'Interstate travel flexibility',
-      ],
-      benefits: [
-        'Fuel Allowance',
-        'Medical Coverage',
-        'Overtime Pay',
-        'Travel Allowance',
-      ],
-      postedDate: '2025-09-25',
-      applications: 89,
-      views: 567,
-      status: 'Active',
-      urgent: false,
-      image: '/staring-man.jpg',
-    },
-    {
-      id: 3,
-      title: 'Logistics Coordinator',
-      department: 'Planning',
-      location: 'Bangalore, Karnataka',
-      type: 'Full-time',
-      salary: '₹4,50,000 - ₹6,50,000/year',
-      description:
-        'Coordinate logistics operations, manage supply chain activities, and ensure timely deliveries. Work closely with drivers and customers.',
-      requirements: [
-        "Bachelor's degree preferred",
-        'Logistics experience 2+ years',
-        'Strong communication skills',
-        'Computer proficiency',
-      ],
-      benefits: [
-        'Career Growth',
-        'Training Programs',
-        'Health Benefits',
-        'Team Environment',
-      ],
-      postedDate: '2025-09-22',
-      applications: 23,
-      views: 156,
-      status: 'Active',
-      urgent: false,
-      image: '/dashboard.png',
-    },
-    {
-      id: 4,
-      title: 'Maintenance Supervisor',
-      department: 'Maintenance',
-      location: 'Chennai, Tamil Nadu',
-      type: 'Full-time',
-      salary: '₹6,00,000 - ₹8,50,000/year',
-      description:
-        'Supervise vehicle maintenance operations, manage workshop staff, and ensure fleet readiness. Focus on preventive maintenance and cost optimization.',
-      requirements: [
-        'Mechanical engineering background',
-        '4+ years supervisory experience',
-        'Knowledge of vehicle systems',
-        'Team management skills',
-      ],
-      benefits: [
-        'Technical Training',
-        'Performance Incentives',
-        'Health Insurance',
-        'Growth Opportunities',
-      ],
-      postedDate: '2025-09-20',
-      applications: 31,
-      views: 203,
-      status: 'Paused',
-      urgent: false,
-      image: '/tires.png',
-    },
-  ];
+      views: 0,
+      applications: [],
+    };
 
-  const applications = [
-    {
-      id: 1,
-      jobTitle: 'Senior Fleet Manager',
-      candidate: {
-        name: 'Rajesh Kumar',
-        email: 'rajesh.kumar@email.com',
-        phone: '+91 98765 43210',
-        experience: '8 years',
-        location: 'Mumbai, Maharashtra',
-        avatar: '/profile.png',
-      },
-      appliedDate: '2025-09-29',
-      status: 'Under Review',
-      score: 85,
-      resume: 'rajesh_kumar_resume.pdf',
-      coverLetter: true,
-      skills: [
-        'Fleet Management',
-        'GPS Systems',
-        'Team Leadership',
-        'Cost Optimization',
-      ],
-    },
-    {
-      id: 2,
-      jobTitle: 'Heavy Vehicle Driver',
-      candidate: {
-        name: 'Suresh Patel',
-        email: 'suresh.patel@email.com',
-        phone: '+91 87654 32109',
-        experience: '6 years',
-        location: 'Delhi, NCR',
-        avatar: '/staring-man.jpg',
-      },
-      appliedDate: '2025-09-28',
-      status: 'Interview Scheduled',
-      score: 92,
-      resume: 'suresh_patel_resume.pdf',
-      coverLetter: false,
-      interviewDate: '2025-10-02',
-      skills: [
-        'Heavy Vehicle Driving',
-        'Interstate Travel',
-        'Safety Compliance',
-      ],
-    },
-    {
-      id: 3,
-      jobTitle: 'Logistics Coordinator',
-      candidate: {
-        name: 'Priya Sharma',
-        email: 'priya.sharma@email.com',
-        phone: '+91 76543 21098',
-        experience: '3 years',
-        location: 'Bangalore, Karnataka',
-        avatar: '/professional-profile.png',
-      },
-      appliedDate: '2025-09-27',
-      status: 'Shortlisted',
-      score: 78,
-      resume: 'priya_sharma_resume.pdf',
-      coverLetter: true,
-      skills: [
-        'Supply Chain',
-        'Coordination',
-        'Customer Service',
-        'Data Analysis',
-      ],
-    },
-    {
-      id: 4,
-      jobTitle: 'Senior Fleet Manager',
-      candidate: {
-        name: 'Amit Singh',
-        email: 'amit.singh@email.com',
-        phone: '+91 65432 10987',
-        experience: '7 years',
-        location: 'Pune, Maharashtra',
-        avatar: '/logistics-professional.jpg',
-      },
-      appliedDate: '2025-09-26',
-      status: 'Rejected',
-      score: 65,
-      resume: 'amit_singh_resume.pdf',
-      coverLetter: true,
-      skills: ['Fleet Operations', 'Budget Management', 'Vendor Relations'],
-      rejectionReason: 'Insufficient experience with GPS systems',
-    },
-  ];
+    setJobs([newJob, ...jobs]);
+    setToast({ message: 'Job created successfully!', type: 'success' });
+    setIsCreateJobModalOpen(false);
 
-  const analytics = {
-    totalJobs: postedJobs.length,
-    activeJobs: postedJobs.filter((job) => job.status === 'Active').length,
-    totalApplications: applications.length,
-    totalViews: postedJobs.reduce((sum, job) => sum + job.views, 0),
-    avgApplicationsPerJob: Math.round(
-      postedJobs.reduce((sum, job) => sum + job.applications, 0) /
-        postedJobs.length
-    ),
-    responseRate: '73%',
+    // Auto-hide toast
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleEditClick = (job: BusinessJob) => {
+    setJobToEdit(job);
+    setIsEditMode(true);
+    setIsCreateJobModalOpen(true);
+  };
+
+  const handleSaveEditedJob = (jobData: {
+    id?: string;
+    jobType?: string;
+    duration?: string;
+    openings?: string;
+    salary?: string;
+    city?: string;
+    type?: string;
+    description?: string;
+    images?: File[];
+  }) => {
+    const updatedJobs = jobs.map((job) => {
+      if (job.id === jobData.id) {
+        return {
+          ...job,
+          title: jobData.jobType || job.title,
+          location: jobData.city || job.location,
+          type: (jobData.type as BusinessJob['type']) || job.type,
+          salary: jobData.salary || job.salary,
+          description: jobData.description || job.description,
+          image: jobData.images?.[0]
+            ? URL.createObjectURL(jobData.images[0])
+            : job.image,
+        };
+      }
+      return job;
+    });
+
+    setJobs(updatedJobs);
+    setToast({ message: 'Job updated successfully!', type: 'success' });
+    setIsCreateJobModalOpen(false);
+    setIsEditMode(false);
+    setJobToEdit(null);
+
+    // Auto-hide toast
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleDeleteClick = (job: BusinessJob) => {
+    setJobToDelete(job);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!jobToDelete) return;
+    setJobs(jobs.filter((job) => job.id !== jobToDelete.id));
+    setToast({ message: 'Job deleted successfully', type: 'success' });
+    setIsDeleteModalOpen(false);
+    setJobToDelete(null);
+
+    // Auto-hide toast
+    setTimeout(() => setToast(null), 3000);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'Paused':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Closed':
-        return 'bg-red-100 text-red-800';
-      case 'Under Review':
-        return 'bg-blue-100 text-blue-800';
-      case 'Interview Scheduled':
-        return 'bg-purple-100 text-purple-800';
-      case 'Shortlisted':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'Rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
   };
 
   return (
@@ -271,681 +191,430 @@ export default function BusinessJobsPage() {
       <Header />
       <LoginSimulator />
 
-      <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          {/* Hero Section */}
-          <div className="relative mb-12 overflow-hidden rounded-3xl bg-white shadow-lg">
-            <div className="relative h-64 md:h-80">
-              <div className="relative h-full w-full">
-                <Image
-                  src={slides[currentSlide].image}
-                  alt={slides[currentSlide].alt}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
+      <div className="mt-20 min-h-screen bg-gradient-to-br from-pink-50 via-white to-red-50">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <h1 className="bg-gradient-to-r from-[#f36969] to-[#e85555] bg-clip-text text-4xl font-bold text-transparent">
+                  Job Management
+                </h1>
+                <p className="mt-2 text-gray-600">
+                  Post jobs for Technicians and Helpers
+                </p>
               </div>
-
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-white">
-                  <h1 className="mb-4 text-4xl font-bold md:text-5xl">
-                    Job Management
-                  </h1>
-                  <p className="text-lg md:text-xl">
-                    Post jobs, manage applications, and find the right talent
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white"
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsCreateJobModalOpen(true)}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#e85555] px-6 py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg"
               >
-                <svg
-                  className="h-5 w-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white"
-              >
-                <svg
-                  className="h-5 w-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentSlide(i)}
-                    className={`h-2 w-2 rounded-full transition-colors ${i === currentSlide ? 'bg-white' : 'bg-white/50'}`}
-                  />
-                ))}
-              </div>
+                <Plus className="h-5 w-5" />
+                <span>Create New Job</span>
+              </motion.button>
             </div>
-          </div>
 
-          {/* Analytics Dashboard */}
-          <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {[
-              {
-                title: 'Total Jobs',
-                value: analytics.totalJobs.toString(),
-                icon: (
-                  <svg
-                    className="h-8 w-8 text-blue-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6"
-                    />
-                  </svg>
-                ),
-                color: 'bg-blue-50 border-blue-200',
-              },
-              {
-                title: 'Active Jobs',
-                value: analytics.activeJobs.toString(),
-                icon: (
-                  <svg
-                    className="h-8 w-8 text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                ),
-                color: 'bg-green-50 border-green-200',
-              },
-              {
-                title: 'Applications',
-                value: analytics.totalApplications.toString(),
-                icon: (
-                  <svg
-                    className="h-8 w-8 text-purple-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                ),
-                color: 'bg-purple-50 border-purple-200',
-              },
-              {
-                title: 'Total Views',
-                value: analytics.totalViews.toString(),
-                icon: (
-                  <svg
-                    className="h-8 w-8 text-orange-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                ),
-                color: 'bg-orange-50 border-orange-200',
-              },
-              {
-                title: 'Avg Applications',
-                value: analytics.avgApplicationsPerJob.toString(),
-                icon: (
-                  <svg
-                    className="h-8 w-8 text-indigo-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                ),
-                color: 'bg-indigo-50 border-indigo-200',
-              },
-              {
-                title: 'Response Rate',
-                value: analytics.responseRate,
-                icon: (
-                  <svg
-                    className="h-8 w-8 text-pink-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                    />
-                  </svg>
-                ),
-                color: 'bg-pink-50 border-pink-200',
-              },
-            ].map((stat, index) => (
-              <div
-                key={index}
-                className={`rounded-2xl border bg-white p-6 shadow-sm ${stat.color}`}
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100"
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {stat.title}
+                      Total Jobs
                     </p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stat.value}
+                    <p className="mt-2 text-3xl font-bold text-gray-900">
+                      {jobs.length}
                     </p>
                   </div>
-                  {stat.icon}
+                  <div className="rounded-full bg-[#f36969]/10 p-3">
+                    <Briefcase className="h-6 w-6 text-[#f36969]" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              </motion.div>
 
-          {/* Quick Actions */}
-          <div className="mb-8 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
-            <div className="flex flex-col items-start justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
-              <div>
-                <h3 className="text-xl font-bold">Ready to hire?</h3>
-                <p className="mt-1 text-blue-100">
-                  Create a new job posting and reach qualified candidates
-                </p>
-              </div>
-              <div className="flex space-x-3">
-                <button className="rounded-lg bg-white px-6 py-3 font-medium text-blue-600 hover:bg-gray-100">
-                  Post New Job
-                </button>
-                <button className="rounded-lg border border-white/20 bg-white/10 px-6 py-3 font-medium text-white hover:bg-white/20">
-                  View Templates
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="mb-8 flex space-x-1 rounded-2xl bg-gray-100 p-1">
-            {[
-              { id: 'posted', label: 'Posted Jobs' },
-              { id: 'applications', label: 'Applications' },
-              { id: 'analytics', label: 'Analytics' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100"
               >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Posted Jobs */}
-          {activeTab === 'posted' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">Posted Jobs</h2>
-              {postedJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className={`rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-lg ${
-                    job.urgent ? 'ring-2 ring-red-200' : ''
-                  }`}
-                >
-                  <div className="mb-4 flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      <div className="h-16 w-16 overflow-hidden rounded-lg">
-                        <Image
-                          src={job.image}
-                          alt={job.title}
-                          width={64}
-                          height={64}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-xl font-semibold text-gray-900">
-                            {job.title}
-                          </h3>
-                          {job.urgent && (
-                            <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
-                              Urgent
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-600">
-                          <span>{job.department}</span>
-                          <span>•</span>
-                          <span>{job.location}</span>
-                          <span>•</span>
-                          <span>{job.type}</span>
-                        </div>
-                        <div className="mt-1 text-lg font-semibold text-green-600">
-                          {job.salary}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(job.status)}`}
-                      >
-                        {job.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="mb-4 text-gray-700">{job.description}</p>
-
-                  <div className="mb-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <div>
-                      <h4 className="mb-2 font-semibold text-gray-900">
-                        Requirements:
-                      </h4>
-                      <ul className="list-inside list-disc space-y-1 text-sm text-gray-600">
-                        {job.requirements.map((req, index) => (
-                          <li key={index}>{req}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="mb-2 font-semibold text-gray-900">
-                        Benefits:
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {job.benefits.map((benefit, index) => (
-                          <span
-                            key={index}
-                            className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800"
-                          >
-                            {benefit}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className="rounded-lg bg-blue-50 p-3 text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {job.applications}
-                      </div>
-                      <div className="text-sm text-blue-700">Applications</div>
-                    </div>
-                    <div className="rounded-lg bg-purple-50 p-3 text-center">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {job.views}
-                      </div>
-                      <div className="text-sm text-purple-700">Views</div>
-                    </div>
-                    <div className="rounded-lg bg-gray-50 p-3 text-center">
-                      <div className="text-sm font-medium text-gray-600">
-                        Posted
-                      </div>
-                      <div className="text-sm text-gray-900">
-                        {job.postedDate}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex space-x-2">
-                      {job.status === 'Active' && (
-                        <button className="rounded-lg bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-600 hover:bg-yellow-100">
-                          Pause Job
-                        </button>
-                      )}
-                      {job.status === 'Paused' && (
-                        <button className="rounded-lg bg-green-50 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-100">
-                          Resume Job
-                        </button>
-                      )}
-                      <button className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-                        Edit Job
-                      </button>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className="rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100">
-                        View Applications
-                      </button>
-                      <button className="rounded-lg bg-purple-50 px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-100">
-                        Share Job
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Applications */}
-          {activeTab === 'applications' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Recent Applications
-              </h2>
-              {applications.map((application) => (
-                <div
-                  key={application.id}
-                  className="rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-lg"
-                >
-                  <div className="mb-4 flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      <div className="h-16 w-16 overflow-hidden rounded-full">
-                        <Image
-                          src={application.candidate.avatar}
-                          alt={application.candidate.name}
-                          width={64}
-                          height={64}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {application.candidate.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Applied for: {application.jobTitle}
-                        </p>
-                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-600">
-                          <span>{application.candidate.email}</span>
-                          <span>•</span>
-                          <span>{application.candidate.phone}</span>
-                        </div>
-                        <div className="mt-1 flex items-center space-x-4 text-sm text-gray-600">
-                          <span>
-                            {application.candidate.experience} experience
-                          </span>
-                          <span>•</span>
-                          <span>{application.candidate.location}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`rounded-lg px-3 py-1 text-sm font-semibold ${getScoreColor(application.score)}`}
-                      >
-                        {application.score}% Match
-                      </div>
-                      <span
-                        className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(application.status)}`}
-                      >
-                        {application.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Skills */}
-                  <div className="mb-4">
-                    <h4 className="mb-2 text-sm font-semibold text-gray-900">
-                      Key Skills:
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {application.skills.map((skill, index) => (
-                        <span
-                          key={index}
-                          className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Application Details */}
-                  <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">
-                        APPLIED DATE
-                      </p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {application.appliedDate}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">
-                        RESUME
-                      </p>
-                      <button className="text-sm font-medium text-blue-600 hover:text-blue-800">
-                        {application.resume}
-                      </button>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">
-                        COVER LETTER
-                      </p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {application.coverLetter ? 'Included' : 'Not provided'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Interview Info */}
-                  {application.interviewDate && (
-                    <div className="mb-4 rounded-lg bg-purple-50 p-3">
-                      <div className="flex items-center space-x-2">
-                        <svg
-                          className="h-5 w-5 text-purple-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <span className="font-medium text-purple-800">
-                          Interview scheduled for {application.interviewDate}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Rejection Reason */}
-                  {application.status === 'Rejected' &&
-                    application.rejectionReason && (
-                      <div className="mb-4 rounded-lg bg-red-50 p-3">
-                        <div className="flex items-start space-x-2">
-                          <svg
-                            className="mt-0.5 h-5 w-5 text-red-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          <div>
-                            <span className="font-medium text-red-800">
-                              Rejection Reason:
-                            </span>
-                            <p className="text-sm text-red-700">
-                              {application.rejectionReason}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex space-x-2">
-                      {application.status === 'Under Review' && (
-                        <>
-                          <button className="rounded-lg bg-green-50 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-100">
-                            Shortlist
-                          </button>
-                          <button className="rounded-lg bg-purple-50 px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-100">
-                            Schedule Interview
-                          </button>
-                          <button className="rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100">
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {application.status === 'Shortlisted' && (
-                        <button className="rounded-lg bg-purple-50 px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-100">
-                          Schedule Interview
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-                        View Profile
-                      </button>
-                      <button className="rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100">
-                        Contact
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Analytics */}
-          {activeTab === 'analytics' && (
-            <div className="space-y-8">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Job Analytics
-              </h2>
-
-              {/* Performance Chart Placeholder */}
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                  Application Trends
-                </h3>
-                <div className="flex h-64 items-center justify-center rounded-lg bg-gray-50">
-                  <div className="text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <p className="mt-2 text-sm text-gray-600">
-                      Analytics chart would be integrated here
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Active Jobs
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">
+                      {jobs.filter((j) => j.status === 'Active').length}
                     </p>
                   </div>
+                  <div className="rounded-full bg-green-100 p-3">
+                    <AlertCircle className="h-6 w-6 text-green-600" />
+                  </div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Top Performing Jobs */}
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                  Top Performing Jobs
-                </h3>
-                <div className="space-y-4">
-                  {postedJobs
-                    .sort((a, b) => b.applications - a.applications)
-                    .slice(0, 3)
-                    .map((job, index) => (
-                      <div
-                        key={job.id}
-                        className="flex items-center justify-between rounded-lg border p-4"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+                className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Applications
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">
+                      {jobs.reduce(
+                        (acc, job) => acc + job.applications.length,
+                        0
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-blue-100 p-3">
+                    <Users className="h-6 w-6 text-blue-600" />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      Total Views
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">
+                      {jobs.reduce((acc, job) => acc + job.views, 0)}
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-purple-100 p-3">
+                    <Eye className="h-6 w-6 text-purple-600" />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+
+          {/* Search and Filter Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mb-6 flex flex-col gap-4 sm:flex-row"
+          >
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search jobs by title, department, or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border-2 border-gray-200 bg-white py-3 pl-12 pr-4 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20"
+              />
+            </div>
+
+            {/* Filter */}
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <select
+                value={filterStatus}
+                onChange={(e) =>
+                  setFilterStatus(
+                    e.target.value as 'all' | 'Active' | 'Paused' | 'Closed'
+                  )
+                }
+                className="w-full appearance-none rounded-xl border-2 border-gray-200 bg-white py-3 pl-12 pr-10 text-sm font-medium transition-all focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20 sm:w-auto"
+              >
+                <option value="all">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Paused">Paused</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          </motion.div>
+
+          {/* Jobs List */}
+          {filteredJobs.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="rounded-3xl bg-white p-16 text-center shadow-sm"
+            >
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                <Briefcase className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-gray-900">
+                No Jobs Found
+              </h3>
+              <p className="text-gray-600">
+                {searchQuery || filterStatus !== 'all'
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Create your first job posting to get started'}
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="space-y-5"
+            >
+              {filteredJobs.map((job) => (
+                <motion.div
+                  key={job.id}
+                  variants={item}
+                  className="group overflow-hidden rounded-3xl bg-gradient-to-br from-white to-pink-50/30 shadow-lg transition-all duration-500 hover:shadow-xl"
+                  whileHover={{ scale: 1.01, x: 4 }}
+                >
+                  <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center">
+                    {/* Image Section */}
+                    <div className="relative h-40 w-full flex-shrink-0 overflow-hidden rounded-2xl shadow-lg ring-4 ring-white lg:h-32 lg:w-48">
+                      <Image
+                        src={job.image}
+                        alt={job.title}
+                        fill
+                        className="object-cover transition-all duration-700 group-hover:rotate-2 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#f36969]/0 to-[#e85555]/0 opacity-0 transition-opacity duration-500 group-hover:from-[#f36969]/20 group-hover:to-[#e85555]/20 group-hover:opacity-100"></div>
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="flex-1">
+                      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <h3 className="text-xl font-bold text-gray-900 transition-colors group-hover:text-[#f36969]">
                               {job.title}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {job.location}
-                            </p>
+                            </h3>
+                            {job.urgent && (
+                              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                                Urgent
+                              </span>
+                            )}
+                            <span
+                              className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusColor(job.status)}`}
+                            >
+                              {job.status}
+                            </span>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900">
-                            {job.applications}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            applications
-                          </div>
+                          <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
+                            {job.description}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
 
-        {/* Shared Footer */}
-        <Footer />
+                      {/* Meta Info Grid */}
+                      <div className="mb-4 grid grid-cols-1 gap-3 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="h-4 w-4 text-[#f36969]" />
+                          <span>{job.department}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-[#f36969]" />
+                          <span>{job.location}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-[#f36969]" />
+                          <span className="truncate">{job.salary}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-[#f36969]" />
+                          <span>
+                            {new Date(job.createdAt).toLocaleDateString(
+                              'en-US',
+                              {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              }
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stats Bar */}
+                      <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg bg-gray-50 px-4 py-2 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-4 w-4 text-blue-500" />
+                          <span className="font-semibold text-gray-900">
+                            {job.applications.length}
+                          </span>
+                          <span className="text-gray-600">Applications</span>
+                        </div>
+                        <div className="h-4 w-px bg-gray-300"></div>
+                        <div className="flex items-center gap-1.5">
+                          <Eye className="h-4 w-4 text-purple-500" />
+                          <span className="font-semibold text-gray-900">
+                            {job.views}
+                          </span>
+                          <span className="text-gray-600">Views</span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-3">
+                        {job.applications.length > 0 && (
+                          <motion.button
+                            onClick={() => {
+                              setSelectedJobForApplications(job);
+                              setIsApplicationsModalOpen(true);
+                            }}
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-2 rounded-xl border-2 border-[#f36969] bg-white px-5 py-2.5 text-sm font-semibold text-[#f36969] shadow-sm transition-all hover:bg-[#f36969] hover:text-white hover:shadow-md"
+                          >
+                            <Users className="h-4 w-4" />
+                            <span>
+                              View Applications ({job.applications.length})
+                            </span>
+                          </motion.button>
+                        )}
+                        <motion.button
+                          onClick={() => handleEditClick(job)}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#e85555] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span>Edit Job</span>
+                        </motion.button>
+                        <motion.button
+                          onClick={() => handleDeleteClick(job)}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center gap-2 rounded-xl border-2 border-red-200 bg-white px-5 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition-all hover:border-red-300 hover:bg-red-50 hover:shadow-md"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Delete</span>
+                        </motion.button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
       </div>
+
+      {/* Create/Edit Job Modal - Only allows Technician and Helper */}
+      <CreateJobModal
+        isOpen={isCreateJobModalOpen}
+        onClose={() => {
+          setIsCreateJobModalOpen(false);
+          setIsEditMode(false);
+          setJobToEdit(null);
+        }}
+        initialData={
+          isEditMode && jobToEdit
+            ? {
+                id: jobToEdit.id,
+                jobType: '' as ModalJobType,
+                duration: 'Permanent',
+                openings: '',
+                salary: jobToEdit.salary,
+                city: jobToEdit.location,
+                type: jobToEdit.type,
+                description: jobToEdit.description,
+                images: [],
+              }
+            : null
+        }
+        mode={isEditMode ? 'edit' : 'create'}
+        onSubmit={(data) => {
+          const d = data as unknown as {
+            id?: string;
+            jobType?: string;
+            duration?: string;
+            openings?: string;
+            salary?: string;
+            city?: string;
+            type?: string;
+            description?: string;
+            images?: File[];
+          };
+          if (isEditMode) handleSaveEditedJob(d);
+          else
+            handleCreateJob({
+              jobType: d.jobType || '',
+              duration: d.duration || 'Permanent',
+              openings: d.openings || '',
+              salary: d.salary || '',
+              city: d.city || '',
+              type: d.type || 'Full-time',
+              description: d.description || '',
+              images: d.images || [],
+            });
+        }}
+        // Restrict job types to only Technician and Helper for business
+        allowedJobTypes={['Technician', 'Helper']}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Job"
+        description="Are you sure you want to delete this job posting? This action cannot be undone."
+      />
+
+      {/* Job Applications Modal */}
+      <JobApplicationsModal
+        isOpen={isApplicationsModalOpen}
+        onClose={() => {
+          setIsApplicationsModalOpen(false);
+          setSelectedJobForApplications(null);
+        }}
+        jobTitle={selectedJobForApplications?.title || ''}
+        applications={selectedJobForApplications?.applications || []}
+      />
+
+      {/* Toast Notification */}
+      {toast && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <div
+            className={`rounded-xl px-6 py-4 shadow-lg ${
+              toast.type === 'success'
+                ? 'bg-green-600 text-white'
+                : 'bg-red-600 text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="font-semibold">{toast.message}</div>
+              <button
+                onClick={() => setToast(null)}
+                className="text-xl font-bold hover:opacity-80"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      <Footer />
     </BusinessProtected>
   );
 }

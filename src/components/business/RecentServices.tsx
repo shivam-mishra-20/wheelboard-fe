@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 interface Service {
   id: number;
@@ -36,9 +37,12 @@ export default function RecentServices() {
     <div className="mb-12">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Recent Services</h2>
-        <button className="text-sm font-medium text-primary-600 hover:text-primary-700">
+        <Link
+          href="/business/listings"
+          className="group flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium text-primary-600 transition-all hover:shadow-glow"
+        >
           View All
-        </button>
+        </Link>
       </div>
       <div className="space-y-4">
         {services.map((service, index) => (
@@ -83,7 +87,7 @@ export default function RecentServices() {
           </motion.div>
         ))}
       </div>
-      <div className="mt-6 text-center">
+      {/* <div className="mt-6 text-center">
         <button className="inline-flex items-center space-x-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-lg">
           <svg
             className="h-5 w-5"
@@ -100,7 +104,7 @@ export default function RecentServices() {
           </svg>
           <span>Add New Service</span>
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }

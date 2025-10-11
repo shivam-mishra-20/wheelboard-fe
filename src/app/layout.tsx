@@ -3,6 +3,11 @@ import { Geist, Geist_Mono, Poppins } from 'next/font/google';
 import './globals.css';
 //import LenisProvider from '@/components/LenisProvider';
 
+// Derive site URL for metadataBase (used for resolving OG/Twitter images)
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
+  'https://wheelboard.com';
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -20,6 +25,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'Wheelboard - Professional Transportation & Logistics Platform',
     template: '%s | Wheelboard',

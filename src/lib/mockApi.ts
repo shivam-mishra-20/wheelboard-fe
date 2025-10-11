@@ -212,6 +212,7 @@ const getNavigationLinks = (
         { id: 'trips', label: 'Trips', href: '/company/trips' },
         { id: 'feeds', label: 'Feeds', href: '/company/feeds' },
         { id: 'jobs', label: 'Jobs', href: '/company/jobs' },
+        { id: 'profile', label: 'Profile', href: '/company/profile' },
       ];
     case 'business':
       return [
@@ -219,6 +220,7 @@ const getNavigationLinks = (
         { id: 'listings', label: 'Listings', href: '/business/listings' },
         { id: 'feeds', label: 'Feeds', href: '/business/feeds' },
         { id: 'jobs', label: 'Jobs', href: '/business/jobs' },
+        { id: 'profile', label: 'Profile', href: '/business/profile' },
       ];
     case 'professional':
       return [
@@ -227,6 +229,7 @@ const getNavigationLinks = (
         { id: 'trips', label: 'Trips', href: '/professional/trips' },
         { id: 'feeds', label: 'Feeds', href: '/professional/feeds' },
         { id: 'jobs', label: 'Jobs', href: '/professional/jobs' },
+        { id: 'profile', label: 'Profile', href: '/professional/profile' },
       ];
     default:
       return [];
@@ -241,9 +244,9 @@ const getProfileImage = (
     case 'company':
       return '/profile.png';
     case 'business':
-      return '/business-profile.png';
+      return 'profile.png';
     case 'professional':
-      return '/professional-profile.png';
+      return 'profile.png';
     default:
       return '/profile.png';
   }
@@ -1387,6 +1390,578 @@ export const companyHomeData = {
   ] as Trip[],
 };
 
+// Business Jobs Mock Data
+export interface BusinessJobApplication {
+  id: string;
+  applicantName: string;
+  email: string;
+  phone: string;
+  experience: string;
+  location: string;
+  avatar?: string;
+  appliedAt: string;
+  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected';
+  coverLetter?: string;
+}
+
+export interface BusinessJob {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: 'Full-time' | 'Part-time' | 'Contract';
+  salary: string;
+  description: string;
+  requirements: string[];
+  benefits: string[];
+  image: string;
+  createdAt: string;
+  status: 'Active' | 'Paused' | 'Closed';
+  views: number;
+  applications: BusinessJobApplication[];
+  urgent?: boolean;
+}
+
+export const businessJobsData: BusinessJob[] = [
+  {
+    id: 'bj-1',
+    title: 'Automotive Technician',
+    department: 'Service',
+    location: 'Mumbai, Maharashtra',
+    type: 'Full-time',
+    salary: '₹25,000 - ₹35,000/month',
+    description:
+      'Experienced automotive technician needed for vehicle maintenance and repair services. Must have expertise in diagnostics and repair.',
+    requirements: [
+      '3+ years experience in automotive repair',
+      'Knowledge of diagnostic tools',
+      'Certification preferred',
+      'Good problem-solving skills',
+    ],
+    benefits: [
+      'Health Insurance',
+      'Performance Bonus',
+      'Training Programs',
+      'Career Growth',
+    ],
+    image: '/tires.png',
+    createdAt: '2025-09-28T10:00:00Z',
+    status: 'Active',
+    views: 234,
+    applications: [
+      {
+        id: 'ba-1',
+        applicantName: 'Vikram Sharma',
+        email: 'vikram.sharma@email.com',
+        phone: '+91 98765 11111',
+        experience: '4 years',
+        location: 'Mumbai, Maharashtra',
+        avatar: '/staring-man.jpg',
+        appliedAt: '2025-09-29T09:30:00Z',
+        status: 'shortlisted',
+        coverLetter:
+          'I am a certified automotive technician with 4 years of hands-on experience in vehicle diagnostics and repair. I specialize in modern diagnostic equipment and have a proven track record of efficient repairs.',
+      },
+      {
+        id: 'ba-2',
+        applicantName: 'Arjun Patel',
+        email: 'arjun.patel@email.com',
+        phone: '+91 98765 22222',
+        experience: '5 years',
+        location: 'Thane, Maharashtra',
+        avatar: '/profile.png',
+        appliedAt: '2025-09-30T14:15:00Z',
+        status: 'reviewed',
+      },
+      {
+        id: 'ba-3',
+        applicantName: 'Karan Singh',
+        email: 'karan.singh@email.com',
+        phone: '+91 98765 33333',
+        experience: '3 years',
+        location: 'Navi Mumbai, Maharashtra',
+        appliedAt: '2025-10-01T11:20:00Z',
+        status: 'pending',
+      },
+    ],
+    urgent: true,
+  },
+  {
+    id: 'bj-2',
+    title: 'Vehicle Helper',
+    department: 'Operations',
+    location: 'Delhi, NCR',
+    type: 'Full-time',
+    salary: '₹15,000 - ₹20,000/month',
+    description:
+      'Looking for reliable helpers to assist with vehicle loading/unloading and maintenance support.',
+    requirements: [
+      'Physical fitness required',
+      '1+ year experience preferred',
+      'Team player attitude',
+      'Flexible work hours',
+    ],
+    benefits: [
+      'Food Allowance',
+      'Overtime Pay',
+      'Medical Coverage',
+      'Uniform Provided',
+    ],
+    image: '/truck-01.jpg',
+    createdAt: '2025-09-25T14:30:00Z',
+    status: 'Active',
+    views: 156,
+    applications: [
+      {
+        id: 'ba-4',
+        applicantName: 'Ravi Kumar',
+        email: 'ravi.kumar@email.com',
+        phone: '+91 98765 44444',
+        experience: '2 years',
+        location: 'Delhi, NCR',
+        avatar: '/staring-man.jpg',
+        appliedAt: '2025-09-26T10:00:00Z',
+        status: 'shortlisted',
+      },
+      {
+        id: 'ba-5',
+        applicantName: 'Sunil Yadav',
+        email: 'sunil.yadav@email.com',
+        phone: '+91 98765 55555',
+        experience: '1 year',
+        location: 'Gurgaon, Haryana',
+        appliedAt: '2025-09-27T16:45:00Z',
+        status: 'pending',
+      },
+    ],
+  },
+  {
+    id: 'bj-3',
+    title: 'Diesel Mechanic',
+    department: 'Service',
+    location: 'Bangalore, Karnataka',
+    type: 'Full-time',
+    salary: '₹30,000 - ₹40,000/month',
+    description:
+      'Skilled diesel mechanic required for heavy vehicle maintenance and engine repairs.',
+    requirements: [
+      '5+ years diesel engine experience',
+      'Heavy vehicle expertise',
+      'Valid certifications',
+      'Tool proficiency',
+    ],
+    benefits: [
+      'High Pay Package',
+      'Insurance Benefits',
+      'Skill Development',
+      'Job Security',
+    ],
+    image: '/excavator.jpg',
+    createdAt: '2025-09-22T09:00:00Z',
+    status: 'Active',
+    views: 189,
+    applications: [
+      {
+        id: 'ba-6',
+        applicantName: 'Prakash Reddy',
+        email: 'prakash.reddy@email.com',
+        phone: '+91 98765 66666',
+        experience: '6 years',
+        location: 'Bangalore, Karnataka',
+        avatar: '/staring-man.jpg',
+        appliedAt: '2025-09-23T09:00:00Z',
+        status: 'reviewed',
+        coverLetter:
+          'With over 6 years of experience in diesel engine repair and maintenance, I have extensive knowledge of heavy vehicle systems and troubleshooting.',
+      },
+      {
+        id: 'ba-7',
+        applicantName: 'Manoj Kumar',
+        email: 'manoj.kumar@email.com',
+        phone: '+91 98765 77777',
+        experience: '7 years',
+        location: 'Bangalore, Karnataka',
+        appliedAt: '2025-09-24T13:30:00Z',
+        status: 'pending',
+      },
+    ],
+  },
+  {
+    id: 'bj-4',
+    title: 'Workshop Supervisor',
+    department: 'Service',
+    location: 'Pune, Maharashtra',
+    type: 'Full-time',
+    salary: '₹40,000 - ₹55,000/month',
+    description:
+      'Lead our workshop team and oversee all repair and maintenance operations. Ensure quality standards and timely service delivery.',
+    requirements: [
+      '7+ years automotive experience',
+      'Team management skills',
+      'Technical expertise',
+      'Quality control knowledge',
+    ],
+    benefits: [
+      'Leadership Role',
+      'Performance Incentives',
+      'Health Benefits',
+      'Professional Growth',
+    ],
+    image: '/tires.png',
+    createdAt: '2025-09-20T08:00:00Z',
+    status: 'Active',
+    views: 312,
+    applications: [
+      {
+        id: 'ba-8',
+        applicantName: 'Santosh Jadhav',
+        email: 'santosh.jadhav@email.com',
+        phone: '+91 98765 88888',
+        experience: '8 years',
+        location: 'Pune, Maharashtra',
+        avatar: '/staring-man.jpg',
+        appliedAt: '2025-09-21T10:30:00Z',
+        status: 'shortlisted',
+      },
+    ],
+  },
+  {
+    id: 'bj-5',
+    title: 'AC Technician',
+    department: 'Service',
+    location: 'Hyderabad, Telangana',
+    type: 'Full-time',
+    salary: '₹22,000 - ₹30,000/month',
+    description:
+      'Specialized AC technician for vehicle air conditioning systems. Installation, repair, and maintenance of automotive AC units.',
+    requirements: [
+      '3+ years AC repair experience',
+      'Refrigerant handling certification',
+      'Electrical knowledge',
+      'Customer service skills',
+    ],
+    benefits: [
+      'Training Programs',
+      'Tool Allowance',
+      'Medical Insurance',
+      'Stable Employment',
+    ],
+    image: '/truck-01.jpg',
+    createdAt: '2025-09-18T12:00:00Z',
+    status: 'Paused',
+    views: 98,
+    applications: [],
+  },
+  {
+    id: 'bj-6',
+    title: 'Tire Specialist',
+    department: 'Service',
+    location: 'Chennai, Tamil Nadu',
+    type: 'Part-time',
+    salary: '₹18,000 - ₹25,000/month',
+    description:
+      'Expert tire technician needed for tire installation, balancing, alignment, and repairs.',
+    requirements: [
+      '2+ years tire service experience',
+      'Wheel alignment knowledge',
+      'Physical fitness',
+      'Safety conscious',
+    ],
+    benefits: [
+      'Flexible Hours',
+      'Performance Bonus',
+      'Training',
+      'Equipment Provided',
+    ],
+    image: '/tires.png',
+    createdAt: '2025-09-15T09:30:00Z',
+    status: 'Active',
+    views: 145,
+    applications: [
+      {
+        id: 'ba-9',
+        applicantName: 'Muthu Selvam',
+        email: 'muthu.selvam@email.com',
+        phone: '+91 98765 99999',
+        experience: '3 years',
+        location: 'Chennai, Tamil Nadu',
+        appliedAt: '2025-09-16T11:00:00Z',
+        status: 'pending',
+      },
+    ],
+  },
+];
+
+// Service Assignments Mock Data (Booking Details)
+export interface ServiceBooking {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  companyId: string;
+  companyName: string;
+  companyLogo?: string;
+  companyPhone: string;
+  assignedBy: string;
+  assignedDate: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled';
+  location: string;
+  serviceType: string;
+  category: string;
+  pricing: {
+    amount: string;
+    currency: string;
+  };
+  duration?: string;
+  bookedBy: 'Customer' | 'Company';
+  notes?: string;
+  internalNotes?: string;
+}
+
+export const serviceBookingsData: ServiceBooking[] = [
+  {
+    id: 'WB123456',
+    serviceId: 'serv-1',
+    serviceName: 'Premium Tyre Replacement',
+    companyId: 'comp-1',
+    companyName: 'Rohit Sharma',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 98765 43210',
+    assignedBy: 'Rohit Sharma',
+    assignedDate: '2025-06-07T10:30:00Z',
+    scheduledDate: '2025-07-10T15:00:00Z',
+    scheduledTime: '3:00 PM',
+    status: 'Confirmed',
+    location: 'Pune, Maharashtra',
+    serviceType: 'Tyre Retreading',
+    category: 'Mechanical',
+    pricing: {
+      amount: '1,200',
+      currency: '₹',
+    },
+    duration: '1 hour',
+    bookedBy: 'Customer',
+    notes: 'Bring a replacement wheel!',
+    internalNotes: 'Visible to You Only',
+  },
+  {
+    id: 'WB123457',
+    serviceId: 'serv-1',
+    serviceName: 'Premium Tyre Replacement',
+    companyId: 'comp-2',
+    companyName: 'Delhi Transport Co.',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 98765 43211',
+    assignedBy: 'Suresh Kumar',
+    assignedDate: '2025-06-10T14:20:00Z',
+    scheduledDate: '2025-07-15T10:00:00Z',
+    scheduledTime: '10:00 AM',
+    status: 'Confirmed',
+    location: 'Delhi, NCR',
+    serviceType: 'Tyre Retreading',
+    category: 'Mechanical',
+    pricing: {
+      amount: '1,200',
+      currency: '₹',
+    },
+    duration: '1 hour',
+    bookedBy: 'Company',
+    notes: 'Need urgent service',
+  },
+  {
+    id: 'WB123458',
+    serviceId: 'serv-2',
+    serviceName: 'Engine Repair Service',
+    companyId: 'comp-3',
+    companyName: 'Mumbai Logistics',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 98765 43212',
+    assignedBy: 'Amit Patel',
+    assignedDate: '2025-06-12T09:15:00Z',
+    scheduledDate: '2025-07-18T14:00:00Z',
+    scheduledTime: '2:00 PM',
+    status: 'Pending',
+    location: 'Mumbai, Maharashtra',
+    serviceType: 'Engine Diagnostics',
+    category: 'Mechanical',
+    pricing: {
+      amount: '2,500',
+      currency: '₹',
+    },
+    duration: '2 hours',
+    bookedBy: 'Customer',
+    notes: 'Check coolant system',
+  },
+  {
+    id: 'WB123459',
+    serviceId: 'serv-1',
+    serviceName: 'Premium Tyre Replacement',
+    companyId: 'comp-4',
+    companyName: 'Bangalore Fleet Services',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 98765 43213',
+    assignedBy: 'Rajesh Verma',
+    assignedDate: '2025-06-05T16:45:00Z',
+    scheduledDate: '2025-07-08T11:30:00Z',
+    scheduledTime: '11:30 AM',
+    status: 'Completed',
+    location: 'Bangalore, Karnataka',
+    serviceType: 'Tyre Retreading',
+    category: 'Mechanical',
+    pricing: {
+      amount: '1,200',
+      currency: '₹',
+    },
+    duration: '1 hour',
+    bookedBy: 'Company',
+  },
+  {
+    id: 'WB123460',
+    serviceId: 'serv-3',
+    serviceName: 'AC Repair & Maintenance',
+    companyId: 'comp-5',
+    companyName: 'Chennai Motors',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 98765 43214',
+    assignedBy: 'Venkat Raman',
+    assignedDate: '2025-06-15T11:00:00Z',
+    scheduledDate: '2025-07-20T09:00:00Z',
+    scheduledTime: '9:00 AM',
+    status: 'Confirmed',
+    location: 'Chennai, Tamil Nadu',
+    serviceType: 'AC Service',
+    category: 'Electrical',
+    pricing: {
+      amount: '1,800',
+      currency: '₹',
+    },
+    duration: '90 minutes',
+    bookedBy: 'Customer',
+    notes: 'AC not cooling properly',
+  },
+  // Additional assignments referencing existing business services (svc-1 .. svc-6)
+  {
+    id: 'WB123461',
+    serviceId: 'svc-1',
+    serviceName: 'Tyre Replacement',
+    companyId: 'comp-6',
+    companyName: 'Pune Haulage Co.',
+    companyLogo: '/logo-01.png',
+    companyPhone: '+91 99222 33445',
+    assignedBy: 'Ajay Singh',
+    assignedDate: '2025-09-20T08:30:00Z',
+    scheduledDate: '2025-10-10T10:00:00Z',
+    scheduledTime: '10:00 AM',
+    status: 'Pending',
+    location: 'Mumbai, Maharashtra',
+    serviceType: 'Tyre Replacement',
+    category: 'Tyre Repair',
+    pricing: {
+      amount: '2,500',
+      currency: '₹',
+    },
+    duration: '1.5 hours',
+    bookedBy: 'Company',
+    notes: 'Require heavy-duty tyre for EX-200',
+  },
+  {
+    id: 'WB123462',
+    serviceId: 'svc-2',
+    serviceName: 'Engine Diagnostics',
+    companyId: 'comp-7',
+    companyName: 'North Fleet Repairs',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 99111 22334',
+    assignedBy: 'Rakesh Mehta',
+    assignedDate: '2025-09-18T12:15:00Z',
+    scheduledDate: '2025-10-12T14:00:00Z',
+    scheduledTime: '2:00 PM',
+    status: 'Confirmed',
+    location: 'Pune, Maharashtra',
+    serviceType: 'Engine Diagnostics',
+    category: 'Engine',
+    pricing: {
+      amount: '3,000',
+      currency: '₹',
+    },
+    duration: '2 hours',
+    bookedBy: 'Customer',
+    notes: 'Priority: emissions check',
+  },
+  {
+    id: 'WB123463',
+    serviceId: 'svc-4',
+    serviceName: 'Brake Inspection',
+    companyId: 'comp-8',
+    companyName: 'SafeStop Services',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 98888 77665',
+    assignedBy: 'Sunita Rao',
+    assignedDate: '2025-09-25T09:00:00Z',
+    scheduledDate: '2025-10-15T11:30:00Z',
+    scheduledTime: '11:30 AM',
+    status: 'Confirmed',
+    location: 'Thane, Maharashtra',
+    serviceType: 'Brake Inspection',
+    category: 'Brake',
+    pricing: {
+      amount: '3,500',
+      currency: '₹',
+    },
+    duration: '1 hour',
+    bookedBy: 'Company',
+  },
+  {
+    id: 'WB123464',
+    serviceId: 'svc-5',
+    serviceName: 'Battery Replacement',
+    companyId: 'comp-9',
+    companyName: 'ElectroPower Pvt Ltd',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 97777 66554',
+    assignedBy: 'Manoj Kumar',
+    assignedDate: '2025-09-22T10:45:00Z',
+    scheduledDate: '2025-10-05T09:00:00Z',
+    scheduledTime: '9:00 AM',
+    status: 'Cancelled',
+    location: 'Nashik, Maharashtra',
+    serviceType: 'Battery Replacement',
+    category: 'Battery',
+    pricing: {
+      amount: '4,500',
+      currency: '₹',
+    },
+    duration: '45 minutes',
+    bookedBy: 'Customer',
+    notes: 'Caller requested cancellation due to stock issue',
+  },
+  {
+    id: 'WB123465',
+    serviceId: 'svc-6',
+    serviceName: 'AC Service & Repair',
+    companyId: 'comp-10',
+    companyName: 'CoolTech Services',
+    companyLogo: '/profile.png',
+    companyPhone: '+91 96666 55443',
+    assignedBy: 'Priya Singh',
+    assignedDate: '2025-09-28T13:30:00Z',
+    scheduledDate: '2025-10-18T08:30:00Z',
+    scheduledTime: '8:30 AM',
+    status: 'Pending',
+    location: 'Mumbai, Maharashtra',
+    serviceType: 'AC Service',
+    category: 'AC',
+    pricing: {
+      amount: '2,200',
+      currency: '₹',
+    },
+    duration: '1.5 hours',
+    bookedBy: 'Company',
+    notes: 'Customer prefers early morning slot',
+  },
+];
+
 export const companyFleetData = {
   vehicles: [
     {
@@ -2327,7 +2902,7 @@ export const mockBidsData: Record<string, TripBid[]> = {
       bidder: {
         id: 'prof-4',
         name: 'Amit Sharma',
-        avatar: '/professional-profile.png',
+        avatar: 'profile.png',
         rating: 4.2,
         totalTrips: 95,
         isVerified: false,
@@ -3262,7 +3837,8 @@ export const companyDashboardData: CompanyDashboardData = {
     {
       id: 'srv-1',
       title: 'Tyre Replacement',
-      description: 'Professional tyre replacement service for all vehicle types',
+      description:
+        'Professional tyre replacement service for all vehicle types',
       status: 'Tyre Repair!',
       updatedAt: '2 days ago',
       backgroundColor: '#FFF5F5',
@@ -3299,6 +3875,354 @@ export const companyDashboardData: CompanyDashboardData = {
       time: '28 May, 07:00 AM',
       driver: 'Driver: A. Rojan',
       route: 'Chennai → Pune',
+    },
+  ],
+};
+
+// Business Service Listings Data Structure
+export interface ServiceListing {
+  id: string;
+  title: string;
+  category: string;
+  categoryColor: string;
+  description: string;
+  detailedDescription?: string;
+  status: 'Published' | 'Draft';
+  createdAt: string;
+  updatedAt: string;
+  businessId: string;
+  businessName: string;
+  pricing?: {
+    type: 'fixed' | 'hourly' | 'quote' | 'package';
+    amount?: number;
+    currency: string;
+    details?: string;
+  };
+  availability?: {
+    days: string[];
+    hours: string;
+  };
+  location?: string;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+  };
+  images?: string[];
+  tags?: string[];
+  rating?: number;
+  reviewCount?: number;
+  completedJobs?: number;
+}
+
+export interface BusinessServiceData {
+  myServices: ServiceListing[];
+  allServices: ServiceListing[];
+}
+
+export const businessServiceListings: BusinessServiceData = {
+  myServices: [
+    {
+      id: 'svc-1',
+      title: 'Tyre Replacement',
+      category: 'Tyre Repair',
+      categoryColor: '#E3F2FD',
+      description:
+        'Professional tyre replacement service for all vehicle types',
+      detailedDescription:
+        'Comprehensive tyre replacement service including balancing, alignment, and quality assurance. We use premium quality tyres suitable for all vehicle types including trucks, buses, and heavy machinery.',
+      status: 'Published',
+      createdAt: '2025-10-04T10:00:00Z',
+      updatedAt: '2025-10-04T10:00:00Z',
+      businessId: 'bus-1',
+      businessName: 'TyreMaster Services',
+      pricing: {
+        type: 'fixed',
+        amount: 2500,
+        currency: '₹',
+        details: 'Per tyre including fitting',
+      },
+      availability: {
+        days: [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ],
+        hours: '8:00 AM - 6:00 PM',
+      },
+      location: 'Mumbai, Maharashtra',
+      contactInfo: {
+        phone: '+91 98765 43210',
+        email: 'contact@tyremaster.com',
+      },
+      images: ['/tires.png'],
+      tags: ['Tyre', 'Replacement', 'Professional'],
+      rating: 4.8,
+      reviewCount: 156,
+      completedJobs: 342,
+    },
+    {
+      id: 'svc-2',
+      title: 'Engine Diagnostics',
+      category: 'Engine',
+      categoryColor: '#F3E5F5',
+      description: 'Complete engine diagnostic and repair services',
+      detailedDescription:
+        'Advanced engine diagnostics using latest computerized equipment. We identify and fix all engine-related issues including performance problems, emissions, and fuel efficiency.',
+      status: 'Published',
+      createdAt: '2025-10-03T14:30:00Z',
+      updatedAt: '2025-10-05T09:15:00Z',
+      businessId: 'bus-1',
+      businessName: 'TyreMaster Services',
+      pricing: {
+        type: 'quote',
+        currency: '₹',
+        details: 'Based on diagnosis',
+      },
+      availability: {
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        hours: '9:00 AM - 5:00 PM',
+      },
+      location: 'Mumbai, Maharashtra',
+      contactInfo: {
+        phone: '+91 98765 43210',
+        email: 'contact@tyremaster.com',
+      },
+      images: ['/excavator.jpg'],
+      tags: ['Engine', 'Diagnostics', 'Repair'],
+      rating: 4.9,
+      reviewCount: 203,
+      completedJobs: 578,
+    },
+    {
+      id: 'svc-3',
+      title: 'Oil Change Service',
+      category: 'Oil',
+      categoryColor: '#FFF9C4',
+      description: 'Quick and efficient oil change for all vehicles',
+      detailedDescription:
+        'Professional oil change service using premium quality engine oils. Includes oil filter replacement and comprehensive 21-point vehicle inspection.',
+      status: 'Draft',
+      createdAt: '2025-10-02T16:45:00Z',
+      updatedAt: '2025-10-02T16:45:00Z',
+      businessId: 'bus-1',
+      businessName: 'TyreMaster Services',
+      pricing: {
+        type: 'package',
+        amount: 1500,
+        currency: '₹',
+        details: 'Including premium oil and filter',
+      },
+      availability: {
+        days: [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ],
+        hours: '8:00 AM - 7:00 PM',
+      },
+      location: 'Mumbai, Maharashtra',
+      contactInfo: {
+        phone: '+91 98765 43210',
+        email: 'contact@tyremaster.com',
+      },
+      images: ['/truck-01.jpg'],
+      tags: ['Oil Change', 'Quick Service', 'Maintenance'],
+      rating: 4.7,
+      reviewCount: 89,
+      completedJobs: 234,
+    },
+    {
+      id: 'svc-4',
+      title: 'Brake Inspection',
+      category: 'Brake',
+      categoryColor: '#FFEBEE',
+      description: 'Comprehensive brake system inspection and repair',
+      detailedDescription:
+        'Thorough brake system inspection covering brake pads, rotors, calipers, and brake fluid. Expert technicians ensure your vehicle safety with premium replacement parts.',
+      status: 'Published',
+      createdAt: '2025-10-01T11:20:00Z',
+      updatedAt: '2025-10-01T11:20:00Z',
+      businessId: 'bus-1',
+      businessName: 'TyreMaster Services',
+      pricing: {
+        type: 'fixed',
+        amount: 3500,
+        currency: '₹',
+        details: 'Complete inspection and minor repairs',
+      },
+      availability: {
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        hours: '9:00 AM - 6:00 PM',
+      },
+      location: 'Mumbai, Maharashtra',
+      contactInfo: {
+        phone: '+91 98765 43210',
+        email: 'contact@tyremaster.com',
+      },
+      images: ['/black-truck.png'],
+      tags: ['Brake', 'Safety', 'Inspection'],
+      rating: 4.8,
+      reviewCount: 167,
+      completedJobs: 445,
+    },
+    {
+      id: 'svc-5',
+      title: 'Battery Replacement',
+      category: 'Battery',
+      categoryColor: '#E0F2F1',
+      description: 'Professional battery testing and replacement service',
+      detailedDescription:
+        'Complete battery diagnostics and replacement using premium branded batteries. Free battery testing and installation with warranty coverage.',
+      status: 'Published',
+      createdAt: '2025-09-30T13:10:00Z',
+      updatedAt: '2025-09-30T13:10:00Z',
+      businessId: 'bus-1',
+      businessName: 'TyreMaster Services',
+      pricing: {
+        type: 'fixed',
+        amount: 4500,
+        currency: '₹',
+        details: 'Including battery and installation',
+      },
+      availability: {
+        days: [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ],
+        hours: '8:00 AM - 6:00 PM',
+      },
+      location: 'Mumbai, Maharashtra',
+      contactInfo: {
+        phone: '+91 98765 43210',
+        email: 'contact@tyremaster.com',
+      },
+      images: ['/yellow-truck.jpg'],
+      tags: ['Battery', 'Replacement', 'Warranty'],
+      rating: 4.6,
+      reviewCount: 98,
+      completedJobs: 267,
+    },
+    {
+      id: 'svc-6',
+      title: 'AC Service & Repair',
+      category: 'AC',
+      categoryColor: '#E8F5E9',
+      description: 'Complete air conditioning service and repair',
+      detailedDescription:
+        'Professional AC servicing including gas refilling, compressor repair, and cooling system maintenance. Expert diagnosis and repair for optimal cooling performance.',
+      status: 'Draft',
+      createdAt: '2025-09-29T15:30:00Z',
+      updatedAt: '2025-09-29T15:30:00Z',
+      businessId: 'bus-1',
+      businessName: 'TyreMaster Services',
+      pricing: {
+        type: 'quote',
+        currency: '₹',
+        details: 'Based on service required',
+      },
+      availability: {
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        hours: '9:00 AM - 5:00 PM',
+      },
+      location: 'Mumbai, Maharashtra',
+      contactInfo: {
+        phone: '+91 98765 43210',
+        email: 'contact@tyremaster.com',
+      },
+      images: ['/bus.jpg'],
+      tags: ['AC', 'Cooling', 'Repair'],
+      rating: 4.7,
+      reviewCount: 134,
+      completedJobs: 312,
+    },
+  ],
+  allServices: [
+    {
+      id: 'svc-101',
+      title: 'Fleet Maintenance Package',
+      category: 'Maintenance',
+      categoryColor: '#FFF3E0',
+      description:
+        'Comprehensive fleet maintenance service for commercial vehicles',
+      detailedDescription:
+        'Complete fleet maintenance solution including scheduled servicing, emergency repairs, and preventive maintenance for commercial fleets.',
+      status: 'Published',
+      createdAt: '2025-10-05T10:00:00Z',
+      updatedAt: '2025-10-05T10:00:00Z',
+      businessId: 'bus-2',
+      businessName: 'FleetCare Solutions',
+      pricing: {
+        type: 'package',
+        amount: 15000,
+        currency: '₹',
+        details: 'Monthly package per vehicle',
+      },
+      availability: {
+        days: [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
+        ],
+        hours: '24/7 Available',
+      },
+      location: 'Delhi, NCR',
+      contactInfo: {
+        phone: '+91 98888 12345',
+        email: 'support@fleetcare.com',
+      },
+      images: ['/truck-cta.png'],
+      tags: ['Fleet', 'Maintenance', 'Commercial'],
+      rating: 4.9,
+      reviewCount: 287,
+      completedJobs: 1245,
+    },
+    {
+      id: 'svc-102',
+      title: 'Hydraulic System Repair',
+      category: 'Hydraulic',
+      categoryColor: '#E1F5FE',
+      description: 'Expert hydraulic system diagnostics and repair',
+      detailedDescription:
+        'Specialized hydraulic system repair for heavy machinery and commercial vehicles. Expert technicians with advanced diagnostic tools.',
+      status: 'Published',
+      createdAt: '2025-10-04T14:20:00Z',
+      updatedAt: '2025-10-04T14:20:00Z',
+      businessId: 'bus-3',
+      businessName: 'HydroTech Services',
+      pricing: {
+        type: 'hourly',
+        amount: 800,
+        currency: '₹',
+        details: 'Per hour plus parts',
+      },
+      availability: {
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        hours: '8:00 AM - 6:00 PM',
+      },
+      location: 'Bangalore, Karnataka',
+      contactInfo: {
+        phone: '+91 99999 54321',
+        email: 'info@hydrotech.com',
+      },
+      images: ['/bulldozer.png'],
+      tags: ['Hydraulic', 'Heavy Machinery', 'Expert'],
+      rating: 4.8,
+      reviewCount: 176,
+      completedJobs: 523,
     },
   ],
 };

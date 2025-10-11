@@ -119,7 +119,7 @@ export default function ProfessionalSearchPage() {
       type: 'Full-time',
       description:
         'Plan and execute construction projects with focus on quality and safety.',
-      image: '/professional-profile.png',
+      image: 'profile.png',
       postedDate: '1 week ago',
     },
   ];

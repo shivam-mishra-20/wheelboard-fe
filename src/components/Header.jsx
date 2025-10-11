@@ -290,6 +290,17 @@ const Header = () => {
   // Determine if navbar should appear expanded
   const isExpanded = !scrolled || temporaryExpanded;
 
+  // Helper to construct profile path based on session user type
+  const getProfilePath = () => {
+    if (!userSession) return '/';
+    // session shape may store user type on userSession.user.userType or userSession.userType
+    const userType =
+      (userSession.user && userSession.user.userType) ||
+      userSession.userType ||
+      'business';
+    return `/${userType}/profile`;
+  };
+
   // Toggle auth popup
   const toggleAuthPopup = (e) => {
     e.preventDefault();
@@ -488,7 +499,11 @@ const Header = () => {
                 {userSession ? (
                   // Show user profile and logout for authenticated users
                   <div className="space-y-2">
-                    <div className="flex items-center space-x-3 px-4 py-2">
+                    <Link
+                      href={getProfilePath()}
+                      className="flex items-center space-x-3 px-4 py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
                       <div className="h-8 w-8 overflow-hidden rounded-full bg-amber-500">
                         <img
                           src={userSession.profileImage}
@@ -502,7 +517,7 @@ const Header = () => {
                       <span className="text-sm font-medium text-gray-700">
                         {userSession.user.companyName}
                       </span>
-                    </div>
+                    </Link>
                     <button
                       onClick={async () => {
                         await mockAPI.logout();
@@ -550,19 +565,27 @@ const Header = () => {
       // Show user profile section when authenticated
       return (
         <div className="hidden items-center gap-3 md:flex">
-          <span className="text-sm font-medium text-gray-700">
-            {userSession.user.companyName}
-          </span>
-          <div className="h-9 w-9 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100">
-            <img
-              src={userSession.profileImage}
-              alt="Profile"
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                e.target.src = '/profile.png';
-              }}
-            />
-          </div>
+          <Link
+            href={getProfilePath()}
+            className="flex items-center gap-3"
+            onClick={() => {
+              /* keep header state as-is; navigating will handle route change */
+            }}
+          >
+            <span className="text-sm font-medium text-gray-700">
+              {userSession.user.companyName}
+            </span>
+            <div className="h-9 w-9 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100">
+              <img
+                src={userSession.profileImage}
+                alt="Profile"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.target.src = '/profile.png';
+                }}
+              />
+            </div>
+          </Link>
           <button
             onClick={async () => {
               await mockAPI.logout();

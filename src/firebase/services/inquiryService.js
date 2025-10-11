@@ -1,4 +1,4 @@
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../config';
 
 const COLLECTION_NAME = 'inquiries';

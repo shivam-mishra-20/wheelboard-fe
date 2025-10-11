@@ -459,7 +459,7 @@ export default function VehicleFormModal({
               />
               <Label
                 htmlFor="image"
-                className="border-input hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 transition-colors"
+                className="flex cursor-pointer items-center gap-2 rounded-md border border-input px-4 py-2 transition-colors hover:bg-accent"
               >
                 <Upload className="h-4 w-4" />
                 <span className="text-sm">Upload Image</span>
@@ -478,7 +478,7 @@ export default function VehicleFormModal({
           </div>
 
           {/* Confirmation Checkbox */}
-          <div className="bg-muted/50 flex items-start gap-2 rounded-lg p-4">
+          <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-4">
             <input
               type="checkbox"
               id="confirm"
@@ -487,7 +487,7 @@ export default function VehicleFormModal({
                 setConfirmChecked(e.target.checked);
                 clearError('confirm');
               }}
-              className="text-primary focus:ring-primary mt-1 h-4 w-4 rounded border-gray-300"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
             />
             <Label
               htmlFor="confirm"

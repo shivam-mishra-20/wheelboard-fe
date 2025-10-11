@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -81,7 +81,7 @@ const getDriverById = (id: string) => {
   };
 };
 
-export default function DriverProfilePage() {
+function DriverProfileInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const driverId = searchParams.get('driverId');
@@ -510,5 +510,17 @@ export default function DriverProfilePage() {
         <Footer />
       </div>
     </CompanyProtected>
+  );
+}
+
+const LoadingFallback = () => (
+  <div className="p-6 text-sm text-gray-500">Loading…</div>
+);
+
+export default function DriverProfilePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <DriverProfileInner />
+    </Suspense>
   );
 }

@@ -21,6 +21,7 @@ interface CreateJobModalProps {
   onSubmit: (jobData: JobFormData & { id?: string }) => void; // include optional id for edit
   initialData?: Partial<JobFormData & { id?: string }> | null;
   mode?: 'create' | 'edit';
+  allowedJobTypes?: ('Driver' | 'Technician' | 'Helper')[]; // Restrict job types (e.g., Business can only post Technician/Helper)
 }
 
 interface JobFormData {
@@ -46,6 +47,7 @@ export default function CreateJobModal({
   onSubmit,
   initialData = null,
   mode = 'create',
+  allowedJobTypes = ['Driver', 'Technician', 'Helper'], // Default to all job types if not specified
 }: CreateJobModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<JobFormData>({
@@ -205,28 +207,26 @@ export default function CreateJobModal({
 
                   {/* Job Type Buttons */}
                   <div className="mb-6 flex flex-wrap gap-3">
-                    {(['Driver', 'Technician', 'Helper'] as const).map(
-                      (type) => {
-                        const Icon = jobTypeIcons[type];
-                        const isSelected = formData.jobType === type;
-                        return (
-                          <motion.button
-                            key={type}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleJobTypeSelect(type)}
-                            className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2.5 font-semibold transition-all ${
-                              isSelected
-                                ? 'border-red-400 bg-red-50 text-red-600'
-                                : 'border-gray-200 bg-white text-gray-600 hover:border-red-200 hover:bg-red-50/50'
-                            }`}
-                          >
-                            <Icon className="h-4 w-4" />
-                            {type}
-                          </motion.button>
-                        );
-                      }
-                    )}
+                    {allowedJobTypes.map((type) => {
+                      const Icon = jobTypeIcons[type];
+                      const isSelected = formData.jobType === type;
+                      return (
+                        <motion.button
+                          key={type}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleJobTypeSelect(type)}
+                          className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2.5 font-semibold transition-all ${
+                            isSelected
+                              ? 'border-red-400 bg-red-50 text-red-600'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-red-200 hover:bg-red-50/50'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {type}
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 </div>
 
