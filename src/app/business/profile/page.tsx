@@ -16,6 +16,7 @@ import {
   Globe,
   Hash,
   ArrowLeft,
+  Building2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -149,65 +150,72 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl scroll-smooth">
+    <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 flex items-center justify-between"
+          className="mb-6 sm:mb-8"
         >
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-primary-500"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </button>
+          <button
+            onClick={() => router.back()}
+            className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-600 transition-colors hover:text-[#f36969]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
 
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Manage your business profile and settings
-              </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f36969] to-[#f36565] shadow-lg shadow-[#f36969]/30">
+                <Building2 className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                  Business Profile
+                </h1>
+                <p className="mt-1 text-sm text-gray-600">
+                  Manage your business information
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            {!isEditing ? (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleEditToggle}
-                className="flex items-center gap-2 rounded-lg bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-shadow hover:shadow-lg"
-              >
-                <Edit2 className="h-4 w-4" />
-                Edit Profile
-              </motion.button>
-            ) : (
-              <>
+            <div className="flex gap-3">
+              {!isEditing ? (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleEditToggle}
-                  className="flex items-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition-all hover:border-gray-400"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#f36969]/30 transition-all hover:shadow-xl hover:shadow-[#f36969]/40 sm:flex-initial"
                 >
-                  <X className="h-4 w-4" />
-                  Cancel
+                  <Edit2 className="h-4 w-4" />
+                  Edit Profile
                 </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="flex items-center gap-2 rounded-lg bg-green-500 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-shadow hover:shadow-lg disabled:opacity-50"
-                >
-                  <Save className="h-4 w-4" />
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </motion.button>
-              </>
-            )}
+              ) : (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleEditToggle}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-5 py-3 text-sm font-bold text-gray-700 shadow-md transition-all hover:border-gray-400 hover:shadow-lg sm:flex-initial"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-green-600/30 transition-all hover:bg-green-700 hover:shadow-xl hover:shadow-green-600/40 disabled:opacity-50 sm:flex-initial"
+                  >
+                    <Save className="h-4 w-4" />
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </motion.button>
+                </>
+              )}
+            </div>
           </div>
         </motion.div>
 
@@ -219,12 +227,12 @@ const ProfilePage = () => {
             animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-1"
           >
-            <div className="sticky top-8 overflow-hidden rounded-2xl bg-white shadow-lg transition-shadow hover:shadow-xl">
+            <div className="sticky top-6 overflow-hidden rounded-2xl bg-white shadow-xl">
               {/* Profile Header with Logo */}
-              <div className="relative h-32 bg-gradient-to-r from-primary-500 to-primary-600">
-                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
+              <div className="relative h-28 bg-gradient-to-r from-[#f36969] to-[#f36565] sm:h-32">
+                <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 sm:-bottom-16">
                   <div className="relative">
-                    <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-white shadow-xl">
+                    <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-white bg-white shadow-xl sm:h-32 sm:w-32">
                       <Image
                         src={logoPreview || '/profile-pic.png'}
                         alt="Profile"
@@ -234,8 +242,8 @@ const ProfilePage = () => {
                       />
                     </div>
                     {isEditing && (
-                      <label className="absolute bottom-0 right-0 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary-500 text-white shadow-lg transition-transform hover:scale-110">
-                        <Camera className="h-5 w-5" />
+                      <label className="absolute bottom-0 right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[#f36969] text-white shadow-lg transition-all hover:scale-110 hover:bg-[#f36565] sm:h-10 sm:w-10">
+                        <Camera className="h-4 w-4 sm:h-5 sm:w-5" />
                         <input
                           type="file"
                           accept="image/*"
@@ -248,27 +256,27 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              <div className="px-6 pb-6 pt-20">
+              <div className="px-5 pb-6 pt-16 sm:px-6 sm:pt-20">
                 {/* Company Name */}
                 <div className="text-center">
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
                     {editedProfile.companyName}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-2 text-xs text-gray-500 sm:text-sm">
                     {editedProfile.gstNumber}
                   </p>
                 </div>
 
                 {/* Service Tags */}
                 <div className="mt-6">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">
                     Services Offered
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {editedProfile.servicesOffered?.map((service, index) => (
                       <span
                         key={index}
-                        className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600"
+                        className="rounded-full bg-gradient-to-r from-[#f36969]/10 to-[#f36565]/10 px-3 py-1.5 text-xs font-semibold text-[#f36969]"
                       >
                         {service}
                       </span>
@@ -282,7 +290,7 @@ const ProfilePage = () => {
                     {editedProfile.businessType?.map((type, index) => (
                       <span
                         key={index}
-                        className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-600"
+                        className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700"
                       >
                         {type}
                       </span>
@@ -294,19 +302,19 @@ const ProfilePage = () => {
                 <div className="mt-8 space-y-3">
                   <button
                     onClick={() => router.push('/business/subscriptions')}
-                    className="w-full rounded-lg bg-green-500 py-3 text-sm font-semibold text-white transition-all hover:bg-green-600"
+                    className="w-full rounded-xl bg-gradient-to-r from-green-600 to-green-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-600/30 transition-all hover:shadow-xl hover:shadow-green-600/40"
                   >
                     View Subscription Plans
                   </button>
                   <button
                     onClick={handleSwitchProfile}
-                    className="w-full rounded-lg border-2 border-red-500 bg-white py-3 text-sm font-semibold text-red-500 transition-all hover:bg-red-50"
+                    className="w-full rounded-xl border-2 border-[#f36969] bg-white py-3.5 text-sm font-bold text-[#f36969] transition-all hover:bg-[#f36969]/5"
                   >
                     Switch Profile
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-500 py-3 text-sm font-semibold text-white transition-all hover:bg-gray-600"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-3.5 text-sm font-bold text-white transition-all hover:bg-black"
                   >
                     <LogOut className="h-4 w-4" />
                     Log Out
@@ -320,238 +328,236 @@ const ProfilePage = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2"
+            className="space-y-6 lg:col-span-2"
           >
-            <div className="space-y-6 pb-8">
-              {/* Business Address Section */}
-              <div className="overflow-hidden rounded-2xl bg-white p-6 shadow-lg transition-shadow hover:shadow-xl">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Business Address
-                </h3>
-                {isEditing ? (
-                  <div className="space-y-4">
+            {/* Business Address Section */}
+            <div className="overflow-hidden rounded-2xl bg-white p-5 shadow-lg sm:p-6">
+              <h3 className="mb-5 text-lg font-bold text-gray-900 sm:text-xl">
+                Business Address
+              </h3>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                      Street Address
+                    </label>
+                    <input
+                      type="text"
+                      value={editedProfile.businessAddress || ''}
+                      onChange={(e) =>
+                        handleInputChange('businessAddress', e.target.value)
+                      }
+                      className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                      placeholder="Enter street address"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Street Address
+                      <label className="mb-2 block text-sm font-semibold text-gray-700">
+                        City
                       </label>
                       <input
                         type="text"
-                        value={editedProfile.businessAddress || ''}
+                        value={editedProfile.city || ''}
                         onChange={(e) =>
-                          handleInputChange('businessAddress', e.target.value)
+                          handleInputChange('city', e.target.value)
                         }
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                        placeholder="Enter city"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700">
-                          City
-                        </label>
-                        <input
-                          type="text"
-                          value={editedProfile.city || ''}
-                          onChange={(e) =>
-                            handleInputChange('city', e.target.value)
-                          }
-                          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700">
-                          State
-                        </label>
-                        <input
-                          type="text"
-                          value={editedProfile.state || ''}
-                          onChange={(e) =>
-                            handleInputChange('state', e.target.value)
-                          }
-                          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-gray-700">
+                        State
+                      </label>
+                      <input
+                        type="text"
+                        value={editedProfile.state || ''}
+                        onChange={(e) =>
+                          handleInputChange('state', e.target.value)
+                        }
+                        className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                        placeholder="Enter state"
+                      />
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400" />
-                    <div className="text-sm text-gray-600">
-                      <p>{profile.businessAddress}</p>
-                      <p className="mt-1">
-                        {profile.city}, {profile.state}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Contact Information */}
-              <div className="overflow-hidden rounded-2xl bg-white p-6 shadow-lg transition-shadow hover:shadow-xl">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Contact Information
-                </h3>
-                <div className="space-y-4">
-                  {/* Phone */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
-                      <Phone className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-500">Phone</p>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          value={editedProfile.phoneNumber}
-                          onChange={(e) =>
-                            handleInputChange('phoneNumber', e.target.value)
-                          }
-                          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-gray-900">
-                          {profile.phoneNumber}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* WhatsApp */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50">
-                      <Phone className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-500">
-                        WhatsApp
-                      </p>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          value={editedProfile.whatsappNumber || ''}
-                          onChange={(e) =>
-                            handleInputChange('whatsappNumber', e.target.value)
-                          }
-                          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-gray-900">
-                          {profile.whatsappNumber}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-50">
-                      <Mail className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-gray-500">
-                        Email Address
-                      </p>
-                      {isEditing ? (
-                        <input
-                          type="email"
-                          value={editedProfile.email}
-                          onChange={(e) =>
-                            handleInputChange('email', e.target.value)
-                          }
-                          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-gray-900">
-                          {profile.email}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Website */}
-                  {(isEditing || profile.website) && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50">
-                        <Globe className="h-5 w-5 text-orange-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-gray-500">
-                          Website
-                        </p>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editedProfile.website || ''}
-                            onChange={(e) =>
-                              handleInputChange('website', e.target.value)
-                            }
-                            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">
-                            {profile.website}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4">
+                  <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#f36969]" />
+                  <div className="text-sm text-gray-900">
+                    <p className="font-semibold">{profile.businessAddress}</p>
+                    <p className="mt-1 text-gray-600">
+                      {profile.city}, {profile.state}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
 
-              {/* Description Section */}
-              <div className="overflow-hidden rounded-2xl bg-white p-6 shadow-lg transition-shadow hover:shadow-xl">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Description
-                </h3>
-                {isEditing ? (
-                  <textarea
-                    value={editedProfile.description || ''}
-                    onChange={(e) =>
-                      handleInputChange('description', e.target.value)
-                    }
-                    rows={6}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Tell us about your business..."
-                  />
-                ) : (
-                  <p className="text-sm leading-relaxed text-gray-600">
-                    {profile.description || 'No description available'}
-                  </p>
-                )}
-              </div>
+            {/* Contact Information */}
+            <div className="overflow-hidden rounded-2xl bg-white p-5 shadow-lg sm:p-6">
+              <h3 className="mb-5 text-lg font-bold text-gray-900 sm:text-xl">
+                Contact Information
+              </h3>
+              <div className="space-y-4">
+                {/* Phone */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+                    <Phone className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-gray-500">Phone</p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editedProfile.phoneNumber}
+                        onChange={(e) =>
+                          handleInputChange('phoneNumber', e.target.value)
+                        }
+                        className="mt-1 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                      />
+                    ) : (
+                      <p className="mt-1 truncate text-sm font-bold text-gray-900">
+                        {profile.phoneNumber}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-              {/* Additional Information */}
-              <div className="overflow-hidden rounded-2xl bg-white p-6 shadow-lg transition-shadow hover:shadow-xl">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Additional Information
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-4">
-                    <Hash className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">
-                        GST Number
+                {/* WhatsApp */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50">
+                    <Phone className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-gray-500">
+                      WhatsApp
+                    </p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editedProfile.whatsappNumber || ''}
+                        onChange={(e) =>
+                          handleInputChange('whatsappNumber', e.target.value)
+                        }
+                        className="mt-1 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                      />
+                    ) : (
+                      <p className="mt-1 truncate text-sm font-bold text-gray-900">
+                        {profile.whatsappNumber}
                       </p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {profile.gstNumber}
+                    )}
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50">
+                    <Mail className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-gray-500">
+                      Email Address
+                    </p>
+                    {isEditing ? (
+                      <input
+                        type="email"
+                        value={editedProfile.email}
+                        onChange={(e) =>
+                          handleInputChange('email', e.target.value)
+                        }
+                        className="mt-1 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                      />
+                    ) : (
+                      <p className="mt-1 truncate text-sm font-bold text-gray-900">
+                        {profile.email}
                       </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Website */}
+                {(isEditing || profile.website) && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50">
+                      <Globe className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-gray-500">
+                        Website
+                      </p>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editedProfile.website || ''}
+                          onChange={(e) =>
+                            handleInputChange('website', e.target.value)
+                          }
+                          className="mt-1 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                        />
+                      ) : (
+                        <p className="mt-1 truncate text-sm font-bold text-gray-900">
+                          {profile.website}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-4">
-                    <Calendar className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">
-                        Member Since
-                      </p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {new Date(profile.createdAt).toLocaleDateString(
-                          'en-US',
-                          {
-                            month: 'short',
-                            year: 'numeric',
-                          }
-                        )}
-                      </p>
-                    </div>
+                )}
+              </div>
+            </div>
+
+            {/* Description Section */}
+            <div className="overflow-hidden rounded-2xl bg-white p-5 shadow-lg sm:p-6">
+              <h3 className="mb-5 text-lg font-bold text-gray-900 sm:text-xl">
+                Business Description
+              </h3>
+              {isEditing ? (
+                <textarea
+                  value={editedProfile.description || ''}
+                  onChange={(e) =>
+                    handleInputChange('description', e.target.value)
+                  }
+                  rows={6}
+                  className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                  placeholder="Tell us about your business..."
+                />
+              ) : (
+                <p className="text-sm leading-relaxed text-gray-700">
+                  {profile.description || 'No description available'}
+                </p>
+              )}
+            </div>
+
+            {/* Additional Information */}
+            <div className="overflow-hidden rounded-2xl bg-white p-5 shadow-lg sm:p-6">
+              <h3 className="mb-5 text-lg font-bold text-gray-900 sm:text-xl">
+                Additional Information
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex items-center gap-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+                  <Hash className="h-5 w-5 shrink-0 text-gray-600" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-500">
+                      GST Number
+                    </p>
+                    <p className="mt-1 truncate text-sm font-bold text-gray-900">
+                      {profile.gstNumber}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+                  <Calendar className="h-5 w-5 shrink-0 text-gray-600" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-500">
+                      Member Since
+                    </p>
+                    <p className="mt-1 truncate text-sm font-bold text-gray-900">
+                      {new Date(profile.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </p>
                   </div>
                 </div>
               </div>

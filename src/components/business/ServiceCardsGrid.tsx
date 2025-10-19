@@ -44,7 +44,7 @@ export default function ServiceCardsGrid() {
   return (
     <div className="mb-12">
       <div className="mb-8 text-center">
-        <h2 className="text-3xl font-bold text-gray-900">Our Services</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Your Dashboard</h2>
         <p className="mt-2 text-gray-600">
           Comprehensive solutions for your business needs
         </p>

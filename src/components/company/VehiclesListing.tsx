@@ -57,7 +57,7 @@ export default function VehiclesListing({
             onClick={() => setActiveTab('drivers')}
             className={`rounded-full px-8 py-2.5 text-sm font-semibold transition-all duration-300 ${
               activeTab === 'drivers'
-                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                ? 'bg-[#f36969] text-white'
                 : 'bg-transparent text-gray-600 hover:bg-white hover:text-primary-500'
             }`}
             whileHover={{ scale: 1.05 }}
@@ -69,7 +69,7 @@ export default function VehiclesListing({
             onClick={() => setActiveTab('vehicles')}
             className={`rounded-full px-8 py-2.5 text-sm font-semibold transition-all duration-300 ${
               activeTab === 'vehicles'
-                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                ? 'bg-[#f36969] text-white'
                 : 'bg-transparent text-gray-600 hover:bg-white hover:text-primary-500'
             }`}
             whileHover={{ scale: 1.05 }}
@@ -105,7 +105,7 @@ export default function VehiclesListing({
 
               <motion.button
                 onClick={onAddVehicle}
-                className="btn-primary flex items-center space-x-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-glow"
+                className="btn-primary flex items-center space-x-2 rounded-xl bg-[#f36969] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-glow"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -143,7 +143,7 @@ export default function VehiclesListing({
 
               <motion.button
                 onClick={onAddDriver}
-                className="btn-primary flex items-center space-x-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-glow"
+                className="btn-primary flex items-center space-x-2 rounded-xl bg-[#f36969] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-glow"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -203,9 +203,15 @@ export default function VehiclesListing({
                 <div className="flex flex-1 flex-col justify-between p-6 sm:flex-row sm:items-center">
                   <div className="space-y-3 pb-4 sm:pb-0">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-lg font-bold text-gray-900">
-                        {vehicle.name} - {vehicle.year}
-                      </h3>
+                      <div className="flex flex-col">
+                        <span className="text-lg font-extrabold text-gray-900">
+                          {vehicle.registrationNumber || vehicle.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {(vehicle.model || vehicle.name) +
+                            (vehicle.year ? ` · ${vehicle.year}` : '')}
+                        </span>
+                      </div>
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-bold shadow-sm ${vehicleStatusColors[vehicle.status as keyof typeof vehicleStatusColors]}`}
                       >

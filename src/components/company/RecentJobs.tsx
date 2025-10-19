@@ -20,36 +20,35 @@ const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.12,
     },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, x: -20 },
+  hidden: { opacity: 0, x: -30 },
   show: {
     opacity: 1,
     x: 0,
-    transition: { type: 'spring' as const, stiffness: 100 },
+    transition: { type: 'spring' as const, stiffness: 80, damping: 15 },
   },
 };
 
 export default function RecentJobs({ jobs }: RecentJobsProps) {
   return (
-    <div className="mb-16">
+    <div className="mb-12 md:mb-20">
       <motion.div
-        className="mb-8 flex items-center justify-between"
-        initial={{ opacity: 0, y: -10 }}
+        className="flex-col-1 mb-6 flex items-start justify-between gap-2 sm:flex-row sm:items-center md:mb-10"
+        initial={{ opacity: 0, y: -15 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6 }}
       >
-        <h2 className="bg-gradient-premium bg-clip-text text-3xl font-bold text-transparent">
-          Recent Jobs Created
+        <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+          Recent <span className="text-[#f36969]">Jobs Created</span>
         </h2>
         <motion.button
-          className="group flex items-center space-x-2 rounded-full border-2 border-primary-200 bg-white px-4 py-2 text-sm font-semibold text-primary-600 shadow-sm transition-all hover:border-primary-300 hover:bg-primary-50 hover:shadow-md"
-          whileHover={{ scale: 1.05 }}
+          className="group flex items-center gap-1 rounded-full bg-gradient-to-r from-[#f36969] to-[#f36565] px-2.5 py-2.5 text-xs font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-[#f36969]/20 md:px-6 md:py-3"
           whileTap={{ scale: 0.95 }}
         >
           <svg
@@ -61,16 +60,18 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={2.5}
               d="M12 4v16m8-8H4"
             />
           </svg>
-          <span>New Job</span>
+          <div className="hidden md:block">
+            <span>Create New Job</span>
+          </div>
         </motion.button>
       </motion.div>
 
       <motion.div
-        className="space-y-5"
+        className="space-y-4 md:space-y-6"
         variants={container}
         initial="hidden"
         whileInView="show"
@@ -80,39 +81,38 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
           <motion.div
             key={job.id}
             variants={item}
-            className="group overflow-hidden rounded-3xl bg-gradient-to-br from-white to-primary-50/30 shadow-premium transition-all duration-500 hover:shadow-premium-lg"
-            whileHover={{ scale: 1.01, x: 4 }}
+            className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-500 hover:border-[#f36969]/30 hover:shadow-2xl hover:shadow-[#f36969]/10 md:rounded-3xl"
           >
-            <div className="flex flex-col items-center gap-6 p-6 sm:flex-row sm:gap-8">
+            <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6 md:p-7">
               {/* Image Section */}
-              <div className="relative order-1 h-32 w-32 flex-shrink-0 overflow-hidden rounded-2xl shadow-lg ring-4 ring-white sm:order-2 sm:h-28 sm:w-28">
+              <div className="relative order-1 mx-auto h-36 w-36 flex-shrink overflow-hidden rounded-2xl shadow-lg ring-4 ring-white sm:order-2 sm:mx-0 sm:h-32 sm:w-32 md:h-36 md:w-36">
                 <Image
                   src={job.image}
                   alt={job.title}
-                  width={128}
-                  height={128}
-                  className="h-full w-full object-cover transition-all duration-700 group-hover:rotate-2 group-hover:scale-110"
+                  fill
+                  sizes="(max-width: 640px) 144px, 128px"
+                  className="object-cover transition-all duration-700"
                 />
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500/0 to-accent-500/0 opacity-0 transition-opacity duration-500 group-hover:from-primary-500/20 group-hover:to-accent-500/20 group-hover:opacity-100"></div>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#f36969]/0 to-[#f36565]/0 opacity-0 transition-opacity duration-500 group-hover:from-[#f36969]/20 group-hover:to-[#f36565]/20 group-hover:opacity-100"></div>
               </div>
 
               {/* Content Section */}
-              <div className="order-2 flex-1 text-center sm:order-1 sm:text-left">
-                <div className="mb-3 flex items-center justify-center gap-3 sm:justify-start">
-                  <h3 className="text-xl font-bold text-gray-900 transition-colors group-hover:text-primary-600">
+              <div className="order-2 flex-1 sm:order-1">
+                <div className="mb-3 flex flex-wrap items-center gap-2 md:gap-3">
+                  <h3 className="text-lg font-bold text-gray-900 transition-colors group-hover:text-[#f36969] md:text-xl lg:text-2xl">
                     {job.title}
                   </h3>
-                  <span className="rounded-full bg-success-100 px-3 py-1 text-xs font-semibold text-success-700">
+                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                     Active
                   </span>
                 </div>
-                <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-gray-600">
+                <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-gray-600 md:mb-5 md:text-base">
                   {job.description}
                 </p>
 
                 {/* Meta Info */}
-                <div className="mb-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500 sm:justify-start">
-                  <div className="flex items-center space-x-1.5">
+                <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-gray-500 md:gap-4 md:text-sm">
+                  <div className="flex items-center gap-1.5">
                     <svg
                       className="h-4 w-4"
                       fill="none"
@@ -128,7 +128,7 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
                     </svg>
                     <span>{job.createdAt}</span>
                   </div>
-                  <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center gap-1.5">
                     <svg
                       className="h-4 w-4"
                       fill="none"
@@ -153,10 +153,9 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-wrap justify-center gap-3 sm:justify-start">
+                <div className="flex flex-wrap gap-3">
                   <motion.button
-                    className="flex items-center space-x-2 rounded-xl border-2 border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    className="flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:shadow-md md:px-5"
                     whileTap={{ scale: 0.95 }}
                   >
                     <svg
@@ -175,8 +174,7 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
                     <span>Share</span>
                   </motion.button>
                   <motion.button
-                    className="btn-primary flex items-center space-x-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-glow"
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:shadow-[#f36969]/30 md:px-5"
                     whileTap={{ scale: 0.95 }}
                   >
                     <svg

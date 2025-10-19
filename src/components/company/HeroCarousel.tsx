@@ -170,18 +170,17 @@ export default function HeroCarousel({
     };
   };
 
-  // Render mobile view
+  // Render mobile view - now matching desktop style
   const renderMobileView = () => {
-    // Mobile will render the stacked carousel (touch-friendly) similar to desktop
     return (
       <div
-        className="relative overflow-hidden py-0"
+        className="relative overflow-hidden py-16"
         onTouchStart={handleMouseEnter}
         onTouchEnd={handleMouseLeave}
       >
         <motion.div
           ref={carouselRef}
-          className="relative h-[220px] w-full"
+          className="relative h-[240px] w-full"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.12}
@@ -192,79 +191,62 @@ export default function HeroCarousel({
         >
           <div className="absolute inset-0 flex items-center justify-center">
             {slides.map((slide, index) => {
-              // compute position same way as desktop so mobile shows the stacked cards
-              const diff =
-                (index - currentSlide + slides.length) % slides.length;
-              let position = 'hidden';
-              if (diff === 0) position = 'center';
-              else if (diff === 1) position = 'right';
-              else if (diff === slides.length - 1) position = 'left';
-              else if (diff === 2) position = 'farRight';
-              else if (diff === slides.length - 2) position = 'farLeft';
-
+              const position = getSlidePosition(index);
               const slideStyles = getSlideStyles(position);
-
-              // derive simple numeric/style values to avoid complex inline ternaries
-              const leftVal =
-                position === 'center'
-                  ? '50%'
-                  : position === 'left'
-                    ? '18%'
-                    : position === 'right'
-                      ? '82%'
-                      : position === 'farLeft'
-                        ? '4%'
-                        : position === 'farRight'
-                          ? '96%'
-                          : '150%';
-
-              const scaleVal =
-                position === 'center'
-                  ? 1
-                  : position === 'left' || position === 'right'
-                    ? 0.86
-                    : 0.72;
-              const rotateYVal =
-                position === 'left'
-                  ? 20
-                  : position === 'right'
-                    ? -20
-                    : position === 'farLeft'
-                      ? 30
-                      : position === 'farRight'
-                        ? -30
-                        : 0;
-              const opacityVal =
-                position === 'hidden'
-                  ? 0
-                  : position === 'center'
-                    ? 1
-                    : position === 'left' || position === 'right'
-                      ? 0.95
-                      : 0.8;
 
               return (
                 <motion.div
                   key={slide.id}
-                  className="absolute overflow-hidden rounded-[20px] shadow-xl"
+                  className="absolute overflow-hidden rounded-[24px] shadow-2xl"
                   initial={false}
                   animate={{
-                    left: leftVal,
+                    left:
+                      position === 'center'
+                        ? '50%'
+                        : position === 'left'
+                          ? '18%'
+                          : position === 'right'
+                            ? '82%'
+                            : position === 'farLeft'
+                              ? '4%'
+                              : position === 'farRight'
+                                ? '96%'
+                                : '150%',
                     x: '-50%',
-                    scale: scaleVal,
+                    scale:
+                      position === 'center'
+                        ? 1
+                        : position === 'left' || position === 'right'
+                          ? 0.82
+                          : 0.68,
                     zIndex: slideStyles.zIndex || 0,
-                    opacity: opacityVal,
-                    rotateY: rotateYVal,
+                    opacity:
+                      position === 'hidden'
+                        ? 0
+                        : position === 'center'
+                          ? 1
+                          : position === 'left' || position === 'right'
+                            ? 0.9
+                            : 0.75,
+                    rotateY:
+                      position === 'left'
+                        ? 22
+                        : position === 'right'
+                          ? -22
+                          : position === 'farLeft'
+                            ? 32
+                            : position === 'farRight'
+                              ? -32
+                              : 0,
                   }}
                   transition={{
                     type: 'tween',
                     ease: 'easeInOut',
                     duration: 0.5,
                   }}
-                  whileTap={{ scale: position === 'center' ? 0.995 : 0.96 }}
-                  whileHover={position !== 'hidden' ? { translateY: -4 } : {}}
+                  whileTap={{ scale: position === 'center' ? 0.98 : 0.8 }}
                   style={{
-                    width: slideStyles.width || (isMobile ? '88%' : '50%'),
+                    width: slideStyles.width || '85%',
                     aspectRatio: slideStyles.aspectRatio || '16/9',
                     transformOrigin:
                       slideStyles.transformOrigin || 'center center',
@@ -283,7 +265,7 @@ export default function HeroCarousel({
                       style={{ filter: slideStyles.filter || 'none' }}
                       priority={index === currentSlide}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/15 to-transparent" />
                   </div>
                 </motion.div>
               );
@@ -291,20 +273,48 @@ export default function HeroCarousel({
           </div>
         </motion.div>
 
-        {/* Mobile navigation dots */}
-        <div className="absolute -bottom-2 left-0 right-0 z-20 mt-4 flex items-center justify-center gap-3">
-          {slides.map((_, index) => (
+        {/* Mobile navigation controls - matching desktop style */}
+        <div className="absolute -bottom-2 left-0 right-0 z-40 flex flex-col items-center gap-3 pb-4">
+          <div className="flex items-center gap-8">
             <button
-              key={index}
-              className={`rounded-full transition-all duration-300 ${
-                currentSlide === index
-                  ? 'h-[8px] w-[8px] bg-[#000000]'
-                  : 'h-[6px] w-[6px] bg-gray-300'
-              }`}
-              onClick={() => goToSlide(index)}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+              onClick={() => {
+                prevSlide();
+                setAutoScroll(false);
+                setTimeout(() => setAutoScroll(true), 5000);
+              }}
+              className="rounded-full bg-white bg-opacity-30 p-2 text-gray-700 shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-opacity-50 hover:text-black focus:outline-none active:scale-95"
+              aria-label="Previous slide"
+            >
+              <IoIosArrowBack size={18} />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  className={`rounded-full transition-all duration-300 ${
+                    currentSlide === index
+                      ? 'h-[9px] w-[9px] bg-[#000000] shadow-md'
+                      : 'h-[7px] w-[7px] bg-gray-300'
+                  }`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                nextSlide();
+                setAutoScroll(false);
+                setTimeout(() => setAutoScroll(true), 5000);
+              }}
+              className="rounded-full bg-white bg-opacity-30 p-2 text-gray-700 shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-opacity-50 hover:text-black focus:outline-none active:scale-95"
+              aria-label="Next slide"
+            >
+              <IoIosArrowForward size={18} />
+            </button>
+          </div>
         </div>
       </div>
     );

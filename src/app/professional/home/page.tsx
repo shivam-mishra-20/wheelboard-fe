@@ -9,6 +9,7 @@ import QuickActions from '../../../components/professional/QuickActions';
 import NextScheduledTrip from '../../../components/professional/NextScheduledTrip';
 import JobListings from '../../../components/professional/JobListings';
 import PopularFeeds from '../../../components/company/PopularFeeds';
+import FloatingSOSButton from '../../../components/professional/FloatingSOSButton';
 import { professionalHomeData } from '../../../lib/mockApi';
 
 export default function ProfessionalHomePage() {
@@ -20,9 +21,9 @@ export default function ProfessionalHomePage() {
       {/* Login Simulator for Testing */}
       <LoginSimulator />
 
-      <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
+      <div className="min-h-screen pt-6 font-poppins">
         {/* Main Content */}
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-4 lg:px-8">
           {/* Hero Carousel Section */}
           <HeroCarousel
             slides={professionalHomeData.carouselSlides}
@@ -44,6 +45,9 @@ export default function ProfessionalHomePage() {
           {/* Popular Feeds Section */}
           <PopularFeeds feeds={professionalHomeData.popularFeeds} />
         </main>
+
+        {/* Floating SOS Button */}
+        <FloatingSOSButton />
 
         {/* Shared Footer */}
         <Footer />

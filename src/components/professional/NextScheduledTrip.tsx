@@ -36,7 +36,7 @@ export default function NextScheduledTrip({
       case 'fragile':
         return (
           <svg
-            className="h-6 w-6"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -52,7 +52,7 @@ export default function NextScheduledTrip({
       case 'cargo':
         return (
           <svg
-            className="h-6 w-6"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -68,7 +68,7 @@ export default function NextScheduledTrip({
       default:
         return (
           <svg
-            className="h-6 w-6"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -85,54 +85,48 @@ export default function NextScheduledTrip({
   };
 
   return (
-    <div className="mb-16">
+    <div className="mb-8 md:mb-16">
+      {/* Header */}
+      <div className="mb-5 md:mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+          Next Scheduled <span className="text-[#f36969]">Trip</span>
+        </h2>
+      </div>
+
+      {/* Trip Card */}
       <motion.div
-        className="mb-8 flex items-center justify-between"
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.5 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-300 hover:border-[#f36969]/30 hover:shadow-2xl hover:shadow-[#f36969]/10 md:rounded-3xl"
       >
-        <h2 className="bg-gradient-premium bg-clip-text text-3xl font-bold text-transparent">
-          Next Scheduled Trip
-        </h2>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        className="group overflow-hidden rounded-3xl bg-gradient-to-br from-white to-primary-50/30 shadow-premium transition-all duration-500 hover:shadow-premium-lg"
-        whileHover={{ scale: 1.01, x: 4 }}
-      >
-        <div className="p-6">
-          {/* Trip Type Badge */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-lg">
+        <div className="p-5 md:p-7 lg:p-8">
+          {/* Trip Type Header */}
+          <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center md:mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#f36969]/10 to-[#f36565]/10 text-[#f36969] md:h-14 md:w-14">
                 {getTripIcon()}
               </div>
               <div>
-                <p className="text-xs text-gray-500">Trip Type</p>
-                <p className="text-sm font-bold capitalize text-gray-900">
+                <p className="text-xs text-gray-500 md:text-sm">Trip Type</p>
+                <p className="text-base font-bold capitalize text-gray-900 md:text-lg">
                   {tripDetails.tripType}
                 </p>
               </div>
             </div>
-            <div className="rounded-full bg-primary-100 px-4 py-2">
-              <span className="text-xs font-semibold text-primary-700">
-                Upcoming
-              </span>
-            </div>
+            <span className="rounded-full bg-emerald-100 px-4 py-1.5 text-xs font-semibold text-emerald-700 md:text-sm">
+              Upcoming
+            </span>
           </div>
 
-          {/* Trip Details */}
-          <div className="space-y-4 rounded-2xl bg-white/70 p-5 shadow-sm backdrop-blur-sm">
-            {/* Pickup Location */}
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-50">
+          {/* Trip Route */}
+          <div className="space-y-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100/50 p-5 md:space-y-5 md:p-6">
+            {/* Pickup */}
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#f36969] to-[#f36565] shadow-md md:h-12 md:w-12">
                 <svg
-                  className="h-6 w-6 text-[#FF7A00]"
+                  className="h-5 w-5 text-white md:h-6 md:w-6"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -143,22 +137,24 @@ export default function NextScheduledTrip({
                   />
                 </svg>
               </div>
-              <div className="flex-1">
-                <p className="mb-1 text-sm font-bold text-gray-900">Pickup</p>
-                <p className="text-sm leading-relaxed text-gray-600">
+              <div className="min-w-0 flex-1">
+                <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-700 md:text-sm">
+                  Pickup Location
+                </p>
+                <p className="break-words text-sm leading-relaxed text-gray-600 md:text-base">
                   {tripDetails.pickup.address}
                 </p>
               </div>
             </div>
 
             {/* Route Line */}
-            <div className="ml-5 h-8 border-l-2 border-dashed border-gray-300"></div>
+            <div className="ml-5 h-8 border-l-2 border-dashed border-[#f36969]/30 md:ml-6"></div>
 
             {/* Destination */}
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-md md:h-12 md:w-12">
                 <svg
-                  className="h-6 w-6 text-blue-600"
+                  className="h-5 w-5 text-white md:h-6 md:w-6"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -169,53 +165,49 @@ export default function NextScheduledTrip({
                   />
                 </svg>
               </div>
-              <div className="flex-1">
-                <p className="mb-1 text-sm font-bold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-700 md:text-sm">
                   Destination
                 </p>
-                <p className="text-sm leading-relaxed text-gray-600">
+                <p className="break-words text-sm leading-relaxed text-gray-600 md:text-base">
                   {tripDetails.destination.address}
                 </p>
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <svg
-                    className="h-5 w-5 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-700">
-                    {tripDetails.dateTime}
-                  </span>
-                </div>
-              </div>
+            {/* Date Time */}
+            <div className="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white p-3 md:gap-3 md:p-4">
+              <svg
+                className="h-5 w-5 flex-shrink-0 text-[#f36969] md:h-6 md:w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span className="text-sm font-semibold text-gray-900 md:text-base">
+                {tripDetails.dateTime}
+              </span>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-6 flex space-x-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row md:mt-6">
             <motion.button
-              className="flex-1 rounded-xl border-2 border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
-              whileHover={{ scale: 1.02 }}
+              className="flex-1 rounded-xl border-2 border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50 hover:shadow-md md:text-base"
+              whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
               View Details
             </motion.button>
             <motion.button
-              className="flex-1 rounded-xl border-2 border-primary-200 bg-gradient-to-r from-primary-500 to-accent-500 py-3 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
-              whileHover={{ scale: 1.02 }}
+              className="flex-1 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] py-3 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:shadow-[#f36969]/30 md:text-base"
+              whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
               Start Trip

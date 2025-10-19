@@ -75,9 +75,9 @@ export default function CompanyHomePage() {
       {/* Login Simulator for Testing */}
       <LoginSimulator />
 
-      <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
+      <div className="min-h-screen pt-4 font-poppins">
         {/* Main Content */}
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-4 lg:px-8">
           {/* Hero Carousel Section */}
           <HeroCarousel slides={companyHomeData.carouselSlides} />
 

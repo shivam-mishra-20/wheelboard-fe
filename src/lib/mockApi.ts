@@ -1259,6 +1259,7 @@ export const companyHomeData = {
       image: '/black-truck.png',
       eta: '12:30 PM',
       progress: 65,
+      isAssigned: true,
       createdAt: '2025-10-05T09:00:00Z',
     },
     {
@@ -1336,6 +1337,7 @@ export const companyHomeData = {
       },
       image: '/truck-01.jpg',
       bids: 8,
+      isAssigned: true,
       createdAt: '2025-10-04T10:00:00Z',
     },
     {
@@ -1347,6 +1349,7 @@ export const companyHomeData = {
       to: 'Nashik',
       departureDate: '2025-10-06',
       departureTime: '10:00 AM',
+      isAssigned: true,
       distance: '210 km',
       duration: '4h 30m',
       driver: {
@@ -1385,6 +1388,7 @@ export const companyHomeData = {
         registrationNumber: 'TS-05-IJ-7890',
       },
       image: '/mining-truck.jpg',
+      isAssigned: true,
       createdAt: '2025-10-04T12:00:00Z',
     },
   ] as Trip[],
@@ -2356,6 +2360,11 @@ export const professionalHomeData = {
       image: '/Yellow-truck.jpg',
       alt: 'Commercial driving',
     },
+    {
+      id: 5,
+      image: '/excavator.jpg',
+      alt: 'Heavy vehicle operator',
+    },
   ] as CarouselSlide[],
 
   nextScheduledTrip: {
@@ -2465,6 +2474,726 @@ export const professionalHomeData = {
       timeAgo: 'Posted 5 days ago',
     },
   ] as FeedPost[],
+};
+
+// Professional Expenses Data
+export interface Expense {
+  id: string;
+  date: string;
+  purpose: string;
+  category:
+    | 'fuel'
+    | 'maintenance'
+    | 'food'
+    | 'challan'
+    | 'toll'
+    | 'parking'
+    | 'other';
+  amount: number;
+  description?: string;
+  tripId?: string;
+  tripName?: string;
+  receiptUrl?: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  total: number;
+  count: number;
+}
+
+export const professionalExpensesData = {
+  totalExpenses: 12340,
+  thisMonthExpenses: 4250,
+  lastMonthExpenses: 3890,
+  pendingApprovals: 850,
+  categoryBreakdown: [
+    {
+      id: 'fuel',
+      name: 'Fuel',
+      icon: '⛽',
+      color: '#3B82F6',
+      total: 2300,
+      count: 8,
+    },
+    {
+      id: 'food',
+      name: 'Food',
+      icon: '🍔',
+      color: '#F59E0B',
+      total: 450,
+      count: 12,
+    },
+    {
+      id: 'maintenance',
+      name: 'Vehicle Repair',
+      icon: '🔧',
+      color: '#EF4444',
+      total: 1500,
+      count: 2,
+    },
+    {
+      id: 'toll',
+      name: 'Toll',
+      icon: '🛣️',
+      color: '#10B981',
+      total: 890,
+      count: 15,
+    },
+    {
+      id: 'challan',
+      name: 'Challan',
+      icon: '🚨',
+      color: '#F97316',
+      total: 500,
+      count: 1,
+    },
+    {
+      id: 'parking',
+      name: 'Parking',
+      icon: '🅿️',
+      color: '#8B5CF6',
+      total: 320,
+      count: 18,
+    },
+    {
+      id: 'other',
+      name: 'Others',
+      icon: '📦',
+      color: '#6B7280',
+      total: 380,
+      count: 6,
+    },
+  ] as ExpenseCategory[],
+
+  recentExpenses: [
+    {
+      id: 'exp-1',
+      date: '2024-10-19',
+      purpose: 'Vehicle Repair',
+      category: 'maintenance' as const,
+      amount: 1500,
+      description: 'Brake system replacement',
+      tripId: 'TRP-1029',
+      tripName: 'Delhi to Mumbai',
+      receiptUrl: '/receipts/exp-1.pdf',
+      status: 'approved' as const,
+    },
+    {
+      id: 'exp-2',
+      date: '2024-10-18',
+      purpose: 'Fuel',
+      category: 'fuel' as const,
+      amount: 2300,
+      description: 'Diesel - Highway fuel station',
+      tripId: 'TRP-1029',
+      tripName: 'Delhi to Mumbai',
+      receiptUrl: '/receipts/exp-2.pdf',
+      status: 'approved' as const,
+    },
+    {
+      id: 'exp-3',
+      date: '2024-10-18',
+      purpose: 'Food',
+      category: 'food' as const,
+      amount: 450,
+      description: 'Lunch stop - Dhaba',
+      tripId: 'TRP-1029',
+      tripName: 'Delhi to Mumbai',
+      status: 'approved' as const,
+    },
+    {
+      id: 'exp-4',
+      date: '2024-10-17',
+      purpose: 'Challan',
+      category: 'challan' as const,
+      amount: 500,
+      description: 'Speed limit violation',
+      tripId: 'TRP-1028',
+      tripName: 'Bangalore to Chennai',
+      receiptUrl: '/receipts/exp-4.pdf',
+      status: 'pending' as const,
+    },
+    {
+      id: 'exp-5',
+      date: '2024-10-16',
+      purpose: 'Toll',
+      category: 'toll' as const,
+      amount: 350,
+      description: 'Highway toll - NH44',
+      tripId: 'TRP-1028',
+      tripName: 'Bangalore to Chennai',
+      status: 'approved' as const,
+    },
+    {
+      id: 'exp-6',
+      date: '2024-10-15',
+      purpose: 'Parking',
+      category: 'parking' as const,
+      amount: 120,
+      description: 'Overnight parking - Rest area',
+      tripId: 'TRP-1027',
+      tripName: 'Pune to Hyderabad',
+      status: 'approved' as const,
+    },
+  ] as Expense[],
+
+  monthlyExpenseData: [
+    { month: 'Jan', amount: 3200 },
+    { month: 'Feb', amount: 3500 },
+    { month: 'Mar', amount: 2800 },
+    { month: 'Apr', amount: 4100 },
+    { month: 'May', amount: 3900 },
+    { month: 'Jun', amount: 4200 },
+    { month: 'Jul', amount: 3800 },
+    { month: 'Aug', amount: 4500 },
+    { month: 'Sep', amount: 3890 },
+    { month: 'Oct', amount: 4250 },
+  ],
+
+  topExpenses: [
+    { category: 'Fuel', amount: 2300, percentage: 38 },
+    { category: 'Vehicle Repair', amount: 1500, percentage: 25 },
+    { category: 'Toll', amount: 890, percentage: 15 },
+    { category: 'Challan', amount: 500, percentage: 8 },
+    { category: 'Food', amount: 450, percentage: 7 },
+    { category: 'Others', amount: 710, percentage: 7 },
+  ],
+};
+
+// Professional Calendar Data
+export interface CalendarEvent {
+  id: string;
+  date: string;
+  eventName: string;
+  note?: string;
+  startTime?: string;
+  endTime?: string;
+  category: 'trip' | 'job';
+  isActive: boolean;
+  location?: {
+    from?: string;
+    to?: string;
+  };
+  tripId?: string;
+  status?: 'in-transit' | 'scheduled' | 'completed';
+}
+
+export interface AvailabilityDate {
+  date: string;
+  isActive: boolean;
+  hasEvent: boolean;
+  events?: CalendarEvent[];
+}
+
+export const professionalCalendarData = {
+  currentMonth: 'September',
+  currentYear: 2025,
+  markedDates: [
+    {
+      date: '2025-09-02',
+      isActive: true,
+      hasEvent: true,
+      events: [
+        {
+          id: 'evt-1',
+          date: '2025-09-02',
+          eventName: 'Warehouse A to Store Z',
+          note: 'Delivery scheduled',
+          startTime: '09:35',
+          endTime: '18:00',
+          category: 'trip' as const,
+          isActive: true,
+          location: {
+            from: 'Warehouse A',
+            to: 'Store Z',
+          },
+          tripId: 'MH2AB3456',
+          status: 'in-transit' as const,
+        },
+      ],
+    },
+    {
+      date: '2025-09-03',
+      isActive: true,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-04',
+      isActive: true,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-05',
+      isActive: true,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-08',
+      isActive: false,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-09',
+      isActive: true,
+      hasEvent: true,
+      events: [
+        {
+          id: 'evt-2',
+          date: '2025-09-09',
+          eventName: 'Delhi to Mumbai Job',
+          note: 'Long haul delivery',
+          startTime: '06:00',
+          endTime: '22:00',
+          category: 'job' as const,
+          isActive: true,
+          location: {
+            from: 'Delhi Hub',
+            to: 'Mumbai Warehouse',
+          },
+          status: 'scheduled' as const,
+        },
+      ],
+    },
+    {
+      date: '2025-09-10',
+      isActive: true,
+      hasEvent: true,
+      events: [
+        {
+          id: 'evt-3',
+          date: '2025-09-10',
+          eventName: 'Return trip preparation',
+          note: 'Vehicle maintenance check',
+          category: 'trip' as const,
+          isActive: true,
+          status: 'scheduled' as const,
+        },
+      ],
+    },
+    {
+      date: '2025-09-14',
+      isActive: false,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-15',
+      isActive: false,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-16',
+      isActive: true,
+      hasEvent: true,
+      events: [
+        {
+          id: 'evt-4',
+          date: '2025-09-16',
+          eventName: 'Local delivery job',
+          note: 'Multiple stops scheduled',
+          startTime: '08:00',
+          endTime: '16:00',
+          category: 'job' as const,
+          isActive: true,
+          status: 'scheduled' as const,
+        },
+      ],
+    },
+    {
+      date: '2025-09-17',
+      isActive: true,
+      hasEvent: true,
+      events: [
+        {
+          id: 'evt-5',
+          date: '2025-09-17',
+          eventName: 'Bangalore to Chennai',
+          note: 'Express delivery',
+          startTime: '05:00',
+          endTime: '14:00',
+          category: 'trip' as const,
+          isActive: true,
+          location: {
+            from: 'Bangalore',
+            to: 'Chennai',
+          },
+          tripId: 'KA01AB1234',
+          status: 'scheduled' as const,
+        },
+      ],
+    },
+    {
+      date: '2025-09-21',
+      isActive: false,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-22',
+      isActive: false,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-28',
+      isActive: true,
+      hasEvent: false,
+      events: [],
+    },
+    {
+      date: '2025-09-29',
+      isActive: true,
+      hasEvent: true,
+      events: [
+        {
+          id: 'evt-6',
+          date: '2025-09-29',
+          eventName: 'Weekend delivery',
+          note: 'Special shipment',
+          category: 'trip' as const,
+          isActive: true,
+          status: 'scheduled' as const,
+        },
+      ],
+    },
+    {
+      date: '2025-09-30',
+      isActive: true,
+      hasEvent: true,
+      events: [
+        {
+          id: 'evt-7',
+          date: '2025-09-30',
+          eventName: 'Month-end clearance',
+          note: 'Final deliveries of the month',
+          category: 'job' as const,
+          isActive: true,
+          status: 'scheduled' as const,
+        },
+      ],
+    },
+  ] as AvailabilityDate[],
+
+  stats: {
+    totalActiveDays: 18,
+    totalInactiveDays: 5,
+    totalEventsScheduled: 7,
+    thisMonthAvailability: 78, // percentage
+  },
+
+  upcomingEvents: [
+    {
+      id: 'evt-8',
+      date: '2025-10-02',
+      eventName: 'Pune to Hyderabad',
+      category: 'trip' as const,
+      isActive: true,
+      location: {
+        from: 'Pune',
+        to: 'Hyderabad',
+      },
+      status: 'scheduled' as const,
+    },
+    {
+      id: 'evt-9',
+      date: '2025-10-05',
+      eventName: 'Local deliveries',
+      category: 'job' as const,
+      isActive: true,
+      status: 'scheduled' as const,
+    },
+  ] as CalendarEvent[],
+};
+
+// Professional Learning Data
+export interface LearningModule {
+  id: string;
+  title: string;
+  description: string;
+  category: 'safety' | 'maintenance' | 'regulations' | 'driving' | 'business';
+  duration: string;
+  thumbnail: string;
+  videoUrl: string;
+  progress: number;
+  isCompleted: boolean;
+  modulesCompleted: number;
+  totalModules: number;
+  lastWatched?: string;
+  tags: string[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  instructor?: string;
+  rating?: number;
+  enrolledCount?: number;
+}
+
+export interface LearningCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  count: number;
+}
+
+export const professionalLearningData = {
+  stats: {
+    modulesCompleted: 5,
+    inProgress: 2,
+    totalModules: 15,
+    completionRate: 33,
+    totalWatchTime: '12h 45m',
+    certificatesEarned: 3,
+  },
+
+  categories: [
+    {
+      id: 'safety',
+      name: 'Safety',
+      icon: '🛡️',
+      color: '#f36969',
+      count: 4,
+    },
+    {
+      id: 'maintenance',
+      name: 'Maintenance',
+      icon: '🔧',
+      color: '#EF4444',
+      count: 3,
+    },
+    {
+      id: 'regulations',
+      name: 'Regulations',
+      icon: '📋',
+      color: '#F59E0B',
+      count: 3,
+    },
+    {
+      id: 'driving',
+      name: 'Driving',
+      icon: '🚛',
+      color: '#10B981',
+      count: 3,
+    },
+    {
+      id: 'business',
+      name: 'Business',
+      icon: '💼',
+      color: '#3B82F6',
+      count: 2,
+    },
+  ] as LearningCategory[],
+
+  modules: [
+    {
+      id: 'learn-1',
+      title: 'How to Save Fuel',
+      description:
+        'Learn best practices to reduce fuel costs and improve efficiency',
+      category: 'driving' as const,
+      duration: '7 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/fuel-saving.mp4',
+      progress: 100,
+      isCompleted: true,
+      modulesCompleted: 3,
+      totalModules: 3,
+      lastWatched: '2 Oct 2025',
+      tags: ['Fuel', 'Completed'],
+      difficulty: 'beginner' as const,
+      instructor: 'John Davis',
+      rating: 4.8,
+      enrolledCount: 2340,
+    },
+    {
+      id: 'learn-2',
+      title: 'Tyre Filling Animation',
+      description:
+        'Step-by-step visual guide on proper tire inflation and safety',
+      category: 'maintenance' as const,
+      duration: '5 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/tyre-filling.mp4',
+      progress: 60,
+      isCompleted: false,
+      modulesCompleted: 3,
+      totalModules: 5,
+      lastWatched: '17 Oct 2025',
+      tags: ['Intermediate', 'In Progress'],
+      difficulty: 'intermediate' as const,
+      instructor: 'Mike Johnson',
+      rating: 4.6,
+      enrolledCount: 1850,
+    },
+    {
+      id: 'learn-3',
+      title: 'Safe Lifting Techniques',
+      description:
+        'Essential tips to avoid injuries when lifting heavy objects during trips',
+      category: 'safety' as const,
+      duration: '8 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/safe-lifting.mp4',
+      progress: 100,
+      isCompleted: true,
+      modulesCompleted: 4,
+      totalModules: 4,
+      lastWatched: '15 Oct 2025',
+      tags: ['Safety', 'Completed'],
+      difficulty: 'beginner' as const,
+      instructor: 'Sarah Williams',
+      rating: 4.9,
+      enrolledCount: 3120,
+    },
+    {
+      id: 'learn-4',
+      title: 'Eco-Driving Animation',
+      description:
+        'Learn eco-friendly driving techniques to reduce carbon footprint',
+      category: 'driving' as const,
+      duration: '6 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/eco-driving.mp4',
+      progress: 100,
+      isCompleted: true,
+      modulesCompleted: 2,
+      totalModules: 2,
+      lastWatched: '12 Oct 2025',
+      tags: ['Completed'],
+      difficulty: 'beginner' as const,
+      instructor: 'Robert Chen',
+      rating: 4.7,
+      enrolledCount: 1950,
+    },
+    {
+      id: 'learn-5',
+      title: 'Keep Your Tyre Safe',
+      description:
+        'Why tire safety matters and key safety tips for road readiness',
+      category: 'safety' as const,
+      duration: '10 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/tyre-safety.mp4',
+      progress: 0,
+      isCompleted: false,
+      modulesCompleted: 0,
+      totalModules: 6,
+      lastWatched: undefined,
+      tags: ['Safety', 'Admin'],
+      difficulty: 'beginner' as const,
+      instructor: 'Emily Taylor',
+      rating: 4.8,
+      enrolledCount: 2670,
+    },
+    {
+      id: 'learn-6',
+      title: 'Advanced Route Planning',
+      description: 'Master efficient route planning for maximum productivity',
+      category: 'business' as const,
+      duration: '15 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/route-planning.mp4',
+      progress: 0,
+      isCompleted: false,
+      modulesCompleted: 0,
+      totalModules: 8,
+      lastWatched: undefined,
+      tags: ['Advanced', 'Business'],
+      difficulty: 'advanced' as const,
+      instructor: 'David Martinez',
+      rating: 4.5,
+      enrolledCount: 980,
+    },
+    {
+      id: 'learn-7',
+      title: 'Traffic Rules & Regulations',
+      description:
+        'Updated traffic laws and regulations for professional drivers',
+      category: 'regulations' as const,
+      duration: '12 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/traffic-rules.mp4',
+      progress: 100,
+      isCompleted: true,
+      modulesCompleted: 5,
+      totalModules: 5,
+      lastWatched: '8 Oct 2025',
+      tags: ['Regulations', 'Completed'],
+      difficulty: 'intermediate' as const,
+      instructor: 'Lisa Anderson',
+      rating: 4.9,
+      enrolledCount: 4200,
+    },
+    {
+      id: 'learn-8',
+      title: 'Vehicle Pre-Trip Inspection',
+      description: 'Complete checklist for pre-trip vehicle inspection',
+      category: 'maintenance' as const,
+      duration: '9 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/inspection.mp4',
+      progress: 30,
+      isCompleted: false,
+      modulesCompleted: 1,
+      totalModules: 4,
+      lastWatched: '16 Oct 2025',
+      tags: ['Intermediate', 'In Progress'],
+      difficulty: 'intermediate' as const,
+      instructor: 'Tom Wilson',
+      rating: 4.7,
+      enrolledCount: 2100,
+    },
+    {
+      id: 'learn-9',
+      title: 'Emergency Response Training',
+      description: 'How to handle roadside emergencies and breakdowns',
+      category: 'safety' as const,
+      duration: '11 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/emergency.mp4',
+      progress: 0,
+      isCompleted: false,
+      modulesCompleted: 0,
+      totalModules: 6,
+      lastWatched: undefined,
+      tags: ['Safety', 'Advanced'],
+      difficulty: 'advanced' as const,
+      instructor: 'Jennifer Brown',
+      rating: 4.8,
+      enrolledCount: 1560,
+    },
+    {
+      id: 'learn-10',
+      title: 'Load Securing Best Practices',
+      description: 'Proper techniques for securing and distributing cargo load',
+      category: 'regulations' as const,
+      duration: '13 min',
+      thumbnail: '/placeholder-video.jpg',
+      videoUrl: 'https://example.com/load-securing.mp4',
+      progress: 0,
+      isCompleted: false,
+      modulesCompleted: 0,
+      totalModules: 7,
+      lastWatched: undefined,
+      tags: ['Regulations'],
+      difficulty: 'intermediate' as const,
+      instructor: 'Michael Garcia',
+      rating: 4.6,
+      enrolledCount: 1420,
+    },
+  ] as LearningModule[],
+
+  recentlyWatched: ['learn-8', 'learn-2', 'learn-3', 'learn-7'],
+
+  recommended: ['learn-5', 'learn-9', 'learn-10', 'learn-6'],
 };
 
 // Comprehensive Feeds Data for Fleet Management Community
@@ -3670,7 +4399,7 @@ export interface JobPosted {
   status: 'Active' | 'Paused' | 'Closed';
 }
 
-export interface ExpenseCategory {
+export interface DashboardExpenseCategory {
   category: 'Advance' | 'Fuel' | 'Chalan' | 'Food' | 'Salary' | 'Enroute';
   amount: number;
   color: string;
@@ -3710,7 +4439,7 @@ export interface CompanyDashboardData {
   jobsPosted: JobPosted[];
   expenseOverview: {
     total: number;
-    categories: ExpenseCategory[];
+    categories: DashboardExpenseCategory[];
   };
   recentTransactions: Transaction[];
   assignedServices: AssignedService[];
@@ -4225,4 +4954,200 @@ export const businessServiceListings: BusinessServiceData = {
       completedJobs: 523,
     },
   ],
+};
+
+// KYC Related Types and Functions
+export interface KYCDocuments {
+  aadharCard: 'verified' | 'pending' | 'missing';
+  panCard: 'verified' | 'pending' | 'missing';
+  drivingLicense: 'verified' | 'pending' | 'missing';
+  bankAccount: 'verified' | 'pending' | 'missing';
+  profilePhoto: 'verified' | 'pending' | 'missing';
+}
+
+export interface KYCData {
+  userId: string;
+  progress: number;
+  documents: KYCDocuments;
+  bankDetails?: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+    upiId?: string;
+  };
+  updatedAt: string;
+}
+
+// Mock KYC database
+const mockKYCData: { [userId: string]: KYCData } = {
+  '1': {
+    userId: '1',
+    progress: 40,
+    documents: {
+      aadharCard: 'pending',
+      panCard: 'missing',
+      drivingLicense: 'missing',
+      bankAccount: 'pending',
+      profilePhoto: 'verified',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+};
+
+// Get KYC Status
+export const getKYCStatus = async (userId: string): Promise<KYCData> => {
+  await simulateDelay(500);
+
+  if (mockKYCData[userId]) {
+    return mockKYCData[userId];
+  }
+
+  // Return default KYC data for new users
+  const defaultKYC: KYCData = {
+    userId,
+    progress: 0,
+    documents: {
+      aadharCard: 'missing',
+      panCard: 'missing',
+      drivingLicense: 'missing',
+      bankAccount: 'missing',
+      profilePhoto: 'missing',
+    },
+    updatedAt: new Date().toISOString(),
+  };
+
+  mockKYCData[userId] = defaultKYC;
+  return defaultKYC;
+};
+
+// Upload KYC Document
+export const uploadKYCDocument = async (
+  userId: string,
+  documentType: 'aadhar' | 'pan' | 'license' | 'photo',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  file: File
+): Promise<{ success: boolean; message: string }> => {
+  await simulateDelay(1000);
+
+  if (!mockKYCData[userId]) {
+    mockKYCData[userId] = {
+      userId,
+      progress: 0,
+      documents: {
+        aadharCard: 'missing',
+        panCard: 'missing',
+        drivingLicense: 'missing',
+        bankAccount: 'missing',
+        profilePhoto: 'missing',
+      },
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  // Update document status to pending
+  const documentMap: { [key: string]: keyof KYCDocuments } = {
+    aadhar: 'aadharCard',
+    pan: 'panCard',
+    license: 'drivingLicense',
+    photo: 'profilePhoto',
+  };
+
+  const docKey = documentMap[documentType];
+  mockKYCData[userId].documents[docKey] = 'pending';
+  mockKYCData[userId].updatedAt = new Date().toISOString();
+
+  // Calculate progress
+  const docs = mockKYCData[userId].documents;
+  const uploadedCount = Object.values(docs).filter(
+    (status) => status !== 'missing'
+  ).length;
+  mockKYCData[userId].progress = Math.round((uploadedCount / 5) * 100);
+
+  return {
+    success: true,
+    message: `${documentType} uploaded successfully. Verification pending.`,
+  };
+};
+
+// Update Bank Details
+export const updateBankDetails = async (
+  userId: string,
+  bankDetails: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+    upiId?: string;
+  }
+): Promise<{ success: boolean; message: string }> => {
+  await simulateDelay(800);
+
+  if (!mockKYCData[userId]) {
+    mockKYCData[userId] = {
+      userId,
+      progress: 0,
+      documents: {
+        aadharCard: 'missing',
+        panCard: 'missing',
+        drivingLicense: 'missing',
+        bankAccount: 'missing',
+        profilePhoto: 'missing',
+      },
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  // Store bank details (without confirming account number)
+  mockKYCData[userId].bankDetails = {
+    accountHolderName: bankDetails.accountHolderName,
+    accountNumber: bankDetails.accountNumber,
+    ifscCode: bankDetails.ifscCode,
+    bankName: bankDetails.bankName,
+    upiId: bankDetails.upiId,
+  };
+  mockKYCData[userId].documents.bankAccount = 'pending';
+  mockKYCData[userId].updatedAt = new Date().toISOString();
+
+  // Calculate progress
+  const docs = mockKYCData[userId].documents;
+  const uploadedCount = Object.values(docs).filter(
+    (status) => status !== 'missing'
+  ).length;
+  mockKYCData[userId].progress = Math.round((uploadedCount / 5) * 100);
+
+  return {
+    success: true,
+    message: 'Bank details updated successfully.',
+  };
+};
+
+// Verify KYC Document (Admin function - for simulation)
+export const verifyKYCDocument = async (
+  userId: string,
+  documentType: keyof KYCDocuments
+): Promise<{ success: boolean; message: string }> => {
+  await simulateDelay(500);
+
+  if (!mockKYCData[userId]) {
+    return {
+      success: false,
+      message: 'User KYC data not found',
+    };
+  }
+
+  mockKYCData[userId].documents[documentType] = 'verified';
+  mockKYCData[userId].updatedAt = new Date().toISOString();
+
+  // Calculate progress
+  const docs = mockKYCData[userId].documents;
+  const verifiedCount = Object.values(docs).filter(
+    (status) => status === 'verified'
+  ).length;
+  mockKYCData[userId].progress = Math.round((verifiedCount / 5) * 100);
+
+  return {
+    success: true,
+    message: `${documentType} verified successfully.`,
+  };
 };

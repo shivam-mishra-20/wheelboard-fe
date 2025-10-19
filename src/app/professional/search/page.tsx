@@ -1,564 +1,455 @@
 'use client';
 
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
-import Header from '../../../components/Header';
-import LoginSimulator from '../../../components/LoginSimulator';
-import Footer from '../../../components/Footer';
-import { ProfessionalProtected } from '../../../components/ProtectedRoute';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  Search,
+  MapPin,
+  Calendar,
+  SlidersHorizontal,
+  Briefcase,
+  Truck,
+  X,
+} from 'lucide-react';
+import { companyHomeData, DetailedJob } from '@/lib/mockApi';
+import Headers from '@/components/Header';
+import JobApplicationModal from '@/components/professional/JobApplicationModal';
 
-export default function ProfessionalSearchPage() {
+type SearchCategory = 'all' | 'jobs' | 'trips';
+type JobType = 'Full-time' | 'Part-time' | 'Contract' | 'Freelance';
+type TripStatus = 'Completed' | 'In-Process' | 'Upcoming';
+
+export default function SearchPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedLocation, setSelectedLocation] = useState('all');
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedCategory, setSelectedCategory] =
+    useState<SearchCategory>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedJobTypes, setSelectedJobTypes] = useState<JobType[]>([]);
+  const [selectedTripStatus, setSelectedTripStatus] = useState<TripStatus[]>(
+    []
+  );
+  const [selectedJob, setSelectedJob] = useState<DetailedJob | null>(null);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
-  const slides = [
-    { id: 1, image: '/truck-01.jpg', alt: 'Search professional opportunities' },
-    { id: 2, image: '/mining-truck.jpg', alt: 'Mining jobs available' },
-    { id: 3, image: '/excavator.jpg', alt: 'Construction work' },
-  ];
+  const jobs = companyHomeData.allJobs;
+  const trips = companyHomeData.allTrips;
 
-  const nextSlide = () => setCurrentSlide((s) => (s + 1) % slides.length);
-  const prevSlide = () =>
-    setCurrentSlide((s) => (s - 1 + slides.length) % slides.length);
+  // Filter logic
+  const filteredResults = useMemo(() => {
+    let filteredJobs = jobs;
+    let filteredTrips = trips;
 
-  const jobCategories = [
-    'All Categories',
-    'Driving',
-    'Construction',
-    'Mining',
-    'Logistics',
-    'Maintenance',
-    'Technical',
-  ];
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filteredJobs = jobs.filter(
+        (job) =>
+          job.title.toLowerCase().includes(query) ||
+          job.location.toLowerCase().includes(query) ||
+          job.department.toLowerCase().includes(query)
+      );
+      filteredTrips = trips.filter(
+        (trip) =>
+          trip.title.toLowerCase().includes(query) ||
+          trip.from.toLowerCase().includes(query) ||
+          trip.to.toLowerCase().includes(query)
+      );
+    }
 
-  const locations = [
-    'All Locations',
-    'Delhi',
-    'Mumbai',
-    'Bangalore',
-    'Chennai',
-    'Hyderabad',
-    'Pune',
-  ];
+    // Job type filter
+    if (selectedJobTypes.length > 0) {
+      filteredJobs = filteredJobs.filter((job) =>
+        selectedJobTypes.includes(job.type)
+      );
+    }
 
-  const searchResults = [
-    {
-      id: 1,
-      title: 'Heavy Vehicle Driver',
-      company: 'Delhi Transport Co.',
-      location: 'Delhi, India',
-      salary: '₹25,000 - ₹35,000/month',
-      experience: '2-5 years',
-      type: 'Full-time',
-      description:
-        'Looking for experienced heavy vehicle drivers for long-distance transport operations.',
-      image: '/staring-man.jpg',
-      postedDate: '2 days ago',
-    },
-    {
-      id: 2,
-      title: 'Mining Equipment Operator',
-      company: 'Mining Solutions Ltd.',
-      location: 'Mumbai, India',
-      salary: '₹30,000 - ₹45,000/month',
-      experience: '3-6 years',
-      type: 'Full-time',
-      description:
-        'Operate and maintain mining equipment in open-pit mining operations.',
-      image: '/mining-2.jpg',
-      postedDate: '1 day ago',
-    },
-    {
-      id: 3,
-      title: 'Construction Site Supervisor',
-      company: 'Build Pro Construction',
-      location: 'Bangalore, India',
-      salary: '₹40,000 - ₹55,000/month',
-      experience: '5-8 years',
-      type: 'Full-time',
-      description:
-        'Supervise construction activities and ensure safety compliance on site.',
-      image: '/excavator.jpg',
-      postedDate: '3 days ago',
-    },
-    {
-      id: 4,
-      title: 'Logistics Coordinator',
-      company: 'Express Logistics',
-      location: 'Chennai, India',
-      salary: '₹28,000 - ₹38,000/month',
-      experience: '1-3 years',
-      type: 'Full-time',
-      description:
-        'Coordinate logistics operations and manage supply chain activities.',
-      image: '/truck-CTA.png',
-      postedDate: '4 days ago',
-    },
-    {
-      id: 5,
-      title: 'Fleet Maintenance Technician',
-      company: 'Transport Solutions',
-      location: 'Hyderabad, India',
-      salary: '₹22,000 - ₹32,000/month',
-      experience: '2-4 years',
-      type: 'Full-time',
-      description:
-        'Maintain and repair fleet vehicles to ensure optimal performance.',
-      image: '/logistics-professional.jpg',
-      postedDate: '5 days ago',
-    },
-    {
-      id: 6,
-      title: 'Site Engineer',
-      company: 'Infrastructure Corp',
-      location: 'Pune, India',
-      salary: '₹35,000 - ₹50,000/month',
-      experience: '3-5 years',
-      type: 'Full-time',
-      description:
-        'Plan and execute construction projects with focus on quality and safety.',
-      image: 'profile.png',
-      postedDate: '1 week ago',
-    },
-  ];
+    // Trip status filter
+    if (selectedTripStatus.length > 0) {
+      filteredTrips = filteredTrips.filter((trip) =>
+        selectedTripStatus.includes(trip.status)
+      );
+    }
 
-  const filteredResults = searchResults.filter((job) => {
-    const matchesQuery =
-      searchQuery === '' ||
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return { jobs: filteredJobs, trips: filteredTrips };
+  }, [searchQuery, selectedJobTypes, selectedTripStatus, jobs, trips]);
 
-    const matchesCategory =
-      selectedCategory === 'all' ||
-      selectedCategory === 'All Categories' ||
-      job.title.toLowerCase().includes(selectedCategory.toLowerCase());
+  const totalResults =
+    selectedCategory === 'all'
+      ? filteredResults.jobs.length + filteredResults.trips.length
+      : selectedCategory === 'jobs'
+        ? filteredResults.jobs.length
+        : filteredResults.trips.length;
 
-    const matchesLocation =
-      selectedLocation === 'all' ||
-      selectedLocation === 'All Locations' ||
-      job.location.toLowerCase().includes(selectedLocation.toLowerCase());
+  const toggleJobType = (type: JobType) => {
+    setSelectedJobTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
 
-    return matchesQuery && matchesCategory && matchesLocation;
-  });
+  const toggleTripStatus = (status: TripStatus) => {
+    setSelectedTripStatus((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSelectedJobTypes([]);
+    setSelectedTripStatus([]);
+  };
+
+  const hasActiveFilters =
+    selectedJobTypes.length > 0 || selectedTripStatus.length > 0;
 
   return (
-    <ProfessionalProtected>
-      <Header />
-      <LoginSimulator />
+    <div className="min-h-screen bg-white pb-20 lg:pb-8">
+      {/* Header */}
+      <Headers />
+      {/* Main */}
+      <div className="sticky top-14 z-20 border-b border-gray-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-[#535353]">Job Board</h1>
+          </div>
 
-      <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          {/* Hero Search Section */}
-          <div className="relative mb-12 overflow-hidden rounded-3xl bg-white shadow-lg">
-            <div className="relative h-64 md:h-96">
-              <div className="relative h-full w-full">
-                <Image
-                  src={slides[currentSlide].image}
-                  alt={slides[currentSlide].alt}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
-              </div>
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search Jobs or Trips..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-3 pl-12 pr-12 text-[#535353] placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#f36969]"
+            />
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`absolute right-4 top-1/2 -translate-y-1/2 rounded p-1 ${
+                showFilters ? 'text-[#f36969]' : 'text-gray-400'
+              }`}
+            >
+              <SlidersHorizontal className="h-5 w-5" />
+            </button>
+          </div>
 
-              {/* Search Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full max-w-4xl px-6">
-                  <h1 className="mb-8 text-center text-3xl font-bold text-white md:text-4xl">
-                    Find Your Perfect Job Opportunity
-                  </h1>
-                  <div className="rounded-2xl bg-white/95 p-6 shadow-xl backdrop-blur-sm">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                      <div className="md:col-span-2">
-                        <input
-                          type="text"
-                          placeholder="Search jobs, companies, or keywords..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                        />
-                      </div>
-                      <div>
-                        <select
-                          value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                        >
-                          {jobCategories.map((category) => (
-                            <option
-                              key={category}
-                              value={
-                                category === 'All Categories' ? 'all' : category
-                              }
-                            >
-                              {category}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <select
-                          value={selectedLocation}
-                          onChange={(e) => setSelectedLocation(e.target.value)}
-                          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                        >
-                          {locations.map((location) => (
-                            <option
-                              key={location}
-                              value={
-                                location === 'All Locations' ? 'all' : location
-                              }
-                            >
-                              {location}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+          {/* Category Tabs */}
+          <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`whitespace-nowrap rounded-full px-4 py-2 transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-[#f36969] text-white'
+                  : 'bg-gray-100 text-[#535353] hover:bg-gray-200'
+              }`}
+            >
+              All ({filteredResults.jobs.length + filteredResults.trips.length})
+            </button>
+            <button
+              onClick={() => setSelectedCategory('jobs')}
+              className={`whitespace-nowrap rounded-full px-4 py-2 transition-colors ${
+                selectedCategory === 'jobs'
+                  ? 'bg-[#f36969] text-white'
+                  : 'bg-gray-100 text-[#535353] hover:bg-gray-200'
+              }`}
+            >
+              Jobs ({filteredResults.jobs.length})
+            </button>
+            <button
+              onClick={() => setSelectedCategory('trips')}
+              className={`whitespace-nowrap rounded-full px-4 py-2 transition-colors ${
+                selectedCategory === 'trips'
+                  ? 'bg-[#f36969] text-white'
+                  : 'bg-gray-100 text-[#535353] hover:bg-gray-200'
+              }`}
+            >
+              Trips ({filteredResults.trips.length})
+            </button>
+          </div>
+
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <div className="mt-10 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-[#535353]">Filters:</span>
+              {selectedJobTypes.map((type) => (
+                <span
+                  key={type}
+                  className="inline-flex items-center gap-1 rounded-full bg-[#f36969] px-3 py-1 text-sm text-white"
+                >
+                  {type}
+                  <button onClick={() => toggleJobType(type)}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {selectedTripStatus.map((status) => (
+                <span
+                  key={status}
+                  className="inline-flex items-center gap-1 rounded-full bg-[#f36969] px-3 py-1 text-sm text-white"
+                >
+                  {status}
+                  <button onClick={() => toggleTripStatus(status)}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-[#f36969] hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="mt-12 border-b border-gray-200 bg-gray-50">
+          <div className="mx-auto max-w-7xl px-4 py-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Job Filters */}
+              {(selectedCategory === 'all' || selectedCategory === 'jobs') && (
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold text-[#535353]">
+                    Job Type
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        'Full-time',
+                        'Part-time',
+                        'Contract',
+                        'Freelance',
+                      ] as JobType[]
+                    ).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => toggleJobType(type)}
+                        className={`rounded-lg px-4 py-2 text-sm transition-colors ${
+                          selectedJobTypes.includes(type)
+                            ? 'bg-[#f36969] text-white'
+                            : 'border border-gray-200 bg-white text-[#535353] hover:border-[#f36969]'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
 
-              <button
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white"
-              >
-                <svg
-                  className="h-5 w-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-md hover:bg-white"
-              >
-                <svg
-                  className="h-5 w-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
+              {/* Trip Filters */}
+              {(selectedCategory === 'all' || selectedCategory === 'trips') && (
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold text-[#535353]">
+                    Trip Status
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      ['Completed', 'In-Process', 'Upcoming'] as TripStatus[]
+                    ).map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => toggleTripStatus(status)}
+                        className={`rounded-lg px-4 py-2 text-sm transition-colors ${
+                          selectedTripStatus.includes(status)
+                            ? 'bg-[#f36969] text-white'
+                            : 'border border-gray-200 bg-white text-[#535353] hover:border-[#f36969]'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentSlide(i)}
-                    className={`h-2 w-2 rounded-full transition-colors ${i === currentSlide ? 'bg-white' : 'bg-white/50'}`}
-                  />
+      {/* Results */}
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <p className="mb-4 text-sm text-gray-500">
+          {totalResults} result{totalResults !== 1 ? 's' : ''} found
+        </p>
+
+        {/* Jobs Section */}
+        {(selectedCategory === 'all' || selectedCategory === 'jobs') &&
+          filteredResults.jobs.length > 0 && (
+            <div className="mb-8">
+              {selectedCategory === 'all' && (
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-[#535353]">
+                  <Briefcase className="h-5 w-5" />
+                  Jobs
+                </h2>
+              )}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {filteredResults.jobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="group cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-lg"
+                  >
+                    <div className="mb-3 flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="mb-1 text-lg font-semibold text-[#f36565] transition-colors group-hover:text-[#f36969]">
+                          {job.title}
+                        </h3>
+                        <p className="text-sm text-[#535353]">
+                          {job.department}
+                        </p>
+                      </div>
+                      {job.urgent && (
+                        <span className="rounded-full bg-[#f36969] px-2 py-1 text-xs text-white">
+                          Urgent
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mb-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 text-[#535353]" />
+                        <span>{job.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 text-[#535353]" />
+                        <span>{job.type}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+                      <span className="text-sm font-semibold text-[#f36565]">
+                        {job.salary}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setIsApplicationModalOpen(true);
+                        }}
+                        className="rounded-lg bg-[#f36969] px-4 py-2 text-sm text-white transition-colors hover:bg-[#f36565]"
+                      >
+                        Apply now
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Search Results Section */}
-          <div className="mb-12">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Job Opportunities
-              </h2>
-              <p className="text-sm text-gray-600">
-                {filteredResults.length} jobs found
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {filteredResults.map((job) => (
-                <div
-                  key={job.id}
-                  className="rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md"
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
+        {/* Trips Section */}
+        {(selectedCategory === 'all' || selectedCategory === 'trips') &&
+          filteredResults.trips.length > 0 && (
+            <div>
+              {selectedCategory === 'all' && (
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-[#535353]">
+                  <Truck className="h-5 w-5" />
+                  Trips
+                </h2>
+              )}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {filteredResults.trips.map((trip) => (
+                  <div
+                    key={trip.id}
+                    className="group cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-lg"
+                  >
+                    <div className="relative h-40">
                       <Image
-                        src={job.image}
-                        alt={job.title}
-                        width={64}
-                        height={64}
-                        className="h-full w-full object-cover"
+                        src={trip.image}
+                        alt={trip.title}
+                        fill
+                        className="object-cover"
                       />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {job.title}
-                      </h3>
-                      <p className="text-sm font-medium text-blue-600">
-                        {job.company}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
-                        <span className="flex items-center">
-                          <svg
-                            className="mr-1 h-3 w-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
-                          {job.location}
+                      <div className="absolute right-3 top-3 flex gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            trip.status === 'Completed'
+                              ? 'bg-green-100 text-green-700'
+                              : trip.status === 'In-Process'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                          }`}
+                        >
+                          {trip.status}
                         </span>
-                        <span className="flex items-center">
-                          <svg
-                            className="mr-1 h-3 w-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                            />
-                          </svg>
-                          {job.salary}
-                        </span>
-                        <span className="flex items-center">
-                          <svg
-                            className="mr-1 h-3 w-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6"
-                            />
-                          </svg>
-                          {job.experience}
+                        <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-[#f36969] backdrop-blur-sm">
+                          {trip.deliveryType}
                         </span>
                       </div>
-                      <p className="mt-3 line-clamp-2 text-sm text-gray-600">
-                        {job.description}
-                      </p>
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          Posted {job.postedDate}
-                        </span>
-                        <div className="flex space-x-2">
-                          <button className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100">
-                            Apply Now
-                          </button>
-                          <button className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200">
-                            Save
-                          </button>
+                    </div>
+
+                    <div className="p-4">
+                      <h3 className="mb-3 text-lg font-semibold text-[#f36565] transition-colors group-hover:text-[#f36969]">
+                        {trip.title}
+                      </h3>
+
+                      <div className="mb-4 space-y-2">
+                        <div className="flex items-start gap-2 text-sm text-gray-600">
+                          <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#535353]" />
+                          <div>
+                            <p className="font-medium text-[#535353]">
+                              {trip.from} → {trip.to}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {trip.distance} • {trip.duration}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 text-[#535353]" />
+                          <span>
+                            {trip.departureDate} • {trip.departureTime}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
 
-            {filteredResults.length === 0 && (
-              <div className="rounded-2xl bg-white p-12 text-center shadow-sm">
-                <svg
-                  className="mx-auto h-16 w-16 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">
-                  No jobs found
-                </h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  Try adjusting your search criteria or browse all available
-                  positions.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Quick Filters */}
-          <div className="mb-12">
-            <h2 className="mb-6 text-xl font-bold text-gray-900">
-              Popular Categories
-            </h2>
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-6">
-              {[
-                'Driving',
-                'Construction',
-                'Mining',
-                'Logistics',
-                'Maintenance',
-                'Technical',
-              ].map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`group cursor-pointer rounded-2xl border p-6 text-center shadow-sm transition-all hover:shadow-md ${
-                    selectedCategory === category
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-white'
-                  }`}
-                >
-                  <div className="mb-4 flex justify-center">
-                    <div
-                      className={`rounded-full p-3 ${
-                        selectedCategory === category
-                          ? 'bg-blue-100'
-                          : 'bg-blue-50'
-                      }`}
-                    >
-                      <svg
-                        className={`h-8 w-8 ${
-                          selectedCategory === category
-                            ? 'text-blue-600'
-                            : 'text-blue-500'
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      <button
+                        onClick={() =>
+                          router.push(`/professional/trips/${trip.id}`)
+                        }
+                        className="w-full rounded-lg bg-[#f36969] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#f36565]"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6"
-                        />
-                      </svg>
+                        View Details
+                      </button>
                     </div>
                   </div>
-                  <h3
-                    className={`text-sm font-medium ${
-                      selectedCategory === category
-                        ? 'text-blue-900'
-                        : 'text-gray-900'
-                    }`}
-                  >
-                    {category}
-                  </h3>
-                </button>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Tips Section */}
-          <div>
-            <h2 className="mb-6 text-xl font-bold text-gray-900">
-              Job Search Tips
-            </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: 'Update Your Profile',
-                  description:
-                    'Keep your professional profile updated with latest skills and experience.',
-                  icon: (
-                    <svg
-                      className="h-8 w-8 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  ),
-                },
-                {
-                  title: 'Apply Early',
-                  description:
-                    'Apply to jobs as soon as they are posted to increase your chances.',
-                  icon: (
-                    <svg
-                      className="h-8 w-8 text-green-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  ),
-                },
-                {
-                  title: 'Network & Connect',
-                  description:
-                    'Build professional relationships and connect with industry professionals.',
-                  icon: (
-                    <svg
-                      className="h-8 w-8 text-purple-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
-                  ),
-                },
-              ].map((tip, index) => (
-                <div key={index} className="rounded-2xl bg-white p-6 shadow-sm">
-                  <div className="mb-4 flex justify-center">{tip.icon}</div>
-                  <h3 className="mb-2 text-center font-semibold text-gray-900">
-                    {tip.title}
-                  </h3>
-                  <p className="text-center text-sm text-gray-600">
-                    {tip.description}
-                  </p>
-                </div>
-              ))}
+        {/* No Results */}
+        {totalResults === 0 && (
+          <div className="py-16 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+              <Search className="h-8 w-8 text-gray-400" />
             </div>
+            <h3 className="mb-2 text-lg font-semibold text-[#535353]">
+              No results found
+            </h3>
+            <p className="text-gray-500">
+              Try adjusting your search or filters to find what you&apos;re
+              looking for
+            </p>
           </div>
-        </main>
-
-        {/* Shared Footer */}
-        <Footer />
+        )}
       </div>
-    </ProfessionalProtected>
+
+      {/* Job Application Modal */}
+      {selectedJob && (
+        <JobApplicationModal
+          isOpen={isApplicationModalOpen}
+          onClose={() => {
+            setIsApplicationModalOpen(false);
+            setSelectedJob(null);
+          }}
+          job={selectedJob}
+        />
+      )}
+    </div>
   );
 }

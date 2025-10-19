@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 interface QuickAction {
@@ -112,7 +113,6 @@ const quickActions: QuickAction[] = [
       </svg>
     ),
     color: 'orange',
-    onClick: () => console.log('Earning clicked'),
   },
   {
     id: 'expenses',
@@ -199,6 +199,33 @@ const item = {
 };
 
 export default function QuickActions() {
+  const router = useRouter();
+
+  const handleActionClick = (actionId: string) => {
+    switch (actionId) {
+      case 'earning':
+        router.push('/professional/earnings');
+        break;
+      case 'calendar':
+        router.push('/professional/calendar');
+        break;
+      case 'track':
+        router.push('/professional/trips');
+        break;
+      case 'expenses':
+        router.push('/professional/expenses');
+        break;
+      case 'learning':
+        router.push('/professional/learning');
+        break;
+      case 'profile':
+        router.push('/professional/profile');
+        break;
+      default:
+        console.log('Action clicked:', actionId);
+    }
+  };
+
   return (
     <motion.div
       className="mb-16"
@@ -223,7 +250,7 @@ export default function QuickActions() {
             <motion.div
               key={action.id}
               variants={item}
-              onClick={action.onClick}
+              onClick={() => handleActionClick(action.id)}
               className={`group relative cursor-pointer overflow-hidden rounded-3xl border-2 ${colors.border} bg-gradient-to-br from-white to-gray-50 p-7 text-center shadow-premium transition-all duration-500 hover:-translate-y-2 hover:shadow-premium-lg`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

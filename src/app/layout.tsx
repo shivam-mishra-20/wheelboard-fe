@@ -74,7 +74,7 @@ export const metadata: Metadata = {
   // Twitter
   twitter: {
     card: 'summary_large_image',
-    title: 'Wheelboard - Professional Transportation & Logistics Platform',
+    title: 'Wheelboard - Transportation & Logistics Platform',
     description:
       'Connect with professionals, find opportunities, and grow your business in the transportation and logistics industry.',
     images: ['/Logo.png'],
@@ -85,11 +85,18 @@ export const metadata: Metadata = {
   // Icons
   icons: {
     icon: [
-      { url: '/logo.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/Cards/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/Cards/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/Logo.svg', type: 'image/svg+xml' },
     ],
-    apple: [{ url: '/Logo.png', sizes: '180x180', type: 'image/png' }],
-    shortcut: '/logo.ico',
+    apple: [
+      {
+        url: '/Cards/apple-touch-icon.png',
+        sizes: '180x180',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/Cards/favicon-32x32.png',
   },
 
   // Manifest
@@ -117,7 +124,7 @@ export const metadata: Metadata = {
 
   // Other metadata
   alternates: {
-    canonical: 'https://wheelboard.com',
+    canonical: 'https://wheelboard.in',
   },
 
   // Apple specific
@@ -140,6 +147,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Ensure correct mobile scaling and prevent automatic zooming on small devices */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
