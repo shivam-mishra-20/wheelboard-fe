@@ -384,26 +384,29 @@ export default function ChatbotFullscreen({
       className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-gray-50 via-white to-orange-50"
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 bg-white/80 px-6 py-4 shadow-sm backdrop-blur-sm">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg">
-            <FaRobot size={24} className="text-white" />
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white/80 px-3 py-3 shadow-sm backdrop-blur-sm md:px-6 md:py-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg md:h-12 md:w-12">
+            <FaRobot className="h-5 w-5 text-white md:h-6 md:w-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">
+            <h1 className="text-base font-bold text-gray-800 md:text-xl">
               WheelBot AI Assistant
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="hidden text-sm text-gray-500 md:block">
               Powered by Gemini & Groq • Always ready to help
+            </p>
+            <p className="text-xs text-gray-500 md:hidden">
+              AI-powered assistant
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 md:gap-3">
           {/* Rate Limit Badge */}
           {rateLimit && (
-            <div className="rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-600">
-              💬 {rateLimit.remaining}/{rateLimit.total} messages
+            <div className="hidden rounded-full bg-gray-100 px-3 py-1.5 text-xs text-gray-600 md:block md:px-4 md:py-2 md:text-sm">
+              💬 {rateLimit.remaining}/{rateLimit.total}
             </div>
           )}
 
@@ -413,7 +416,7 @@ export default function ChatbotFullscreen({
             className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100"
             title="Clear chat"
           >
-            <FaTrash size={18} />
+            <FaTrash className="h-4 w-4 md:h-[18px] md:w-[18px]" />
           </button>
 
           {/* Close Button */}
@@ -422,57 +425,57 @@ export default function ChatbotFullscreen({
             className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-red-100 hover:text-red-600"
             title="Close fullscreen"
           >
-            <FaCompress size={20} />
+            <FaCompress className="h-5 w-5 md:h-5 md:w-5" />
           </button>
         </div>
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 py-4 md:px-4 md:py-6">
+        <div className="mx-auto max-w-4xl space-y-4 md:space-y-6">
           {messages.map((message, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
-              className={`flex gap-4 ${
+              className={`flex gap-2 md:gap-4 ${
                 message.role === 'user' ? 'justify-end' : 'justify-start'
               }`}
             >
               {message.role === 'assistant' && (
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-md">
-                  <FaRobot size={20} className="text-white" />
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-md md:h-10 md:w-10">
+                  <FaRobot className="h-4 w-4 text-white md:h-5 md:w-5" />
                 </div>
               )}
 
               <div
-                className={`flex max-w-[75%] flex-col ${
+                className={`flex max-w-[85%] flex-col md:max-w-[75%] ${
                   message.role === 'user' ? 'items-end' : 'items-start'
                 }`}
               >
                 <div
-                  className={`rounded-2xl px-6 py-4 shadow-md ${
+                  className={`rounded-2xl px-4 py-3 shadow-md md:px-6 md:py-4 ${
                     message.role === 'user'
                       ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white'
                       : 'bg-white text-gray-800'
                   }`}
                 >
-                  <p className="whitespace-pre-line text-base leading-relaxed">
+                  <p className="whitespace-pre-line text-sm leading-relaxed md:text-base">
                     {message.content}
                   </p>
                 </div>
 
                 {/* Action Buttons */}
                 {message.buttons && message.buttons.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-1.5 md:mt-3 md:gap-2">
                     {message.buttons.map((button, btnIndex) => (
                       <motion.button
                         key={btnIndex}
                         onClick={() => handleButtonClick(button.action)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600"
+                        className="rounded-full border border-orange-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600 md:px-4 md:py-2 md:text-sm"
                         disabled={isLoading || isTyping}
                       >
                         {button.label}
@@ -481,7 +484,7 @@ export default function ChatbotFullscreen({
                   </div>
                 )}
 
-                <p className="mt-2 px-2 text-xs text-gray-400">
+                <p className="mt-1 px-1 text-xs text-gray-400 md:mt-2 md:px-2">
                   {new Date(message.timestamp).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -490,8 +493,8 @@ export default function ChatbotFullscreen({
               </div>
 
               {message.role === 'user' && (
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-600 to-gray-800 shadow-md">
-                  <FaUser size={18} className="text-white" />
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-600 to-gray-800 shadow-md md:h-10 md:w-10">
+                  <FaUser className="h-4 w-4 text-white md:h-[18px] md:w-[18px]" />
                 </div>
               )}
             </motion.div>
@@ -502,38 +505,38 @@ export default function ChatbotFullscreen({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex gap-4"
+              className="flex gap-2 md:gap-4"
             >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-md">
-                <FaRobot size={20} className="text-white" />
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 shadow-md md:h-10 md:w-10">
+                <FaRobot className="h-4 w-4 text-white md:h-5 md:w-5" />
               </div>
-              <div className="max-w-[75%]">
-                <div className="rounded-2xl bg-white px-6 py-4 shadow-md">
+              <div className="max-w-[85%] md:max-w-[75%]">
+                <div className="rounded-2xl bg-white px-4 py-3 shadow-md md:px-6 md:py-4">
                   {isTyping && typingText ? (
                     <div className="flex items-start">
-                      <p className="whitespace-pre-line text-base leading-relaxed text-gray-800">
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-gray-800 md:text-base">
                         {typingText}
                       </p>
-                      <span className="typing-cursor ml-0.5 mt-0.5 inline-block h-5 w-[2px] bg-orange-500" />
+                      <span className="typing-cursor ml-0.5 mt-0.5 inline-block h-4 w-[2px] bg-orange-500 md:h-5" />
                     </div>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5 md:gap-2">
                       <div
-                        className="h-3 w-3 animate-bounce rounded-full bg-orange-500"
+                        className="h-2.5 w-2.5 animate-bounce rounded-full bg-orange-500 md:h-3 md:w-3"
                         style={{
                           animationDelay: '0ms',
                           animationDuration: '0.6s',
                         }}
                       />
                       <div
-                        className="h-3 w-3 animate-bounce rounded-full bg-orange-500"
+                        className="h-2.5 w-2.5 animate-bounce rounded-full bg-orange-500 md:h-3 md:w-3"
                         style={{
                           animationDelay: '100ms',
                           animationDuration: '0.6s',
                         }}
                       />
                       <div
-                        className="h-3 w-3 animate-bounce rounded-full bg-orange-500"
+                        className="h-2.5 w-2.5 animate-bounce rounded-full bg-orange-500 md:h-3 md:w-3"
                         style={{
                           animationDelay: '200ms',
                           animationDuration: '0.6s',
@@ -551,21 +554,21 @@ export default function ChatbotFullscreen({
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 bg-white/80 px-6 py-4 shadow-lg backdrop-blur-sm">
+      <div className="border-t border-gray-200 bg-white/80 px-3 py-3 shadow-lg backdrop-blur-sm md:px-6 md:py-4">
         <div className="mx-auto max-w-4xl">
-          <div className="flex items-end gap-3 rounded-2xl border border-gray-300 bg-white p-2 shadow-sm focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-200">
+          <div className="flex items-end gap-2 rounded-2xl border border-gray-300 bg-white p-2 shadow-sm focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-200 md:gap-3">
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message here... (Press Enter to send)"
+              placeholder="Type your message..."
               disabled={isLoading || isTyping}
               rows={1}
-              className="max-h-32 flex-1 resize-none bg-transparent px-4 py-3 text-base text-gray-800 placeholder-gray-400 focus:outline-none disabled:cursor-not-allowed"
+              className="max-h-24 flex-1 resize-none bg-transparent px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none disabled:cursor-not-allowed md:max-h-32 md:px-4 md:py-3 md:text-base"
               style={{
-                minHeight: '48px',
-                maxHeight: '128px',
+                minHeight: '40px',
+                maxHeight: '96px',
               }}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
@@ -576,9 +579,9 @@ export default function ChatbotFullscreen({
             <button
               onClick={() => sendMessage()}
               disabled={!input.trim() || isLoading || isTyping}
-              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:h-12 md:w-12"
             >
-              <FaPaperPlane size={18} />
+              <FaPaperPlane className="h-4 w-4 md:h-[18px] md:w-[18px]" />
             </button>
           </div>
           <p className="mt-2 text-center text-xs text-gray-500">
