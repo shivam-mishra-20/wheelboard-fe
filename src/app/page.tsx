@@ -15,6 +15,7 @@ import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/LoadingScreen';
 import LoginSimulator from '@/components/LoginSimulator';
+import Chatbot from '@/components/Chatbot';
 import './globals.css';
 
 export default function Page() {
@@ -61,6 +62,9 @@ export default function Page() {
 
         {/* Login Simulator for Testing */}
         <LoginSimulator />
+
+        {/* AI Chatbot */}
+        <Chatbot />
       </div>
     </div>
   );

@@ -380,6 +380,12 @@ export const mockAPI = {
     return getCurrentSession();
   },
 
+  // Get current user
+  getCurrentUser(): User | null {
+    const session = getCurrentSession();
+    return session?.user || null;
+  },
+
   // Logout user
   async logout(): Promise<{ success: boolean; message: string }> {
     await simulateDelay(500);
