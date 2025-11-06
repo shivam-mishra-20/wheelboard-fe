@@ -3,13 +3,20 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { api, saveAuthUser } from '@/lib/apiAdapter';
 
 export default function CompanyRegisterPage() {
   const [companyName, setCompanyName] = useState('');
+  const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [businessCategory, setBusinessCategory] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>(
+    'success'
+  );
   const router = useRouter();
 
   // Handle category change and routing
@@ -23,14 +30,56 @@ export default function CompanyRegisterPage() {
     }
 
     if (value === 'transport') {
-      // Redirect to Complete Profile page for transport/company
-      router.push('/register/company/complete-profile');
+      // For transport companies, they can continue with this form
+      // Optionally redirect to complete profile later
+      // router.push('/register/company/complete-profile');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ companyName, phoneNumber, password, businessCategory });
+    setIsLoading(true);
+    setMessage('');
+
+    try {
+      const result = await api.register({
+        userType: 'company',
+        companyName,
+        email,
+        mobileNo: phoneNumber,
+        phoneNumber, // Backward compatibility
+        password,
+        businessCategory,
+      });
+
+      setMessageType(result.success ? 'success' : 'error');
+      setMessage(result.message);
+
+      if (result.success) {
+        // Save user session if returned
+        if (result.user) {
+          saveAuthUser(result.user, result.token);
+        }
+
+        // Redirect based on result
+        setTimeout(() => {
+          if (result.user) {
+            router.replace('/company/home');
+          } else {
+            router.replace('/login');
+          }
+        }, 1500);
+      }
+    } catch (error) {
+      setMessageType('error');
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Registration failed. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -97,6 +146,20 @@ export default function CompanyRegisterPage() {
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   placeholder="Enter your number"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="company@example.com"
                   required
                 />
               </div>
@@ -174,12 +237,26 @@ export default function CompanyRegisterPage() {
                 </select>
               </div>
 
+              {/* Message Display */}
+              {message && (
+                <div
+                  className={`rounded-lg p-4 ${
+                    messageType === 'success'
+                      ? 'bg-green-50 text-green-800'
+                      : 'bg-red-50 text-red-800'
+                  }`}
+                >
+                  {message}
+                </div>
+              )}
+
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-gradient-to-r from-[#FF7A00] to-[#E66D00] py-3 font-semibold text-white transition-all hover:from-[#E66D00] hover:to-[#CC6100] hover:shadow-lg"
+                disabled={isLoading}
+                className="w-full rounded-lg bg-orange-500 px-4 py-3 font-medium text-white transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Register
+                {isLoading ? 'Creating Account...' : 'Create Company Account'}
               </button>
             </form>
 

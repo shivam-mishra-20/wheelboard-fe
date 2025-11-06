@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockAPI } from '@/lib/mockApi';
+import { api, saveAuthUser } from '@/lib/apiAdapter';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -23,12 +23,19 @@ export default function LoginPage() {
     setMessage('');
 
     try {
-      const result = await mockAPI.login({ email, password });
+      // Use unified API - works with both mock and real API based on env config
+      const result = await api.login({
+        email, // Will use mobileNo field if NEXT_PUBLIC_API_MODE=real
+        password,
+      });
 
       setMessageType(result.success ? 'success' : 'error');
       setMessage(result.message);
 
       if (result.success && result.user) {
+        // Save user session
+        saveAuthUser(result.user, result.token);
+
         // Redirect to role-specific home page
         const role = result.user.userType;
         const target =
@@ -43,9 +50,13 @@ export default function LoginPage() {
           router.push(target);
         }, 800);
       }
-    } catch {
+    } catch (error) {
       setMessageType('error');
-      setMessage('Login failed. Please try again.');
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Login failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -262,19 +273,11 @@ export default function LoginPage() {
                 onClick={async () => {
                   setIsLoading(true);
                   try {
-                    const result = await mockAPI.socialLogin('google');
-                    setMessageType(result.success ? 'success' : 'error');
-                    setMessage(result.message);
-                    if (result.success && result.user) {
-                      const role = result.user.userType;
-                      const target =
-                        role === 'company'
-                          ? '/company/home'
-                          : role === 'business'
-                            ? '/business/home'
-                            : '/professional/home';
-                      setTimeout(() => router.push(target), 800);
-                    }
+                    // Note: Social login not yet implemented in real API
+                    setMessageType('error');
+                    setMessage(
+                      'Social login coming soon. Please use email/password.'
+                    );
                   } catch {
                     setMessageType('error');
                     setMessage('Social login failed.');

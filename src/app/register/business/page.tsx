@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockAPI, BusinessRegistrationStep2 } from '@/lib/mockApi';
+import { api, saveAuthUser } from '@/lib/apiAdapter';
+import { BusinessRegistrationStep2 } from '@/lib/mockApi';
 
 export default function BusinessRegisterPage() {
   const router = useRouter();
@@ -128,31 +129,50 @@ export default function BusinessRegisterPage() {
         return;
       }
 
-      // Submit complete registration
-      const result = await mockAPI.register({
+      // Submit complete registration using unified API
+      const result = await api.register({
+        userType: 'business',
         companyName,
-        phoneNumber,
+        businessName: step2Data.businessName,
+        email: step2Data.email,
+        mobileNo: phoneNumber,
+        phoneNumber, // Backward compatibility
         password,
         businessCategory: 'service-provider',
-        userType: 'business',
       });
 
       setMessageType(result.success ? 'success' : 'error');
       setMessage(result.message);
 
       if (result.success) {
+        // Save user session if returned
+        if (result.user) {
+          saveAuthUser(result.user, result.token);
+        }
+
         // Redirect to the appropriate home for the new account
-        const redirectMap: Record<string, string> = {
-          company: '/company/home',
-          business: '/business/home',
-          professional: '/professional/home',
-        };
-        const target = redirectMap[result.user?.userType || ''] || '/';
-        router.replace(target);
+        setTimeout(() => {
+          if (result.user) {
+            const redirectMap: Record<string, string> = {
+              company: '/company/home',
+              business: '/business/home',
+              professional: '/professional/home',
+            };
+            const target =
+              redirectMap[result.user.userType] || '/business/home';
+            router.replace(target);
+          } else {
+            router.replace('/login');
+          }
+        }, 1500);
       }
-    } catch {
+    } catch (error) {
       setMessageType('error');
-      setMessage('Registration failed. Please try again.');
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Registration failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }

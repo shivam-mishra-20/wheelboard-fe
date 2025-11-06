@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockAPI } from '@/lib/mockApi';
+import { api, saveAuthUser } from '@/lib/apiAdapter';
+import { formatDateForApi } from '@/lib/userApi';
 
 export default function ProfessionalRegisterPage() {
   const router = useRouter();
@@ -11,9 +12,13 @@ export default function ProfessionalRegisterPage() {
   const [fatherName, setFatherName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [stateName, setStateName] = useState('');
   const [city, setCity] = useState('');
+  const [professionalType, setProfessionalType] = useState('Driver');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>(
@@ -26,45 +31,70 @@ export default function ProfessionalRegisterPage() {
     setMessage('');
 
     try {
-      const result = await mockAPI.register({
-        companyName: fullName || 'Professional',
-        phoneNumber,
-        password: 'defaultpassword',
-        businessCategory: 'professional',
+      const result = await api.register({
         userType: 'professional',
-        fullName,
-        fatherName,
-        birthDate,
+        email: email,
+        password: password,
+        name: fullName,
+        fatherName: fatherName,
+        dateOfBirth: birthDate
+          ? formatDateForApi(new Date(birthDate))
+          : undefined,
+        mobileNo: phoneNumber,
+        phoneNumber: phoneNumber, // Backward compatibility with mock API
         state: stateName,
-        city,
-        avatarDataUrl: avatarPreview || undefined,
+        city: city,
+        professionalType: professionalType,
+        businessCategory: professionalType, // Backward compatibility
+        profileImage: profileImageFile || undefined,
+        avatarDataUrl: avatarPreview || undefined, // For mock API
+        fullName: fullName, // For mock API
+        birthDate: birthDate, // For mock API
       });
 
       setMessageType(result.success ? 'success' : 'error');
       setMessage(result.message);
 
       if (result.success) {
+        // Save user session if returned
+        if (result.user) {
+          saveAuthUser(result.user, result.token);
+        }
+
         // Clear form on success
         setFullName('');
         setFatherName('');
         setBirthDate('');
         setPhoneNumber('');
+        setEmail('');
+        setPassword('');
         setStateName('');
         setCity('');
         setAvatarPreview(null);
+        setProfileImageFile(null);
 
-        // Redirect to role-specific home
-        const redirectMap: Record<string, string> = {
-          company: '/company/home',
-          business: '/business/home',
-          professional: '/professional/home',
-        };
-        const target = redirectMap[result.user?.userType || ''] || '/';
-        router.replace(target);
+        // Redirect to login or role-specific home
+        setTimeout(() => {
+          if (result.user) {
+            const redirectMap: Record<string, string> = {
+              company: '/company/home',
+              business: '/business/home',
+              professional: '/professional/home',
+            };
+            const target = redirectMap[result.user.userType] || '/login';
+            router.replace(target);
+          } else {
+            router.replace('/login');
+          }
+        }, 1500);
       }
-    } catch {
+    } catch (error) {
       setMessageType('error');
-      setMessage('Registration failed. Please try again.');
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Registration failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -73,20 +103,10 @@ export default function ProfessionalRegisterPage() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const result = await mockAPI.socialLogin('google');
-      setMessageType(result.success ? 'success' : 'error');
-      setMessage(result.message);
-
-      if (result.success) {
-        // social login returns an authenticated session in mockAPI
-        const redirectMap: Record<string, string> = {
-          company: '/company/home',
-          business: '/business/home',
-          professional: '/professional/home',
-        };
-        const target = redirectMap[result.user?.userType || ''] || '/';
-        router.replace(target);
-      }
+      setMessageType('error');
+      setMessage(
+        'Social login coming soon. Please complete the registration form.'
+      );
     } catch {
       setMessageType('error');
       setMessage('Google sign in failed. Please try again.');
@@ -98,19 +118,10 @@ export default function ProfessionalRegisterPage() {
   const handleFacebookSignIn = async () => {
     setIsLoading(true);
     try {
-      const result = await mockAPI.socialLogin('facebook');
-      setMessageType(result.success ? 'success' : 'error');
-      setMessage(result.message);
-
-      if (result.success) {
-        const redirectMap: Record<string, string> = {
-          company: '/company/home',
-          business: '/business/home',
-          professional: '/professional/home',
-        };
-        const target = redirectMap[result.user?.userType || ''] || '/';
-        router.replace(target);
-      }
+      setMessageType('error');
+      setMessage(
+        'Social login coming soon. Please complete the registration form.'
+      );
     } catch {
       setMessageType('error');
       setMessage('Facebook sign in failed. Please try again.');
@@ -231,6 +242,52 @@ export default function ProfessionalRegisterPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    placeholder="Create a password"
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">
+                    Professional Type
+                  </label>
+                  <select
+                    value={professionalType}
+                    onChange={(e) => setProfessionalType(e.target.value)}
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    required
+                  >
+                    <option value="Driver">Driver</option>
+                    <option value="Helper">Helper</option>
+                    <option value="Technician">Technician</option>
+                    <option value="Operator">Operator</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-gray-700">
                     State
                   </label>
                   <select
@@ -281,6 +338,9 @@ export default function ProfessionalRegisterPage() {
                         if (file.size > 2 * 1024 * 1024) {
                           return;
                         }
+                        // Store the actual file for API upload
+                        setProfileImageFile(file);
+                        // Create preview
                         const reader = new FileReader();
                         reader.onload = (ev) =>
                           setAvatarPreview(ev.target?.result as string);
