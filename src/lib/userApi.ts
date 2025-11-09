@@ -1,9 +1,20 @@
 // User API Service - Integration with Wheelboard Backend
 // Base URL: https://wheelboardapi.addonshareware.com
 
+import axios, { type AxiosRequestConfig } from 'axios';
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   'https://wheelboardapi.addonshareware.com';
+
+// Create axios instance with default config
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000, // 30 seconds
+});
 
 // ============================================
 // TYPE DEFINITIONS
@@ -169,64 +180,60 @@ const buildFormData = (
 };
 
 /**
- * Generic API request handler with error handling
+ * Generic API request handler with error handling using axios
  */
 async function apiRequest<T = unknown>(
   endpoint: string,
-  options: RequestInit = {}
+  options: AxiosRequestConfig = {}
 ): Promise<ApiResponse<T>> {
   try {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${endpoint}`;
 
-    console.log(`[API Request] ${options.method || 'GET'} ${url}`);
+    console.log(
+      `[API Request] ${options.method || 'GET'} ${API_BASE_URL}${url}`
+    );
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-      },
-    });
-
-    // Parse response
-    let responseData: {
+    const response = await axiosInstance.request<{
       message?: string;
       error?: string;
       data?: T;
       [key: string]: unknown;
+    }>({
+      url,
+      ...options,
+    });
+
+    console.log(`[API Response] ${response.status}:`, response.data);
+
+    // Success response
+    return {
+      success: true,
+      message: response.data?.message || 'Success',
+      data: response.data?.data || (response.data as T),
     };
-    const contentType = response.headers.get('content-type');
+  } catch (error: unknown) {
+    console.error('[API Error]', error);
 
-    if (contentType && contentType.includes('application/json')) {
-      responseData = await response.json();
-    } else {
-      const text = await response.text();
-      responseData = { message: text };
-    }
+    if (axios.isAxiosError(error)) {
+      const axiosError = error;
+      const responseData = axiosError.response?.data as
+        | {
+            message?: string;
+            error?: string;
+          }
+        | undefined;
 
-    console.log(`[API Response] ${response.status}:`, responseData);
-
-    // Handle HTTP errors
-    if (!response.ok) {
       return {
         success: false,
         message:
           responseData?.message ||
           responseData?.error ||
-          `HTTP Error ${response.status}`,
-        error:
-          responseData?.error ||
-          `Request failed with status ${response.status}`,
+          axiosError.message ||
+          'Request failed',
+        error: responseData?.error || axiosError.message,
       };
     }
 
-    // Success response
-    return {
-      success: true,
-      message: responseData?.message || 'Success',
-      data: responseData?.data || (responseData as T),
-    };
-  } catch (error: unknown) {
-    console.error('[API Error]', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred';
     return {
@@ -251,10 +258,7 @@ export const userApi = {
   ): Promise<ApiResponse<LoginResponse['data']>> => {
     return apiRequest('/api/User/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
+      data: credentials,
     });
   },
 
@@ -280,7 +284,10 @@ export const userApi = {
 
     return apiRequest('/api/User/professional_signup', {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 
@@ -291,10 +298,7 @@ export const userApi = {
   companySignup: async (data: CompanySignupRequest): Promise<ApiResponse> => {
     return apiRequest('/api/User/company_signup', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
+      data: data,
     });
   },
 
@@ -317,7 +321,10 @@ export const userApi = {
 
     return apiRequest('/api/User/complete-transport', {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 
@@ -345,7 +352,10 @@ export const userApi = {
 
     return apiRequest('/api/User/complete-service-provider', {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 
@@ -356,10 +366,7 @@ export const userApi = {
   saveReferral: async (data: SaveReferralRequest): Promise<ApiResponse> => {
     return apiRequest('/api/User/save-referral', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
+      data: data,
     });
   },
 
@@ -376,7 +383,10 @@ export const userApi = {
 
     return apiRequest(`/api/User/UploadSliderImage?userId=${userId}`, {
       method: 'POST',
-      body: formData,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
   },
 

@@ -1,0 +1,5683 @@
+{
+	"info": {
+		"_postman_id": "06ae4a40-863b-4be3-bb31-cb4a86688b5f",
+		"name": "WheelBoard API",
+		"description": "API and Admin Panel for WheelBoard",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45963221"
+	},
+	"item": [
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "Job",
+					"item": [
+						{
+							"name": "add-job",
+							"item": [
+								{
+									"name": "/api/Job/add-job",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "UserId",
+													"value": "4fc60e5b-98a9-d51e-4da6-26db5811f021",
+													"type": "text"
+												},
+												{
+													"key": "Role",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "JobDuration",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Openings",
+													"value": "3770",
+													"type": "text"
+												},
+												{
+													"key": "Salary",
+													"value": "2101.879168150078",
+													"type": "text"
+												},
+												{
+													"key": "City",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "JobType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Images",
+													"value": "string,string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Job/add-job",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Job",
+												"add-job"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "UserId",
+															"value": "4fc60e5b-98a9-d51e-4da6-26db5811f021",
+															"type": "text"
+														},
+														{
+															"key": "Role",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "JobDuration",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Openings",
+															"value": "3770",
+															"type": "text"
+														},
+														{
+															"key": "Salary",
+															"value": "2101.879168150078",
+															"type": "text"
+														},
+														{
+															"key": "City",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "JobType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Images",
+															"value": "string,string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/add-job",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"add-job"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "update-job",
+							"item": [
+								{
+									"name": "/api/Job/update-job",
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "JobId",
+													"value": "54b08e91-3b39-2a16-c8eb-c289bc952052",
+													"type": "text"
+												},
+												{
+													"key": "Role",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "JobDuration",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Openings",
+													"value": "7372",
+													"type": "text"
+												},
+												{
+													"key": "Salary",
+													"value": "123.28554694388538",
+													"type": "text"
+												},
+												{
+													"key": "City",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "JobType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "UserId",
+													"value": "310ef6fc-828f-daae-8cdc-09b6bada7c79",
+													"type": "text"
+												},
+												{
+													"key": "NewImages",
+													"value": "string,string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Job/update-job",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Job",
+												"update-job"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "JobId",
+															"value": "54b08e91-3b39-2a16-c8eb-c289bc952052",
+															"type": "text"
+														},
+														{
+															"key": "Role",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "JobDuration",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Openings",
+															"value": "7372",
+															"type": "text"
+														},
+														{
+															"key": "Salary",
+															"value": "123.28554694388538",
+															"type": "text"
+														},
+														{
+															"key": "City",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "JobType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "UserId",
+															"value": "310ef6fc-828f-daae-8cdc-09b6bada7c79",
+															"type": "text"
+														},
+														{
+															"key": "NewImages",
+															"value": "string,string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/update-job",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"update-job"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "job-list",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Job/job-list/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/job-list/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"job-list",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Job/job-list/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Job",
+																"job-list",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "open-job-list",
+							"item": [
+								{
+									"name": "/api/Job/open-job-list",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Job/open-job-list",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Job",
+												"open-job-list"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/open-job-list",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"open-job-list"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "{jobId}",
+							"item": [
+								{
+									"name": "user",
+									"item": [
+										{
+											"name": "{userId}",
+											"item": [
+												{
+													"name": "/api/Job/:jobId/user/:userId",
+													"request": {
+														"method": "DELETE",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Job/:jobId/user/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Job",
+																":jobId",
+																"user",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "jobId",
+																	"value": "bec6e730-daea-6c09-9744-a4238a228549"
+																},
+																{
+																	"key": "userId",
+																	"value": "bec6e730-daea-6c09-9744-a4238a228549"
+																}
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "OK",
+															"originalRequest": {
+																"method": "DELETE",
+																"header": [
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/Job/:jobId/user/:userId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"Job",
+																		":jobId",
+																		"user",
+																		":userId"
+																	],
+																	"variable": [
+																		{
+																			"key": "jobId"
+																		},
+																		{
+																			"key": "userId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"body": ""
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "apply-job",
+							"item": [
+								{
+									"name": "/api/Job/apply-job",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"jobId\": \"c6be4746-4297-a8af-964d-17b58914c050\",\n  \"userId\": \"32eb9709-dec4-2530-ec52-ce4c717556d7\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Job/apply-job",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Job",
+												"apply-job"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"jobId\": \"c6be4746-4297-a8af-964d-17b58914c050\",\n  \"userId\": \"32eb9709-dec4-2530-ec52-ce4c717556d7\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/apply-job",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"apply-job"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "get-applications",
+							"item": [
+								{
+									"name": "{jobId}",
+									"item": [
+										{
+											"name": "/api/Job/get-applications/:jobId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/get-applications/:jobId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"get-applications",
+														":jobId"
+													],
+													"variable": [
+														{
+															"key": "jobId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Job/get-applications/:jobId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Job",
+																"get-applications",
+																":jobId"
+															],
+															"variable": [
+																{
+																	"key": "jobId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "applied-jobs",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Job/applied-jobs/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/applied-jobs/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"applied-jobs",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Job/applied-jobs/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Job",
+																"applied-jobs",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "update-job-status",
+							"item": [
+								{
+									"name": "/api/Job/update-job-status",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"applicationId\": \"53ae2404-f31f-708c-7867-26138da1c24c\",\n  \"status\": \"string\",\n  \"modifiedUserId\": \"ec32fef1-c0de-d552-bad7-fdf7fb22533e\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Job/update-job-status",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Job",
+												"update-job-status"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"applicationId\": \"53ae2404-f31f-708c-7867-26138da1c24c\",\n  \"status\": \"string\",\n  \"modifiedUserId\": \"ec32fef1-c0de-d552-bad7-fdf7fb22533e\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Job/update-job-status",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Job",
+														"update-job-status"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "MasterData",
+					"item": [
+						{
+							"name": "getAllServices",
+							"item": [
+								{
+									"name": "/api/MasterData/getAllServices",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/MasterData/getAllServices",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"MasterData",
+												"getAllServices"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/MasterData/getAllServices",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"MasterData",
+														"getAllServices"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "getAllBusinessType",
+							"item": [
+								{
+									"name": "/api/MasterData/getAllBusinessType",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/MasterData/getAllBusinessType",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"MasterData",
+												"getAllBusinessType"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/MasterData/getAllBusinessType",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"MasterData",
+														"getAllBusinessType"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Post",
+					"item": [
+						{
+							"name": "add",
+							"item": [
+								{
+									"name": "/api/Post/add",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "UserId",
+													"value": "4aa44e18-80c2-6c46-df22-d5fa696482d2",
+													"type": "text"
+												},
+												{
+													"key": "Content",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Category",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Images",
+													"value": "string,string",
+													"type": "text"
+												},
+												{
+													"key": "CreatedBy",
+													"value": "7299ec4c-888b-0af6-d90f-28eff57bf97a",
+													"type": "text"
+												},
+												{
+													"key": "PartnerId",
+													"value": "991",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Post/add",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Post",
+												"add"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "UserId",
+															"value": "4aa44e18-80c2-6c46-df22-d5fa696482d2",
+															"type": "text"
+														},
+														{
+															"key": "Content",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Category",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Images",
+															"value": "string,string",
+															"type": "text"
+														},
+														{
+															"key": "CreatedBy",
+															"value": "7299ec4c-888b-0af6-d90f-28eff57bf97a",
+															"type": "text"
+														},
+														{
+															"key": "PartnerId",
+															"value": "991",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Post/add",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Post",
+														"add"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "user",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Post/user/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Post/user/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Post",
+														"user",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Post/user/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Post",
+																"user",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "approve",
+							"item": [
+								{
+									"name": "{postId}",
+									"item": [
+										{
+											"name": "/api/Post/approve/:postId",
+											"request": {
+												"method": "PUT",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Post/approve/:postId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Post",
+														"approve",
+														":postId"
+													],
+													"variable": [
+														{
+															"key": "postId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Post/approve/:postId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Post",
+																"approve",
+																":postId"
+															],
+															"variable": [
+																{
+																	"key": "postId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "reject",
+							"item": [
+								{
+									"name": "{postId}",
+									"item": [
+										{
+											"name": "/api/Post/reject/:postId",
+											"request": {
+												"method": "PUT",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Post/reject/:postId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Post",
+														"reject",
+														":postId"
+													],
+													"variable": [
+														{
+															"key": "postId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Post/reject/:postId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Post",
+																"reject",
+																":postId"
+															],
+															"variable": [
+																{
+																	"key": "postId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "{postId}",
+							"item": [
+								{
+									"name": "/api/Post/:postId",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Post/:postId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Post",
+												":postId"
+											],
+											"variable": [
+												{
+													"key": "postId",
+													"value": "bec6e730-daea-6c09-9744-a4238a228549"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Post/:postId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Post",
+														":postId"
+													],
+													"variable": [
+														{
+															"key": "postId"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Service",
+					"item": [
+						{
+							"name": "add-service",
+							"item": [
+								{
+									"name": "/api/Service/add-service",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "UserId",
+													"value": "4bfecd5e-ac67-724d-5b51-a85163c6c1d1",
+													"type": "text"
+												},
+												{
+													"key": "ServiceTitle",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ContactNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "WhatsappNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsFlatPrice",
+													"value": "true",
+													"type": "text"
+												},
+												{
+													"key": "Price",
+													"value": "4186.980452237032",
+													"type": "text"
+												},
+												{
+													"key": "City",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "FullAddress",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsVisible",
+													"value": "false",
+													"type": "text"
+												},
+												{
+													"key": "BusinessFrom",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "BusinessTo",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "DaysOpen",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "CreatedBy",
+													"value": "f21e4939-1890-4a90-300e-65491c6abcb0",
+													"type": "text"
+												},
+												{
+													"key": "Images",
+													"value": "string,string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Service/add-service",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Service",
+												"add-service"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "UserId",
+															"value": "4bfecd5e-ac67-724d-5b51-a85163c6c1d1",
+															"type": "text"
+														},
+														{
+															"key": "ServiceTitle",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ContactNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "WhatsappNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsFlatPrice",
+															"value": "true",
+															"type": "text"
+														},
+														{
+															"key": "Price",
+															"value": "4186.980452237032",
+															"type": "text"
+														},
+														{
+															"key": "City",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "FullAddress",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsVisible",
+															"value": "false",
+															"type": "text"
+														},
+														{
+															"key": "BusinessFrom",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "BusinessTo",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "DaysOpen",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "CreatedBy",
+															"value": "f21e4939-1890-4a90-300e-65491c6abcb0",
+															"type": "text"
+														},
+														{
+															"key": "Images",
+															"value": "string,string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Service/add-service",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Service",
+														"add-service"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "update-service",
+							"item": [
+								{
+									"name": "/api/Service/update-service",
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "ServiceId",
+													"value": "21e99f10-3384-5b62-11e2-8b537552ffd5",
+													"type": "text"
+												},
+												{
+													"key": "UserId",
+													"value": "2b3fdef5-f53f-5710-0769-4229a612359a",
+													"type": "text"
+												},
+												{
+													"key": "ServiceTitle",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ContactNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "WhatsappNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsFlatPrice",
+													"value": "true",
+													"type": "text"
+												},
+												{
+													"key": "Price",
+													"value": "55.32471559636099",
+													"type": "text"
+												},
+												{
+													"key": "City",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "FullAddress",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsVisible",
+													"value": "true",
+													"type": "text"
+												},
+												{
+													"key": "BusinessFrom",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "BusinessTo",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "DaysOpen",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ModifiedBy",
+													"value": "dffba560-e20d-f935-d531-bc86d3ccff52",
+													"type": "text"
+												},
+												{
+													"key": "NewImages",
+													"value": "string,string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Service/update-service",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Service",
+												"update-service"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "ServiceId",
+															"value": "21e99f10-3384-5b62-11e2-8b537552ffd5",
+															"type": "text"
+														},
+														{
+															"key": "UserId",
+															"value": "2b3fdef5-f53f-5710-0769-4229a612359a",
+															"type": "text"
+														},
+														{
+															"key": "ServiceTitle",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ContactNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "WhatsappNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsFlatPrice",
+															"value": "true",
+															"type": "text"
+														},
+														{
+															"key": "Price",
+															"value": "55.32471559636099",
+															"type": "text"
+														},
+														{
+															"key": "City",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "FullAddress",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsVisible",
+															"value": "true",
+															"type": "text"
+														},
+														{
+															"key": "BusinessFrom",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "BusinessTo",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "DaysOpen",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ModifiedBy",
+															"value": "dffba560-e20d-f935-d531-bc86d3ccff52",
+															"type": "text"
+														},
+														{
+															"key": "NewImages",
+															"value": "string,string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Service/update-service",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Service",
+														"update-service"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "service-list",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Service/service-list/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Service/service-list/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Service",
+														"service-list",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Service/service-list/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Service",
+																"service-list",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "{serviceId}",
+							"item": [
+								{
+									"name": "user",
+									"item": [
+										{
+											"name": "{userId}",
+											"item": [
+												{
+													"name": "/api/Service/:serviceId/user/:userId",
+													"request": {
+														"method": "DELETE",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Service/:serviceId/user/:userId?jobId=bec6e730-daea-6c09-9744-a4238a228549",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Service",
+																":serviceId",
+																"user",
+																":userId"
+															],
+															"query": [
+																{
+																	"key": "jobId",
+																	"value": "bec6e730-daea-6c09-9744-a4238a228549"
+																}
+															],
+															"variable": [
+																{
+																	"key": "serviceId",
+																	"value": "string"
+																},
+																{
+																	"key": "userId",
+																	"value": "bec6e730-daea-6c09-9744-a4238a228549"
+																}
+															]
+														}
+													},
+													"response": [
+														{
+															"name": "OK",
+															"originalRequest": {
+																"method": "DELETE",
+																"header": [
+																	{
+																		"key": "Authorization",
+																		"value": "Bearer <token>",
+																		"description": "Added as a part of security scheme: bearer"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/Service/:serviceId/user/:userId?jobId=bec6e730-daea-6c09-9744-a4238a228549",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"Service",
+																		":serviceId",
+																		"user",
+																		":userId"
+																	],
+																	"query": [
+																		{
+																			"key": "jobId",
+																			"value": "bec6e730-daea-6c09-9744-a4238a228549"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "serviceId"
+																		},
+																		{
+																			"key": "userId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"body": ""
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "assign-service",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Service/assign-service/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Service/assign-service/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Service",
+														"assign-service",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Service/assign-service/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Service",
+																"assign-service",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "/api/Service/assign-service",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"serviceId\": \"e22400d1-e55a-274c-d819-31010af633f1\",\n  \"assignedToUserId\": \"db28f3e6-4211-e0d6-f311-3bdceeb1a056\",\n  \"vehicleNumber\": \"string\",\n  \"scheduledDate\": \"1969-12-31T02:09:46.371Z\",\n  \"scheduledTime\": \"string\",\n  \"description\": \"string\",\n  \"status\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Service/assign-service",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Service",
+												"assign-service"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"serviceId\": \"e22400d1-e55a-274c-d819-31010af633f1\",\n  \"assignedToUserId\": \"db28f3e6-4211-e0d6-f311-3bdceeb1a056\",\n  \"vehicleNumber\": \"string\",\n  \"scheduledDate\": \"1969-12-31T02:09:46.371Z\",\n  \"scheduledTime\": \"string\",\n  \"description\": \"string\",\n  \"status\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Service/assign-service",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Service",
+														"assign-service"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "{assignmentId}",
+							"item": [
+								{
+									"name": "/api/Service/:assignmentId",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Service/:assignmentId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Service",
+												":assignmentId"
+											],
+											"variable": [
+												{
+													"key": "assignmentId",
+													"value": "bec6e730-daea-6c09-9744-a4238a228549"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Service/:assignmentId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Service",
+														":assignmentId"
+													],
+													"variable": [
+														{
+															"key": "assignmentId"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Transport",
+					"item": [
+						{
+							"name": "add-vehicle",
+							"item": [
+								{
+									"name": "/api/Transport/add-vehicle",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "UserId",
+													"value": "c4e9c3a0-23b0-6320-9074-363a84cf2f76",
+													"type": "text"
+												},
+												{
+													"key": "VehicleModel",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ManufacturingYear",
+													"value": "4326",
+													"type": "text"
+												},
+												{
+													"key": "OwnershipType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsDeclarationAccepted",
+													"value": "false",
+													"type": "text"
+												},
+												{
+													"key": "Images",
+													"value": "string,string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Transport/add-vehicle",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Transport",
+												"add-vehicle"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "UserId",
+															"value": "c4e9c3a0-23b0-6320-9074-363a84cf2f76",
+															"type": "text"
+														},
+														{
+															"key": "VehicleModel",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ManufacturingYear",
+															"value": "4326",
+															"type": "text"
+														},
+														{
+															"key": "OwnershipType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsDeclarationAccepted",
+															"value": "false",
+															"type": "text"
+														},
+														{
+															"key": "Images",
+															"value": "string,string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/add-vehicle",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														"add-vehicle"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "update-vehicle",
+							"item": [
+								{
+									"name": "/api/Transport/update-vehicle",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "VehicleId",
+													"value": "b9b35e9b-6a7e-e3da-ea3b-b2594a801091",
+													"type": "text"
+												},
+												{
+													"key": "UserId",
+													"value": "884f4447-9d7e-5251-f9b7-12d41b443fef",
+													"type": "text"
+												},
+												{
+													"key": "VehicleModel",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ManufacturingYear",
+													"value": "4444",
+													"type": "text"
+												},
+												{
+													"key": "OwnershipType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsDeclarationAccepted",
+													"value": "true",
+													"type": "text"
+												},
+												{
+													"key": "Images",
+													"value": "string,string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Transport/update-vehicle",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Transport",
+												"update-vehicle"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "VehicleId",
+															"value": "b9b35e9b-6a7e-e3da-ea3b-b2594a801091",
+															"type": "text"
+														},
+														{
+															"key": "UserId",
+															"value": "884f4447-9d7e-5251-f9b7-12d41b443fef",
+															"type": "text"
+														},
+														{
+															"key": "VehicleModel",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ManufacturingYear",
+															"value": "4444",
+															"type": "text"
+														},
+														{
+															"key": "OwnershipType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsDeclarationAccepted",
+															"value": "true",
+															"type": "text"
+														},
+														{
+															"key": "Images",
+															"value": "string,string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/update-vehicle",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														"update-vehicle"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "vehicle",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Transport/vehicle/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/vehicle/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														"vehicle",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Transport/vehicle/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Transport",
+																"vehicle",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "{vehicleId}",
+							"item": [
+								{
+									"name": "/api/Transport/:vehicleId",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Transport/:vehicleId?modifiedBy=bec6e730-daea-6c09-9744-a4238a228549",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Transport",
+												":vehicleId"
+											],
+											"query": [
+												{
+													"key": "modifiedBy",
+													"value": "bec6e730-daea-6c09-9744-a4238a228549"
+												}
+											],
+											"variable": [
+												{
+													"key": "vehicleId",
+													"value": "bec6e730-daea-6c09-9744-a4238a228549"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/:vehicleId?modifiedBy=bec6e730-daea-6c09-9744-a4238a228549",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														":vehicleId"
+													],
+													"query": [
+														{
+															"key": "modifiedBy",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													],
+													"variable": [
+														{
+															"key": "vehicleId"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "add-driver",
+							"item": [
+								{
+									"name": "/api/Transport/add-driver",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "UserId",
+													"value": "f4329d44-c778-3d0f-5990-3dc71e06b1d0",
+													"type": "text"
+												},
+												{
+													"key": "FullName",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ContactNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsDeclarationAccepted",
+													"value": "true",
+													"type": "text"
+												},
+												{
+													"key": "Image",
+													"type": "file",
+													"src": []
+												},
+												{
+													"key": "PartnerId",
+													"value": "4667",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Transport/add-driver",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Transport",
+												"add-driver"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "UserId",
+															"value": "f4329d44-c778-3d0f-5990-3dc71e06b1d0",
+															"type": "text"
+														},
+														{
+															"key": "FullName",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ContactNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsDeclarationAccepted",
+															"value": "true",
+															"type": "text"
+														},
+														{
+															"key": "Image",
+															"type": "file",
+															"src": []
+														},
+														{
+															"key": "PartnerId",
+															"value": "4667",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/add-driver",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														"add-driver"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "drivers",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Transport/drivers/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/drivers/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														"drivers",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Transport/drivers/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Transport",
+																"drivers",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "update-driver",
+							"item": [
+								{
+									"name": "/api/Transport/update-driver",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "DriverId",
+													"value": "f2edbfe1-4b85-aef6-35db-fe48157d75e6",
+													"type": "text"
+												},
+												{
+													"key": "FullName",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ContactNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "VehicleNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "IsDeclarationAccepted",
+													"value": "false",
+													"type": "text"
+												},
+												{
+													"key": "Image",
+													"type": "file",
+													"src": []
+												},
+												{
+													"key": "ModifiedUserId",
+													"value": "d6954933-e38d-bc46-7f24-effb7c0f5562",
+													"type": "text"
+												},
+												{
+													"key": "PartnerId",
+													"value": "2294",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Transport/update-driver",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Transport",
+												"update-driver"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "DriverId",
+															"value": "f2edbfe1-4b85-aef6-35db-fe48157d75e6",
+															"type": "text"
+														},
+														{
+															"key": "FullName",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ContactNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "VehicleNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "IsDeclarationAccepted",
+															"value": "false",
+															"type": "text"
+														},
+														{
+															"key": "Image",
+															"type": "file",
+															"src": []
+														},
+														{
+															"key": "ModifiedUserId",
+															"value": "d6954933-e38d-bc46-7f24-effb7c0f5562",
+															"type": "text"
+														},
+														{
+															"key": "PartnerId",
+															"value": "2294",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/update-driver",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														"update-driver"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "driver",
+							"item": [
+								{
+									"name": "{driverId}",
+									"item": [
+										{
+											"name": "/api/Transport/driver/:driverId",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Transport/driver/:driverId?modifiedBy=bec6e730-daea-6c09-9744-a4238a228549",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Transport",
+														"driver",
+														":driverId"
+													],
+													"query": [
+														{
+															"key": "modifiedBy",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													],
+													"variable": [
+														{
+															"key": "driverId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Transport/driver/:driverId?modifiedBy=bec6e730-daea-6c09-9744-a4238a228549",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Transport",
+																"driver",
+																":driverId"
+															],
+															"query": [
+																{
+																	"key": "modifiedBy",
+																	"value": "bec6e730-daea-6c09-9744-a4238a228549"
+																}
+															],
+															"variable": [
+																{
+																	"key": "driverId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Trip",
+					"item": [
+						{
+							"name": "add-trip",
+							"item": [
+								{
+									"name": "/api/Trip/add-trip",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "TripId",
+													"value": "070a2c81-e63a-5e49-e31f-c58b58507fac",
+													"type": "text"
+												},
+												{
+													"key": "UserId",
+													"value": "4dd9b877-d8de-ee41-2d57-316e91e8a762",
+													"type": "text"
+												},
+												{
+													"key": "VehicleId",
+													"value": "9a3ce4c2-902a-9db2-658a-06a22c5bf264",
+													"type": "text"
+												},
+												{
+													"key": "DriverId",
+													"value": "0d00fcca-0c6f-d84d-3f6b-9d1825373fbf",
+													"type": "text"
+												},
+												{
+													"key": "PickupLocation",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "DeliveryLocation",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "PickupDate",
+													"value": "1954-09-12T22:02:54.303Z",
+													"type": "text"
+												},
+												{
+													"key": "PickupTime",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "SpecialInstructions",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "PayRange",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "TripCode",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "TripStatus",
+													"value": "string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Trip/add-trip",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Trip",
+												"add-trip"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "TripId",
+															"value": "070a2c81-e63a-5e49-e31f-c58b58507fac",
+															"type": "text"
+														},
+														{
+															"key": "UserId",
+															"value": "4dd9b877-d8de-ee41-2d57-316e91e8a762",
+															"type": "text"
+														},
+														{
+															"key": "VehicleId",
+															"value": "9a3ce4c2-902a-9db2-658a-06a22c5bf264",
+															"type": "text"
+														},
+														{
+															"key": "DriverId",
+															"value": "0d00fcca-0c6f-d84d-3f6b-9d1825373fbf",
+															"type": "text"
+														},
+														{
+															"key": "PickupLocation",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "DeliveryLocation",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "PickupDate",
+															"value": "1954-09-12T22:02:54.303Z",
+															"type": "text"
+														},
+														{
+															"key": "PickupTime",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "SpecialInstructions",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "PayRange",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "TripCode",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "TripStatus",
+															"value": "string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/add-trip",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"add-trip"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "trip-list",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Trip/trip-list/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/trip-list/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"trip-list",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Trip/trip-list/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Trip",
+																"trip-list",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "unassign-trip-list",
+							"item": [
+								{
+									"name": "/api/Trip/unassign-trip-list",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Trip/unassign-trip-list",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Trip",
+												"unassign-trip-list"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/unassign-trip-list",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"unassign-trip-list"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "assign-trip-list",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Trip/assign-trip-list/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/assign-trip-list/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"assign-trip-list",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Trip/assign-trip-list/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Trip",
+																"assign-trip-list",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "trip_expense_save",
+							"item": [
+								{
+									"name": "/api/Trip/trip_expense_save",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "ExpenseId",
+													"value": "c3485c76-e65d-5d45-c9b5-1caa5224eeb9",
+													"type": "text"
+												},
+												{
+													"key": "CreatedBy",
+													"value": "e15655ff-fff5-8a0b-35d4-2ca1286f6edf",
+													"type": "text"
+												},
+												{
+													"key": "ExpensePurposeId",
+													"value": "9765",
+													"type": "text"
+												},
+												{
+													"key": "Amount",
+													"value": "7961.309741719735",
+													"type": "text"
+												},
+												{
+													"key": "ExpenseDate",
+													"value": "2008-07-23T19:04:17.191Z",
+													"type": "text"
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "TripId",
+													"value": "80f76bb6-71de-de7e-fff2-d70ed36528ce",
+													"type": "text"
+												},
+												{
+													"key": "ReceiptPath",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ReceiptFile",
+													"type": "file",
+													"src": []
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Trip/trip_expense_save",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Trip",
+												"trip_expense_save"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "ExpenseId",
+															"value": "c3485c76-e65d-5d45-c9b5-1caa5224eeb9",
+															"type": "text"
+														},
+														{
+															"key": "CreatedBy",
+															"value": "e15655ff-fff5-8a0b-35d4-2ca1286f6edf",
+															"type": "text"
+														},
+														{
+															"key": "ExpensePurposeId",
+															"value": "9765",
+															"type": "text"
+														},
+														{
+															"key": "Amount",
+															"value": "7961.309741719735",
+															"type": "text"
+														},
+														{
+															"key": "ExpenseDate",
+															"value": "2008-07-23T19:04:17.191Z",
+															"type": "text"
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "TripId",
+															"value": "80f76bb6-71de-de7e-fff2-d70ed36528ce",
+															"type": "text"
+														},
+														{
+															"key": "ReceiptPath",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ReceiptFile",
+															"type": "file",
+															"src": []
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/trip_expense_save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"trip_expense_save"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "trip_expense_list",
+							"item": [
+								{
+									"name": "/api/Trip/trip_expense_list",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Trip/trip_expense_list",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Trip",
+												"trip_expense_list"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/trip_expense_list",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"trip_expense_list"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "trip_expense_delete",
+							"item": [
+								{
+									"name": "{id}",
+									"item": [
+										{
+											"name": "/api/Trip/trip_expense_delete/:id",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/trip_expense_delete/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"trip_expense_delete",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Trip/trip_expense_delete/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Trip",
+																"trip_expense_delete",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "trip_expense_purposes",
+							"item": [
+								{
+									"name": "/api/Trip/trip_expense_purposes",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Trip/trip_expense_purposes",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Trip",
+												"trip_expense_purposes"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/trip_expense_purposes",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"trip_expense_purposes"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "submit-bid",
+							"item": [
+								{
+									"name": "/api/Trip/submit-bid",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"createdBy\": \"a2094b31-5095-0e08-9a18-97c0739118e7\",\n  \"partnerId\": 4670,\n  \"tripId\": \"eb3cfbca-6e7d-68b2-c803-8f40ad173574\",\n  \"userId\": \"4e1c7bdb-d52c-5232-6054-e7855312352a\",\n  \"bidAmount\": 5182.193246662512,\n  \"bidDescription\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Trip/submit-bid",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Trip",
+												"submit-bid"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"createdBy\": \"a2094b31-5095-0e08-9a18-97c0739118e7\",\n  \"partnerId\": 4670,\n  \"tripId\": \"eb3cfbca-6e7d-68b2-c803-8f40ad173574\",\n  \"userId\": \"4e1c7bdb-d52c-5232-6054-e7855312352a\",\n  \"bidAmount\": 5182.193246662512,\n  \"bidDescription\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/submit-bid",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"submit-bid"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "get-trip-bids",
+							"item": [
+								{
+									"name": "{tripId}",
+									"item": [
+										{
+											"name": "/api/Trip/get-trip-bids/:tripId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/get-trip-bids/:tripId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"get-trip-bids",
+														":tripId"
+													],
+													"variable": [
+														{
+															"key": "tripId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Trip/get-trip-bids/:tripId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Trip",
+																"get-trip-bids",
+																":tripId"
+															],
+															"variable": [
+																{
+																	"key": "tripId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "save-calendar-events",
+							"item": [
+								{
+									"name": "/api/Trip/save-calendar-events",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"eventId\": \"b3d1bf49-1459-9940-4d00-a271df9dd02f\",\n  \"createdBy\": \"dda0e4ab-bad0-9334-56f5-c5ba9714ce57\",\n  \"partnerId\": 8596,\n  \"userId\": \"9128888a-6269-f368-5be2-152e4b6966a4\",\n  \"eventName\": \"string\",\n  \"note\": \"string\",\n  \"startTime\": \"1949-10-11T02:28:11.688Z\",\n  \"endTime\": \"1981-09-01T09:52:29.633Z\",\n  \"category\": \"string\",\n  \"isActive\": true\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Trip/save-calendar-events",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Trip",
+												"save-calendar-events"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"eventId\": \"b3d1bf49-1459-9940-4d00-a271df9dd02f\",\n  \"createdBy\": \"dda0e4ab-bad0-9334-56f5-c5ba9714ce57\",\n  \"partnerId\": 8596,\n  \"userId\": \"9128888a-6269-f368-5be2-152e4b6966a4\",\n  \"eventName\": \"string\",\n  \"note\": \"string\",\n  \"startTime\": \"1949-10-11T02:28:11.688Z\",\n  \"endTime\": \"1981-09-01T09:52:29.633Z\",\n  \"category\": \"string\",\n  \"isActive\": true\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/save-calendar-events",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"save-calendar-events"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "get-events-by-userId",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/Trip/get-events-by-userId/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Trip/get-events-by-userId/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Trip",
+														"get-events-by-userId",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Trip/get-events-by-userId/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Trip",
+																"get-events-by-userId",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "User",
+					"item": [
+						{
+							"name": "login",
+							"item": [
+								{
+									"name": "/api/User/login",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"mobileNo\": \"string\",\n  \"password\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/User/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"login"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"mobileNo\": \"string\",\n  \"password\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/User/login",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"login"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "professional_signup",
+							"item": [
+								{
+									"name": "/api/User/professional_signup",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "Email",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Password",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Name",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "FatherName",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "DateOfBirth",
+													"value": "1994-01-18T23:04:29.293Z",
+													"type": "text"
+												},
+												{
+													"key": "MobileNo",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "State",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "City",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ProfessionalType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ProfileImage",
+													"type": "file",
+													"src": []
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/User/professional_signup",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"professional_signup"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "Email",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Password",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Name",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "FatherName",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "DateOfBirth",
+															"value": "1994-01-18T23:04:29.293Z",
+															"type": "text"
+														},
+														{
+															"key": "MobileNo",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "State",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "City",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ProfessionalType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ProfileImage",
+															"type": "file",
+															"src": []
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/User/professional_signup",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"professional_signup"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "company_signup",
+							"item": [
+								{
+									"name": "/api/User/company_signup",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"companyName\": \"string\",\n  \"mobileNo\": \"string\",\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"businessCategory\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/User/company_signup",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"company_signup"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"companyName\": \"string\",\n  \"mobileNo\": \"string\",\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"businessCategory\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/User/company_signup",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"company_signup"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "complete-transport",
+							"item": [
+								{
+									"name": "/api/User/complete-transport",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "UserId",
+													"value": "cf09bd18-0af4-855b-3d25-3c3186f6ac23",
+													"type": "text"
+												},
+												{
+													"key": "FirstName",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "LastName",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Address",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "FleetSize",
+													"value": "1865",
+													"type": "text"
+												},
+												{
+													"key": "GSTNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "CompanyLogo",
+													"type": "file",
+													"src": []
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/User/complete-transport",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"complete-transport"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "UserId",
+															"value": "cf09bd18-0af4-855b-3d25-3c3186f6ac23",
+															"type": "text"
+														},
+														{
+															"key": "FirstName",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "LastName",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Address",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "FleetSize",
+															"value": "1865",
+															"type": "text"
+														},
+														{
+															"key": "GSTNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "CompanyLogo",
+															"type": "file",
+															"src": []
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/User/complete-transport",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"complete-transport"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "complete-service-provider",
+							"item": [
+								{
+									"name": "/api/User/complete-service-provider",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "UserId",
+													"value": "6d4c59a2-c4b4-d955-1c67-33c7785b60ed",
+													"type": "text"
+												},
+												{
+													"key": "BusinessName",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "GSTNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "BusinessType",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "ServicesOffered",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "BusinessAddress",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "City",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "PhoneNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "Email",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "WhatsAppNumber",
+													"value": "string",
+													"type": "text"
+												},
+												{
+													"key": "BusinessLogo",
+													"type": "file",
+													"src": []
+												},
+												{
+													"key": "Description",
+													"value": "string",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/User/complete-service-provider",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"complete-service-provider"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "UserId",
+															"value": "6d4c59a2-c4b4-d955-1c67-33c7785b60ed",
+															"type": "text"
+														},
+														{
+															"key": "BusinessName",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "GSTNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "BusinessType",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "ServicesOffered",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "BusinessAddress",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "City",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "PhoneNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "Email",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "WhatsAppNumber",
+															"value": "string",
+															"type": "text"
+														},
+														{
+															"key": "BusinessLogo",
+															"type": "file",
+															"src": []
+														},
+														{
+															"key": "Description",
+															"value": "string",
+															"type": "text"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/User/complete-service-provider",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"complete-service-provider"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "user-profile",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/User/user-profile/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/User/user-profile/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"user-profile",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/User/user-profile/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"User",
+																"user-profile",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "save-referral",
+							"item": [
+								{
+									"name": "/api/User/save-referral",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"referralId\": \"61e37d84-2b81-8d09-6adc-42deade56f0d\",\n  \"createdBy\": \"78b595ea-b01f-6c1b-50d4-fba68b4db114\",\n  \"partnerId\": 1119,\n  \"userId\": \"2e0dcc1b-6161-1ae9-1e4a-2cfedf4c692a\",\n  \"fullName\": \"string\",\n  \"mobileNumber\": \"string\",\n  \"email\": \"string\",\n  \"role\": \"string\",\n  \"location\": \"string\",\n  \"notifyOnAcceptance\": true,\n  \"referralStatus\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/User/save-referral",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"save-referral"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"referralId\": \"61e37d84-2b81-8d09-6adc-42deade56f0d\",\n  \"createdBy\": \"78b595ea-b01f-6c1b-50d4-fba68b4db114\",\n  \"partnerId\": 1119,\n  \"userId\": \"2e0dcc1b-6161-1ae9-1e4a-2cfedf4c692a\",\n  \"fullName\": \"string\",\n  \"mobileNumber\": \"string\",\n  \"email\": \"string\",\n  \"role\": \"string\",\n  \"location\": \"string\",\n  \"notifyOnAcceptance\": true,\n  \"referralStatus\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/User/save-referral",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"save-referral"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "GetReferralsByUserId",
+							"item": [
+								{
+									"name": "{userId}",
+									"item": [
+										{
+											"name": "/api/User/GetReferralsByUserId/:userId",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/User/GetReferralsByUserId/:userId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"GetReferralsByUserId",
+														":userId"
+													],
+													"variable": [
+														{
+															"key": "userId",
+															"value": "bec6e730-daea-6c09-9744-a4238a228549"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/User/GetReferralsByUserId/:userId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"User",
+																"GetReferralsByUserId",
+																":userId"
+															],
+															"variable": [
+																{
+																	"key": "userId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "UploadSliderImage",
+							"item": [
+								{
+									"name": "/api/User/UploadSliderImage",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "multipart/form-data"
+											}
+										],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "file",
+													"type": "file",
+													"src": []
+												}
+											]
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/User/UploadSliderImage?userId=6117",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"UploadSliderImage"
+											],
+											"query": [
+												{
+													"key": "userId",
+													"value": "6117"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "multipart/form-data"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "formdata",
+													"formdata": [
+														{
+															"key": "file",
+															"type": "file",
+															"src": []
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/User/UploadSliderImage?userId=6117",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"UploadSliderImage"
+													],
+													"query": [
+														{
+															"key": "userId",
+															"value": "6117"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "DeleteSlider",
+							"item": [
+								{
+									"name": "{id}",
+									"item": [
+										{
+											"name": "/api/User/DeleteSlider/:id",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/User/DeleteSlider/:id?userId=6117",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"DeleteSlider",
+														":id"
+													],
+													"query": [
+														{
+															"key": "userId",
+															"value": "6117"
+														}
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "6117"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/User/DeleteSlider/:id?userId=6117",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"User",
+																"DeleteSlider",
+																":id"
+															],
+															"query": [
+																{
+																	"key": "userId",
+																	"value": "6117"
+																}
+															],
+															"variable": [
+																{
+																	"key": "id"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": ""
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "GetSliders",
+							"item": [
+								{
+									"name": "/api/User/GetSliders",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/User/GetSliders?userId=6117",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"User",
+												"GetSliders"
+											],
+											"query": [
+												{
+													"key": "userId",
+													"value": "6117"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/User/GetSliders?userId=6117",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"User",
+														"GetSliders"
+													],
+													"query": [
+														{
+															"key": "userId",
+															"value": "6117"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "VehicleApi",
+					"item": [
+						{
+							"name": "GetVehicleDetails",
+							"item": [
+								{
+									"name": "/api/VehicleApi/GetVehicleDetails",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"vehicleNumber\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/VehicleApi/GetVehicleDetails",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"VehicleApi",
+												"GetVehicleDetails"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"vehicleNumber\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/VehicleApi/GetVehicleDetails",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"VehicleApi",
+														"GetVehicleDetails"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "GetLicenceDetails",
+							"item": [
+								{
+									"name": "/api/VehicleApi/GetLicenceDetails",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"number\": \"string\",\n  \"dob\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/VehicleApi/GetLicenceDetails",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"VehicleApi",
+												"GetLicenceDetails"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"number\": \"string\",\n  \"dob\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/VehicleApi/GetLicenceDetails",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"VehicleApi",
+														"GetLicenceDetails"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{bearerToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "/"
+		}
+	]
+}
