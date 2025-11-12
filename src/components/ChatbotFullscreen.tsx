@@ -9,7 +9,7 @@ import {
   FaCompress,
   FaTrash,
 } from 'react-icons/fa';
-import { mockAPI } from '@/lib/mockApi';
+import { api } from '@/lib/apiAdapter';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -275,7 +275,7 @@ export default function ChatbotFullscreen({
     setIsLoading(true);
 
     try {
-      const user = mockAPI.getCurrentUser();
+      const user = api.getCurrentUser();
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Poppins } from 'next/font/google';
 import './globals.css';
+import 'antd/dist/reset.css';
 //import LenisProvider from '@/components/LenisProvider';
 
 // Derive site URL for metadataBase (used for resolving OG/Twitter images)

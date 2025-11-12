@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Vehicle, Driver } from '@/lib/mockApi';
+import { Vehicle, Driver } from '@/types/fleet';
+import { Select } from 'antd';
 
 interface VehiclesListingProps {
   vehicles: Vehicle[];
@@ -90,10 +91,10 @@ export default function VehiclesListing({
           {activeTab === 'vehicles' ? (
             <>
               <select className="rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-primary-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                <option>All Status</option>
-                <option>Attached</option>
-                <option>Owned</option>
-                <option>Rented</option>
+                <option value="">All Status</option>
+                <option value="Attached">Attached</option>
+                <option value="Owned">Owned</option>
+                <option value="Rented">Rented</option>
               </select>
 
               <select className="rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-primary-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
@@ -196,6 +197,7 @@ export default function VehiclesListing({
                     src={vehicle.image}
                     alt={`${vehicle.name} - ${vehicle.year}`}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>
@@ -301,6 +303,7 @@ export default function VehiclesListing({
                     src={vehicle.image}
                     alt={`${vehicle.name} - ${vehicle.year}`}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>
@@ -333,9 +336,10 @@ export default function VehiclesListing({
                 {/* Mobile image for smaller screens */}
                 <div className="relative h-48 sm:hidden">
                   <Image
-                    src={driver.image}
+                    src={driver.image || '/profile-pic.png'}
                     alt={driver.name}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>
@@ -490,9 +494,10 @@ export default function VehiclesListing({
                 {/* Desktop image - hidden on mobile */}
                 <div className="relative hidden h-auto w-48 sm:block">
                   <Image
-                    src={driver.image}
+                    src={driver.image || '/profile-pic.png'}
                     alt={driver.name}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Driver } from '@/lib/mockApi';
+import { Driver, VEHICLE_CATEGORIES } from '@/types/fleet';
 import {
   Dialog,
   DialogContent,
@@ -69,8 +69,21 @@ export default function DriverFormModal({
   useEffect(() => {
     if (driver && mode === 'edit') {
       setFormData({
-        ...driver,
-        vehicleCategory: '',
+        name: driver.name || '',
+        experience: driver.experience || '',
+        status: driver.status || 'Available',
+        licenseNumber: driver.licenseNumber || '',
+        phoneNumber: driver.phoneNumber || (driver as any).phone || '',
+        rating: driver.rating || 4.0,
+        totalTrips: driver.totalTrips || 0,
+        currentVehicle: driver.currentVehicle || (driver as any).vehicle || '',
+        location: driver.location || '',
+        image: driver.image || '/staring-man.jpg',
+        joinedDate: driver.joinedDate || new Date().toISOString().split('T')[0],
+        email: driver.email || '',
+        address: driver.address || '',
+        emergencyContact: driver.emergencyContact || '',
+        vehicleCategory: driver.vehicleType || '',
         vehicleCategoryDetail: '',
       });
       setImagePreview(driver.image || null);
@@ -141,30 +154,26 @@ export default function DriverFormModal({
       return;
     }
 
-    const driverData: Driver = {
+    const driverData: any = {
       id: driver?.id || `d${Date.now()}`,
       name: formData.name!,
       experience: formData.experience || '',
       status: formData.status!,
       licenseNumber: formData.licenseNumber!,
       phoneNumber: formData.phoneNumber!,
+      phone: formData.phoneNumber!,
       rating: formData.rating || 4.0,
       totalTrips: formData.totalTrips || 0,
       currentVehicle: formData.currentVehicle,
+      vehicleType: formData.vehicleCategory || 'Truck',
       location: formData.location || '',
-      image: formData.image || '/staring-man.jpg',
+      image: formData.image || '/profile-pic.png',
       joinedDate: formData.joinedDate!,
       email: formData.email,
       address: formData.address,
       emergencyContact: formData.emergencyContact,
-      performance: driver?.performance ?? {
-        timelyDelivery: 0,
-        tripEfficiency: 0,
-        safety: 0,
-      },
-      reviews: driver?.reviews ?? [],
+      description: formData.address || 'No description',
     };
-
     onSave(driverData);
     onClose();
   };
@@ -294,10 +303,11 @@ export default function DriverFormModal({
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Shipment">Shipment</SelectItem>
-                <SelectItem value="Construction">Construction</SelectItem>
-                <SelectItem value="Mining">Mining</SelectItem>
-                <SelectItem value="Others">Others (specify)</SelectItem>
+                {VEHICLE_CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category === 'Others' ? 'Others (specify)' : category}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {errors.vehicleCategory && (

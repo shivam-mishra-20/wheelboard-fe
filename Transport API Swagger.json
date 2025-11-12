@@ -1,0 +1,1751 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "WheelBoard Transport API",
+    "description": "Transport API endpoints for WheelBoard platform",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/Job/add-job": {
+      "post": {
+        "tags": [
+          "JobApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "Role": {
+                    "type": "string"
+                  },
+                  "JobDuration": {
+                    "type": "string"
+                  },
+                  "Openings": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Salary": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "City": {
+                    "type": "string"
+                  },
+                  "JobType": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "Images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "UserId": {
+                  "style": "form"
+                },
+                "Role": {
+                  "style": "form"
+                },
+                "JobDuration": {
+                  "style": "form"
+                },
+                "Openings": {
+                  "style": "form"
+                },
+                "Salary": {
+                  "style": "form"
+                },
+                "City": {
+                  "style": "form"
+                },
+                "JobType": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "Images": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Job/update-job": {
+      "put": {
+        "tags": [
+          "JobApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "JobId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "Role": {
+                    "type": "string"
+                  },
+                  "JobDuration": {
+                    "type": "string"
+                  },
+                  "Openings": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Salary": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "City": {
+                    "type": "string"
+                  },
+                  "JobType": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "NewImages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "JobId": {
+                  "style": "form"
+                },
+                "Role": {
+                  "style": "form"
+                },
+                "JobDuration": {
+                  "style": "form"
+                },
+                "Openings": {
+                  "style": "form"
+                },
+                "Salary": {
+                  "style": "form"
+                },
+                "City": {
+                  "style": "form"
+                },
+                "JobType": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "UserId": {
+                  "style": "form"
+                },
+                "NewImages": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Job/job-list/{userId}": {
+      "get": {
+        "tags": [
+          "JobApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Job/{jobId}/user/{userId}": {
+      "delete": {
+        "tags": [
+          "JobApi"
+        ],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Job/get-applications/{jobId}": {
+      "get": {
+        "tags": [
+          "JobApi"
+        ],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Job/update-job-status": {
+      "post": {
+        "tags": [
+          "JobApi"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationStatusRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationStatusRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/MasterData/getAllServices": {
+      "get": {
+        "tags": [
+          "MasterDataApi"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/MasterData/getAllBusinessType": {
+      "get": {
+        "tags": [
+          "MasterDataApi"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Post/add": {
+      "post": {
+        "tags": [
+          "PostApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "Content": {
+                    "type": "string"
+                  },
+                  "Category": {
+                    "type": "string"
+                  },
+                  "Images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "CreatedBy": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "PartnerId": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "encoding": {
+                "UserId": {
+                  "style": "form"
+                },
+                "Content": {
+                  "style": "form"
+                },
+                "Category": {
+                  "style": "form"
+                },
+                "Images": {
+                  "style": "form"
+                },
+                "CreatedBy": {
+                  "style": "form"
+                },
+                "PartnerId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Post/user/{userId}": {
+      "get": {
+        "tags": [
+          "PostApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Post/approve/{postId}": {
+      "put": {
+        "tags": [
+          "PostApi"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Post/reject/{postId}": {
+      "put": {
+        "tags": [
+          "PostApi"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Post/{postId}": {
+      "delete": {
+        "tags": [
+          "PostApi"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/service-list": {
+      "get": {
+        "tags": [
+          "ServiceApi"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/details/{serviceId}": {
+      "get": {
+        "tags": [
+          "ServiceApi"
+        ],
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/assign-service": {
+      "post": {
+        "tags": [
+          "ServiceApi"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAssignmentRequestModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAssignmentRequestModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAssignmentRequestModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/assign-service/{userId}": {
+      "get": {
+        "tags": [
+          "ServiceApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/{assignmentId}": {
+      "delete": {
+        "tags": [
+          "ServiceApi"
+        ],
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/add-vehicle": {
+      "post": {
+        "tags": [
+          "TransportApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "VehicleModel": {
+                    "type": "string"
+                  },
+                  "VehicleNumber": {
+                    "type": "string"
+                  },
+                  "ManufacturingYear": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "OwnershipType": {
+                    "type": "string"
+                  },
+                  "VehicleType": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "IsDeclarationAccepted": {
+                    "type": "boolean"
+                  },
+                  "Images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "UserId": {
+                  "style": "form"
+                },
+                "VehicleModel": {
+                  "style": "form"
+                },
+                "VehicleNumber": {
+                  "style": "form"
+                },
+                "ManufacturingYear": {
+                  "style": "form"
+                },
+                "OwnershipType": {
+                  "style": "form"
+                },
+                "VehicleType": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "IsDeclarationAccepted": {
+                  "style": "form"
+                },
+                "Images": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/update-vehicle": {
+      "post": {
+        "tags": [
+          "TransportApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "VehicleId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "VehicleModel": {
+                    "type": "string"
+                  },
+                  "VehicleNumber": {
+                    "type": "string"
+                  },
+                  "ManufacturingYear": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "OwnershipType": {
+                    "type": "string"
+                  },
+                  "VehicleType": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "IsDeclarationAccepted": {
+                    "type": "boolean"
+                  },
+                  "Images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "VehicleId": {
+                  "style": "form"
+                },
+                "UserId": {
+                  "style": "form"
+                },
+                "VehicleModel": {
+                  "style": "form"
+                },
+                "VehicleNumber": {
+                  "style": "form"
+                },
+                "ManufacturingYear": {
+                  "style": "form"
+                },
+                "OwnershipType": {
+                  "style": "form"
+                },
+                "VehicleType": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "IsDeclarationAccepted": {
+                  "style": "form"
+                },
+                "Images": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/vehicle/{userId}": {
+      "get": {
+        "tags": [
+          "TransportApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/{vehicleId}": {
+      "delete": {
+        "tags": [
+          "TransportApi"
+        ],
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "modifiedBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/add-driver": {
+      "post": {
+        "tags": [
+          "TransportApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "FullName": {
+                    "type": "string"
+                  },
+                  "ContactNumber": {
+                    "type": "string"
+                  },
+                  "VehicleType": {
+                    "type": "string"
+                  },
+                  "VehicleNumber": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "IsDeclarationAccepted": {
+                    "type": "boolean"
+                  },
+                  "Image": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "PartnerId": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "encoding": {
+                "UserId": {
+                  "style": "form"
+                },
+                "FullName": {
+                  "style": "form"
+                },
+                "ContactNumber": {
+                  "style": "form"
+                },
+                "VehicleType": {
+                  "style": "form"
+                },
+                "VehicleNumber": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "IsDeclarationAccepted": {
+                  "style": "form"
+                },
+                "Image": {
+                  "style": "form"
+                },
+                "PartnerId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/drivers/{userId}": {
+      "get": {
+        "tags": [
+          "TransportApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/update-driver": {
+      "post": {
+        "tags": [
+          "TransportApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "DriverId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "FullName": {
+                    "type": "string"
+                  },
+                  "ContactNumber": {
+                    "type": "string"
+                  },
+                  "VehicleType": {
+                    "type": "string"
+                  },
+                  "VehicleNumber": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "IsDeclarationAccepted": {
+                    "type": "boolean"
+                  },
+                  "Image": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "ModifiedUserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "PartnerId": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "encoding": {
+                "DriverId": {
+                  "style": "form"
+                },
+                "FullName": {
+                  "style": "form"
+                },
+                "ContactNumber": {
+                  "style": "form"
+                },
+                "VehicleType": {
+                  "style": "form"
+                },
+                "VehicleNumber": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "IsDeclarationAccepted": {
+                  "style": "form"
+                },
+                "Image": {
+                  "style": "form"
+                },
+                "ModifiedUserId": {
+                  "style": "form"
+                },
+                "PartnerId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/driver/{driverId}": {
+      "delete": {
+        "tags": [
+          "TransportApi"
+        ],
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "modifiedBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/trip_expense_save": {
+      "post": {
+        "tags": [
+          "TripApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ExpenseId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "CreatedBy": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "ExpensePurposeId": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Amount": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "ExpenseDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "TripId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "ReceiptPath": {
+                    "type": "string"
+                  },
+                  "ReceiptFile": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "ExpenseId": {
+                  "style": "form"
+                },
+                "CreatedBy": {
+                  "style": "form"
+                },
+                "ExpensePurposeId": {
+                  "style": "form"
+                },
+                "Amount": {
+                  "style": "form"
+                },
+                "ExpenseDate": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "TripId": {
+                  "style": "form"
+                },
+                "ReceiptPath": {
+                  "style": "form"
+                },
+                "ReceiptFile": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/trip_expense_purposes": {
+      "get": {
+        "tags": [
+          "TripApi"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/add-trip": {
+      "post": {
+        "tags": [
+          "TripApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "TripId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "VehicleId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "DriverId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "PickupLocation": {
+                    "type": "string"
+                  },
+                  "DeliveryLocation": {
+                    "type": "string"
+                  },
+                  "PickupDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "PickupTime": {
+                    "type": "string",
+                    "format": "date-span"
+                  },
+                  "SpecialInstructions": {
+                    "type": "string"
+                  },
+                  "PayRange": {
+                    "type": "string"
+                  },
+                  "TripCode": {
+                    "type": "string"
+                  },
+                  "TripStatus": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "TripId": {
+                  "style": "form"
+                },
+                "UserId": {
+                  "style": "form"
+                },
+                "VehicleId": {
+                  "style": "form"
+                },
+                "DriverId": {
+                  "style": "form"
+                },
+                "PickupLocation": {
+                  "style": "form"
+                },
+                "DeliveryLocation": {
+                  "style": "form"
+                },
+                "PickupDate": {
+                  "style": "form"
+                },
+                "PickupTime": {
+                  "style": "form"
+                },
+                "SpecialInstructions": {
+                  "style": "form"
+                },
+                "PayRange": {
+                  "style": "form"
+                },
+                "TripCode": {
+                  "style": "form"
+                },
+                "TripStatus": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/trip-list/{userId}": {
+      "get": {
+        "tags": [
+          "TripApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/get-trip-bids/{tripId}": {
+      "get": {
+        "tags": [
+          "TripApi"
+        ],
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/company_signup": {
+      "post": {
+        "tags": [
+          "UserApi"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanySignup"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanySignup"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanySignup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/complete-transport": {
+      "post": {
+        "tags": [
+          "UserApi"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "FirstName": {
+                    "type": "string"
+                  },
+                  "LastName": {
+                    "type": "string"
+                  },
+                  "Address": {
+                    "type": "string"
+                  },
+                  "FleetSize": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "GSTNumber": {
+                    "type": "string"
+                  },
+                  "CompanyLogo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "UserId": {
+                  "style": "form"
+                },
+                "FirstName": {
+                  "style": "form"
+                },
+                "LastName": {
+                  "style": "form"
+                },
+                "Address": {
+                  "style": "form"
+                },
+                "FleetSize": {
+                  "style": "form"
+                },
+                "GSTNumber": {
+                  "style": "form"
+                },
+                "CompanyLogo": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/login": {
+      "post": {
+        "tags": [
+          "UserApi"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/user-profile/{userId}": {
+      "get": {
+        "tags": [
+          "UserApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/save-referral": {
+      "post": {
+        "tags": [
+          "UserApi"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Referral"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Referral"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Referral"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/GetReferralsByUserId/{userId}": {
+      "get": {
+        "tags": [
+          "UserApi"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/VehicleApi/GetVehicleDetails": {
+      "post": {
+        "tags": [
+          "VehicleApi"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VihicleRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VihicleRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VihicleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/VehicleApi/GetLicenceDetails": {
+      "post": {
+        "tags": [
+          "VehicleApi"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DrivingLicenceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DrivingLicenceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DrivingLicenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompanySignup": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "mobileNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "businessCategory": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DrivingLicenceRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "dob": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "mobileNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Referral": {
+        "type": "object",
+        "properties": {
+          "referralId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "mobileNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "notifyOnAcceptance": {
+            "type": "boolean"
+          },
+          "referralStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServiceAssignmentRequestModel": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignedToUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicleNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scheduledTime": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateApplicationStatusRequest": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "modifiedUserId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VihicleRequest": {
+        "type": "object",
+        "properties": {
+          "vehicleNumber": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Enter a valid JWT token (e.g., Bearer {your token})",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}

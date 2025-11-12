@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Vehicle } from '@/lib/mockApi';
+import {
+  Vehicle,
+  VEHICLE_CATEGORIES,
+  FUEL_TYPES,
+  OWNERSHIP_TYPES,
+} from '@/types/fleet';
 import {
   Dialog,
   DialogContent,
@@ -11,17 +15,13 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, Check, Upload } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
+import { Upload, Select, message } from 'antd';
+import { UploadFile, UploadProps } from 'antd/es/upload/interface';
+import { PlusOutlined } from '@ant-design/icons';
 
 interface VehicleFormModalProps {
   isOpen: boolean;
@@ -31,7 +31,19 @@ interface VehicleFormModalProps {
   mode: 'add' | 'edit';
 }
 
-type FormData = Partial<Vehicle> & {
+type FormData = {
+  name?: string;
+  model?: string;
+  registrationNumber?: string;
+  year?: number;
+  type?: string;
+  ownership?: string;
+  fuelType?: string;
+  capacity?: string;
+  mileage?: string;
+  location?: string;
+  image?: string;
+  description?: string;
   vehicleCategory?: string;
   vehicleCategoryDetail?: string;
 };
@@ -46,8 +58,7 @@ export default function VehicleFormModal({
   const [formData, setFormData] = useState<FormData>({
     name: '',
     year: new Date().getFullYear(),
-    status: 'Owned',
-    lastService: '',
+    ownership: 'Owned',
     location: '',
     image: '/truck-01.jpg',
     model: '',
@@ -60,25 +71,34 @@ export default function VehicleFormModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [confirmChecked, setConfirmChecked] = useState(false);
 
   // Initialize form with vehicle data or reset
   useEffect(() => {
     if (vehicle && mode === 'edit') {
       setFormData({
-        ...vehicle,
-        vehicleCategory: '',
+        name: vehicle.name || vehicle.model || '',
+        model: vehicle.model || vehicle.name || '',
+        registrationNumber: vehicle.registrationNumber || '',
+        year: vehicle.year || new Date().getFullYear(),
+        ownership: vehicle.ownership || 'Owned',
+        location: vehicle.location || '',
+        image: vehicle.image || '/truck-01.jpg',
+        fuelType: vehicle.fuelType || 'Diesel',
+        capacity: vehicle.capacity || '',
+        mileage: vehicle.mileage || '',
+        vehicleCategory: vehicle.type || '',
         vehicleCategoryDetail: '',
+        description: vehicle.description || '',
       });
-      setImagePreview(vehicle.image || null);
+      setFileList([]);
       setConfirmChecked(false);
     } else if (mode === 'add' || !isOpen) {
       setFormData({
         name: '',
         year: new Date().getFullYear(),
-        status: 'Owned',
-        lastService: '',
+        ownership: 'Owned',
         location: '',
         image: '/truck-01.jpg',
         model: '',
@@ -89,7 +109,7 @@ export default function VehicleFormModal({
         vehicleCategory: '',
         vehicleCategoryDetail: '',
       });
-      setImagePreview(null);
+      setFileList([]);
       setConfirmChecked(false);
     }
     setErrors({});
@@ -123,6 +143,9 @@ export default function VehicleFormModal({
     if (!formData.location?.trim()) {
       newErrors.location = 'Description is required';
     }
+    if (fileList.length === 0 && mode === 'add') {
+      newErrors.images = 'At least one vehicle image is required';
+    }
     if (!confirmChecked) {
       newErrors.confirm = 'Please confirm the information is correct';
     }
@@ -138,33 +161,31 @@ export default function VehicleFormModal({
       return;
     }
 
-    const vehicleData: Vehicle = {
+    // Extract File objects from fileList for API submission
+    const imageFiles = fileList
+      .map((file) => file.originFileObj as File)
+      .filter((file) => file !== undefined);
+
+    const vehicleData: any = {
       id: vehicle?.id || `v${Date.now()}`,
       name: formData.model!,
+      model: formData.model!,
+      registrationNumber: formData.registrationNumber!,
       year: formData.year!,
-      status: formData.status!,
-      lastService:
-        formData.lastService ||
-        `Last service: ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`,
+      status: 'Available',
+      ownership: formData.ownership || 'Owned',
+      type:
+        formData.vehicleCategory === 'Others'
+          ? formData.vehicleCategoryDetail
+          : formData.vehicleCategory,
+      description: formData.description || formData.location!,
+      images: imageFiles, // Array of File objects for API
       location: formData.location!,
       image: formData.image || '/truck-01.jpg',
-      model: formData.model,
-      registrationNumber: formData.registrationNumber,
       fuelType: formData.fuelType,
       capacity: formData.capacity,
       mileage: formData.mileage,
-      statusBadge: vehicle?.statusBadge || 'Available',
-      ownership:
-        vehicle?.ownership ||
-        (formData.status === 'Owned' ? 'Owned' : 'Attached'),
-      metrics: vehicle?.metrics || {
-        avgRun: 0,
-        tripEfficiency: 0,
-        monthlyUsage: 0,
-        costPerKM: 0,
-      },
-      recentTrips: vehicle?.recentTrips || [],
-      totalTrips: vehicle?.totalTrips || 0,
+      imageUrls: [],
     };
 
     onSave(vehicleData);
@@ -190,16 +211,29 @@ export default function VehicleFormModal({
     clearError(name);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        setFormData((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+  // Ant Design Upload handler
+  const handleUploadChange: UploadProps['onChange'] = ({
+    fileList: newFileList,
+  }) => {
+    setFileList(newFileList);
+    if (newFileList.length === 0) {
+      clearError('images');
     }
+  };
+
+  // Before upload - validate and prevent auto upload
+  const beforeUpload = (file: File) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('You can only upload image files!');
+      return Upload.LIST_IGNORE;
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error('Image must be smaller than 5MB!');
+      return Upload.LIST_IGNORE;
+    }
+    return false; // Prevent auto upload
   };
 
   const clearError = (field: string) => {
@@ -294,25 +328,21 @@ export default function VehicleFormModal({
           <div className="space-y-2">
             <Label className="text-sm font-medium">Ownership Status *</Label>
             <RadioGroup
-              value={formData.status || 'Owned'}
-              onValueChange={(value) => handleSelectChange('status', value)}
+              value={formData.ownership || 'Owned'}
+              onValueChange={(value) => handleSelectChange('ownership', value)}
               className="flex gap-4"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Owned" id="owned" />
-                <Label htmlFor="owned" className="cursor-pointer font-normal">
-                  Owned
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Attached" id="attached" />
-                <Label
-                  htmlFor="attached"
-                  className="cursor-pointer font-normal"
-                >
-                  Attached
-                </Label>
-              </div>
+              {OWNERSHIP_TYPES.map((type) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <RadioGroupItem value={type} id={type.toLowerCase()} />
+                  <Label
+                    htmlFor={type.toLowerCase()}
+                    className="cursor-pointer font-normal"
+                  >
+                    {type}
+                  </Label>
+                </div>
+              ))}
             </RadioGroup>
           </div>
 
@@ -322,8 +352,8 @@ export default function VehicleFormModal({
               Vehicle Category *
             </Label>
             <Select
-              value={formData.vehicleCategory || ''}
-              onValueChange={(value) => {
+              value={formData.vehicleCategory || undefined}
+              onChange={(value) => {
                 handleSelectChange('vehicleCategory', value);
                 if (value !== 'Others') {
                   setFormData((prev) => ({
@@ -332,19 +362,14 @@ export default function VehicleFormModal({
                   }));
                 }
               }}
-            >
-              <SelectTrigger
-                className={errors.vehicleCategory ? 'border-red-500' : ''}
-              >
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Shipment">Shipment</SelectItem>
-                <SelectItem value="Construction">Construction</SelectItem>
-                <SelectItem value="Mining">Mining</SelectItem>
-                <SelectItem value="Others">Others (specify)</SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder="Select category"
+              className="w-full"
+              status={errors.vehicleCategory ? 'error' : ''}
+              options={VEHICLE_CATEGORIES.map((category) => ({
+                label: category === 'Others' ? 'Others (specify)' : category,
+                value: category,
+              }))}
+            />
             {errors.vehicleCategory && (
               <p className="text-sm text-red-500">{errors.vehicleCategory}</p>
             )}
@@ -382,19 +407,14 @@ export default function VehicleFormModal({
             </Label>
             <Select
               value={formData.fuelType || 'Diesel'}
-              onValueChange={(value) => handleSelectChange('fuelType', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select fuel type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Diesel">Diesel</SelectItem>
-                <SelectItem value="Petrol">Petrol</SelectItem>
-                <SelectItem value="Electric">Electric</SelectItem>
-                <SelectItem value="CNG">CNG</SelectItem>
-                <SelectItem value="Hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(value) => handleSelectChange('fuelType', value)}
+              placeholder="Select fuel type"
+              className="w-full"
+              options={FUEL_TYPES.map((fuel) => ({
+                label: fuel,
+                value: fuel,
+              }))}
+            />
           </div>
 
           {/* Capacity */}
@@ -447,34 +467,26 @@ export default function VehicleFormModal({
           {/* Image Upload */}
           <div className="space-y-2">
             <Label htmlFor="image" className="text-sm font-medium">
-              Vehicle Image
+              Vehicle Images * (Max 5MB each)
             </Label>
-            <div className="flex items-center gap-4">
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <Label
-                htmlFor="image"
-                className="flex cursor-pointer items-center gap-2 rounded-md border border-input px-4 py-2 transition-colors hover:bg-accent"
-              >
-                <Upload className="h-4 w-4" />
-                <span className="text-sm">Upload Image</span>
-              </Label>
-              {imagePreview && (
-                <div className="relative h-16 w-16 overflow-hidden rounded-md border">
-                  <Image
-                    src={imagePreview}
-                    alt="Preview"
-                    fill
-                    className="object-cover"
-                  />
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleUploadChange}
+              beforeUpload={beforeUpload}
+              multiple
+              maxCount={5}
+            >
+              {fileList.length >= 5 ? null : (
+                <div>
+                  <PlusOutlined />
+                  <div style={{ marginTop: 8 }}>Upload</div>
                 </div>
               )}
-            </div>
+            </Upload>
+            {errors.images && (
+              <p className="text-sm text-red-500">{errors.images}</p>
+            )}
           </div>
 
           {/* Confirmation Checkbox */}

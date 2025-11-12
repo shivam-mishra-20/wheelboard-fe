@@ -1,12 +1,14 @@
 'use client';
 
-import React, { use, useState } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoginSimulator from '@/components/LoginSimulator';
 import { CompanyProtected } from '@/components/ProtectedRoute';
-import { companyFleetData, Vehicle } from '@/lib/mockApi';
+import { Vehicle } from '@/types/fleet';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 import VehicleInfoCard from '@/components/company/VehicleInfoCard';
 import VehicleMetricsCard from '@/components/company/VehicleMetricsCard';
 import VehicleRecentTripsCard from '@/components/company/VehicleRecentTripsCard';
@@ -19,11 +21,84 @@ export default function VehicleDetailsPage({
 }) {
   const router = useRouter();
   const { id } = use(params);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const vehicleData = companyFleetData.vehicles.find(
-    (v) => v.id === id
-  ) as Vehicle;
-  const [vehicle, setVehicle] = useState<Vehicle>(vehicleData);
+  // Fetch vehicle data from API
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      try {
+        const user = api.getCurrentUser();
+        if (!user) return;
+
+        const response = await wheelboardApi.transport.getVehiclesByUser(
+          user.id
+        );
+        const vehiclesData = (response.data as any[]) || [];
+
+        // Find the specific vehicle
+        const apiVehicle = vehiclesData.find((v: any) => v.vehicleId === id);
+
+        if (apiVehicle) {
+          // Map API response to Vehicle interface
+          const mappedVehicle: Vehicle = {
+            id: apiVehicle.vehicleId,
+            name: apiVehicle.vehicleModel,
+            model: apiVehicle.vehicleModel,
+            registrationNumber: apiVehicle.vehicleNumber,
+            year: apiVehicle.manufacturingYear,
+            type: apiVehicle.vehicleType || 'Truck',
+            image: apiVehicle.imageUrls?.[0] || '/truck-01.jpg',
+            status:
+              (apiVehicle.status as
+                | 'Available'
+                | 'Assigned'
+                | 'In Transit'
+                | 'Maintenance') || 'Available',
+            statusBadge:
+              (apiVehicle.status as 'Assigned' | 'Available' | 'In Transit') ||
+              'Available',
+            ownership:
+              (apiVehicle.ownershipType as 'Owned' | 'Attached') || 'Owned',
+            location: apiVehicle.description || 'N/A',
+            description: apiVehicle.description,
+            driver: 'Unassigned',
+            imageUrls: apiVehicle.imageUrls || [],
+            metrics: {
+              avgRun: 0,
+              tripEfficiency: 0,
+              monthlyUsage: 0,
+              costPerKM: 0,
+            },
+            recentTrips: [],
+            totalTrips: 0,
+          };
+          setVehicle(mappedVehicle);
+        }
+      } catch (error) {
+        console.error('Error fetching vehicle:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVehicle();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <CompanyProtected>
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-orange-600"></div>
+            <h1 className="mb-4 text-xl font-semibold text-gray-900">
+              Loading Vehicle Details...
+            </h1>
+          </div>
+        </div>
+      </CompanyProtected>
+    );
+  }
 
   if (!vehicle) {
     return (
@@ -61,6 +136,8 @@ export default function VehicleDetailsPage({
   };
 
   const handleLeaseSubmit = (leaseData: LeaseFormData) => {
+    if (!vehicle) return;
+
     // Update vehicle with lease data (keeps current status)
     const updatedVehicle: Vehicle = {
       ...vehicle,
@@ -69,18 +146,13 @@ export default function VehicleDetailsPage({
     };
     setVehicle(updatedVehicle);
 
-    // Update in the mock data (in a real app, this would be an API call)
-    const vehicleIndex = companyFleetData.vehicles.findIndex(
-      (v) => v.id === id
-    );
-    if (vehicleIndex !== -1) {
-      Object.assign(companyFleetData.vehicles[vehicleIndex], updatedVehicle);
-    }
-
+    // TODO: Update vehicle lease status via API call
     console.log('Vehicle leased:', updatedVehicle);
   };
 
   const handleLeaseRemove = () => {
+    if (!vehicle) return;
+
     // Remove lease data from vehicle
     const updatedVehicle: Vehicle = {
       ...vehicle,
@@ -89,15 +161,8 @@ export default function VehicleDetailsPage({
     };
     setVehicle(updatedVehicle);
 
-    // Update in the mock data (in a real app, this would be an API call)
-    const vehicleIndex = companyFleetData.vehicles.findIndex(
-      (v) => v.id === id
-    );
-    if (vehicleIndex !== -1) {
-      Object.assign(companyFleetData.vehicles[vehicleIndex], updatedVehicle);
-    }
-
-    console.log('Lease removed from vehicle:', updatedVehicle);
+    // TODO: Update vehicle lease status via API call
+    console.log('Vehicle lease removed:', updatedVehicle);
   };
 
   return (
@@ -122,7 +187,7 @@ export default function VehicleDetailsPage({
             {/* Left Column - Vehicle Info Card */}
             <div>
               <VehicleInfoCard
-                vehicle={vehicle}
+                vehicle={vehicle as any}
                 onChangeDriver={handleChangeDriver}
                 onContactDriver={handleContactDriver}
                 onLeaseSubmit={handleLeaseSubmit}
@@ -133,10 +198,10 @@ export default function VehicleDetailsPage({
             {/* Right Column - Metrics & Trips */}
             <div className="space-y-6">
               {/* Vehicle Metrics */}
-              <VehicleMetricsCard vehicle={vehicle} />
+              <VehicleMetricsCard vehicle={vehicle as any} />
 
               {/* Recent Trips */}
-              <VehicleRecentTripsCard vehicle={vehicle} />
+              <VehicleRecentTripsCard vehicle={vehicle as any} />
             </div>
           </div>
         </div>

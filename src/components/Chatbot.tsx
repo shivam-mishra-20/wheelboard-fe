@@ -10,7 +10,7 @@ import {
   FaUser,
   FaExpand,
 } from 'react-icons/fa';
-import { mockAPI } from '@/lib/mockApi';
+import { api } from '@/lib/apiAdapter';
 import dynamic from 'next/dynamic';
 
 const ChatbotFullscreen = dynamic(() => import('./ChatbotFullscreen'), {
@@ -246,7 +246,7 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
-      const user = mockAPI.getCurrentUser();
+      const user = api.getCurrentUser();
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {

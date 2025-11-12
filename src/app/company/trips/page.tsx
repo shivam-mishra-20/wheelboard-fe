@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,7 +28,46 @@ import Footer from '@/components/Footer';
 import CreateTripModal from '@/components/company/CreateTripModal';
 import ScheduleTripModal from '@/components/company/ScheduleTripModal';
 import TripDetailsModal from '@/components/company/TripDetailsModal';
-import { companyHomeData, companyFleetData, type Trip } from '@/lib/mockApi';
+import { Trip as ApiTrip } from '@/types/api';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+
+// Enhanced Trip interface for UI compatibility
+interface Trip extends ApiTrip {
+  // UI compatibility fields
+  id: string;
+  title: string;
+  status: 'Completed' | 'In-Process' | 'Upcoming';
+  deliveryType:
+    | 'Express Delivery'
+    | 'Standard'
+    | 'Bulk Transport'
+    | 'Scheduled';
+  from: string;
+  to: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalDate?: string;
+  arrivalTime?: string;
+  distance: string;
+  duration: string;
+  driver: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  vehicle?: {
+    id: string;
+    name: string;
+    type: string;
+    registrationNumber?: string;
+  };
+  image?: string;
+  isAssigned?: boolean;
+  progress?: number;
+  eta?: string;
+  bids?: number;
+}
 
 const container = {
   hidden: { opacity: 0 },
@@ -69,9 +108,85 @@ export default function CompanyTripsPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
-  const trips: Trip[] = companyHomeData.allTrips || [];
-  const vehicles = companyFleetData.vehicles || [];
-  const drivers = companyFleetData.drivers || [];
+  // API State
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch trips and related data
+  useEffect(() => {
+    const fetchTripsData = async () => {
+      try {
+        const user = api.getCurrentUser();
+        if (!user) {
+          setError('Please log in to view trips');
+          return;
+        }
+
+        // Fetch all data in parallel
+        const [tripsResponse, vehiclesResponse, driversResponse] =
+          await Promise.all([
+            wheelboardApi.trip.getTripsByUser(user.id),
+            wheelboardApi.transport.getVehiclesByUser(user.id),
+            wheelboardApi.transport.getDriversByUser(user.id),
+          ]);
+
+        const tripsData = (tripsResponse.data as any[]) || [];
+        const vehiclesData = (vehiclesResponse.data as any[]) || [];
+        const driversData = (driversResponse.data as any[]) || [];
+
+        // Map API trips to UI format
+        const mappedTrips: Trip[] = tripsData.map((apiTrip: any) => ({
+          // API fields
+          ...apiTrip,
+          // UI compatibility fields
+          id: apiTrip.tripId,
+          title: `${apiTrip.pickupLocation} to ${apiTrip.deliveryLocation}`,
+          status: (apiTrip.tripStatus === 'Pending'
+            ? 'Upcoming'
+            : apiTrip.tripStatus === 'In Progress'
+              ? 'In-Process'
+              : 'Completed') as 'Completed' | 'In-Process' | 'Upcoming',
+          deliveryType: 'Standard' as const, // Default value
+          from: apiTrip.pickupLocation,
+          to: apiTrip.deliveryLocation,
+          departureDate: apiTrip.pickupDate,
+          departureTime: apiTrip.pickupTime,
+          distance: '0 km', // Placeholder - API doesn't provide this
+          duration: '0 hrs', // Placeholder - API doesn't provide this
+          driver: {
+            id: apiTrip.driverId,
+            name: apiTrip.driverName || 'Unassigned',
+            avatar: '/profile-pic.png',
+          },
+          vehicle: apiTrip.vehicleId
+            ? {
+                id: apiTrip.vehicleId,
+                name: apiTrip.vehicleName || 'Unknown Vehicle',
+                type: 'Truck',
+                registrationNumber: apiTrip.vehicleName,
+              }
+            : undefined,
+          image: '/truck-01.jpg', // Default image
+          isAssigned: !!apiTrip.driverId && !!apiTrip.vehicleId,
+        }));
+
+        setTrips(mappedTrips);
+        setVehicles(vehiclesData);
+        setDrivers(driversData);
+      } catch (error) {
+        console.error('Error fetching trips data:', error);
+        setError('Failed to load trips data');
+        setTrips([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTripsData();
+  }, []);
 
   const handleTripCreated = () => {
     // Switch to Upcoming tab
@@ -396,7 +511,47 @@ export default function CompanyTripsPage() {
           </motion.div>
 
           {/* Trips Grid */}
-          {filteredTrips.length === 0 ? (
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="rounded-3xl bg-white p-16 text-center shadow-sm"
+            >
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-orange-600"></div>
+              <h3 className="mb-2 text-xl font-semibold text-gray-900">
+                Loading Trips...
+              </h3>
+              <p className="text-gray-600">
+                Fetching your trips from the server
+              </p>
+            </motion.div>
+          ) : error ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="rounded-3xl bg-white p-16 text-center shadow-sm"
+            >
+              <div className="mb-4 text-red-500">
+                <svg
+                  className="mx-auto h-12 w-12"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mb-2 text-xl font-semibold text-gray-900">
+                Error Loading Trips
+              </h3>
+              <p className="text-gray-600">{error}</p>
+            </motion.div>
+          ) : filteredTrips.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -433,7 +588,7 @@ export default function CompanyTripsPage() {
                     {/* Card Header Image */}
                     <div className="relative h-48 overflow-hidden">
                       <Image
-                        src={trip.image}
+                        src={trip.image || '/truck-01.jpg'}
                         alt={trip.title}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -514,8 +669,8 @@ export default function CompanyTripsPage() {
                         <div className="flex items-center gap-2">
                           <Truck className="h-4 w-4 text-primary-500" />
                           <span className="truncate">
-                            {trip.vehicle.name} {'•'}{' '}
-                            {trip.vehicle.registrationNumber}
+                            {trip.vehicle?.name} {'•'}{' '}
+                            {trip.vehicle?.registrationNumber}
                           </span>
                         </div>
 
@@ -664,7 +819,7 @@ export default function CompanyTripsPage() {
           <TripDetailsModal
             open={isDetailsModalOpen}
             onClose={() => setIsDetailsModalOpen(false)}
-            trip={selectedTrip}
+            trip={selectedTrip as any}
             onEdit={handleEditTrip}
           />
 

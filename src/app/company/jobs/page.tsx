@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
@@ -21,7 +21,9 @@ import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { companyHomeData, DetailedJob } from '@/lib/mockApi';
+import { Job } from '@/types/api';
+import { api } from '@/lib/apiAdapter';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 import JobApplicationsModal from '@/components/company/JobApplicationsModal';
 import CreateJobModal from '@/components/company/CreateJobModal';
 import ConfirmDeleteModal from '@/components/company/ConfirmDeleteModal';
@@ -48,24 +50,93 @@ const item = {
 export default function CompanyJobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<
-    'all' | 'Active' | 'Paused' | 'Closed'
+    'all' | 'Active' | 'Inactive' | 'Filled'
   >('all');
-  const [selectedJob, setSelectedJob] = useState<DetailedJob | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isApplicationsModalOpen, setIsApplicationsModalOpen] = useState(false);
   const [isCreateJobModalOpen, setIsCreateJobModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [jobToEdit, setJobToEdit] = useState<DetailedJob | null>(null);
+  const [jobToEdit, setJobToEdit] = useState<Job | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [jobToDelete, setJobToDelete] = useState<DetailedJob | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type?: 'success' | 'error';
   } | null>(null);
 
-  const jobs = companyHomeData.allJobs || [];
+  // API State
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch jobs on mount
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const user = api.getCurrentUser();
+      if (!user) {
+        setError('User not logged in');
+        setIsLoading(false);
+        return;
+      }
+
+      // Get jobs from API
+      const response = await wheelboardApi.job.getJobListByUser(user.id);
+      const jobsData = (response.data as any[]) || [];
+
+      // Map API response to Job format
+      const mappedJobs: Job[] = jobsData.map((apiJob: any) => ({
+        // API fields
+        jobId: apiJob.jobId,
+        userId: apiJob.userId,
+        role: apiJob.role || 'Untitled Job',
+        jobDuration: apiJob.jobDuration || 'Not specified',
+        openings: apiJob.openings || 1,
+        salary: apiJob.salary || 0,
+        city: apiJob.city || 'Unknown',
+        jobType: apiJob.jobType || 'Full-time',
+        description: apiJob.description || '',
+        imageUrls: apiJob.imageUrls || [],
+        createdAt: apiJob.createdAt || new Date().toISOString(),
+        modifiedAt: apiJob.modifiedAt,
+        status: (apiJob.status as 'Active' | 'Inactive' | 'Filled') || 'Active',
+
+        // UI compatibility fields
+        id: apiJob.jobId,
+        title: apiJob.role || 'Untitled Job',
+        location: apiJob.city || 'Unknown',
+        type:
+          (apiJob.jobType as
+            | 'Full-time'
+            | 'Part-time'
+            | 'Contract'
+            | 'Freelance') || 'Full-time',
+        department: 'Operations', // Default value
+        requirements: [], // Could be parsed from description
+        benefits: [], // Default empty
+        image: apiJob.imageUrls?.[0] || '/truck-01.jpg',
+        updatedAt: apiJob.modifiedAt,
+        urgent: false, // Default false
+        applications: [], // Will be populated when needed
+        views: 0, // Default 0
+      }));
+
+      setJobs(mappedJobs);
+    } catch (err: any) {
+      console.error('Error fetching jobs:', err);
+      setError(err.message || 'Failed to fetch jobs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter jobs based on search and status
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = jobs.filter((job: Job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,12 +145,12 @@ export default function CompanyJobsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleViewApplications = (job: DetailedJob) => {
+  const handleViewApplications = (job: Job) => {
     setSelectedJob(job);
     setIsApplicationsModalOpen(true);
   };
 
-  const handleCreateJob = (jobData: {
+  const handleCreateJob = async (jobData: {
     jobType: string;
     duration: string;
     openings: string;
@@ -89,43 +160,46 @@ export default function CompanyJobsPage() {
     description: string;
     images: File[];
   }) => {
-    console.log('Creating new job:', jobData);
-    // In a real app, this would call an API to create the job
-    // For now, we'll just log it and show a success message
-    // simulate adding to mock data
-    const newJob: DetailedJob = {
-      id: 'job-' + Date.now(),
-      title: jobData.jobType || 'New Job',
-      department: 'Operations',
-      location: jobData.city || 'Unknown',
-      type: (jobData.type as DetailedJob['type']) || 'Full-time',
-      salary: jobData.salary || 'Not specified',
-      description: jobData.description || '',
-      requirements: [],
-      benefits: [],
-      image: jobData.images?.[0]
-        ? URL.createObjectURL(jobData.images[0])
-        : '/truck-01.jpg',
-      createdAt: new Date().toISOString(),
-      status: 'Active',
-      views: 0,
-      applications: [],
-    } as DetailedJob;
+    try {
+      const user = api.getCurrentUser();
+      if (!user) {
+        setToast({ message: 'User not logged in', type: 'error' });
+        return;
+      }
 
-    companyHomeData.allJobs.unshift(newJob);
-    setToast({ message: 'Job created successfully!', type: 'success' });
-    setIsCreateJobModalOpen(false);
+      // Call real API
+      await wheelboardApi.job.addJob({
+        UserId: user.id,
+        Role: jobData.jobType || 'New Job',
+        City: jobData.city || 'Unknown',
+        Description: jobData.description || '',
+        JobType: jobData.type || 'Full-time',
+        JobDuration: jobData.duration || 'Permanent',
+        Images: jobData.images,
+      });
+
+      // Refresh jobs list after successful creation
+      await fetchJobs();
+      setToast({ message: 'Job created successfully!', type: 'success' });
+      setIsCreateJobModalOpen(false);
+    } catch (error: any) {
+      console.error('Error creating job:', error);
+      setToast({
+        message: error.message || 'Failed to create job',
+        type: 'error',
+      });
+    }
   };
 
   type ModalJobType = '' | 'Driver' | 'Technician' | 'Helper';
 
-  const handleEditClick = (job: DetailedJob) => {
+  const handleEditClick = (job: Job) => {
     setJobToEdit(job);
     setIsEditMode(true);
     setIsCreateJobModalOpen(true);
   };
 
-  const handleSaveEditedJob = (jobData: {
+  const handleSaveEditedJob = async (_jobData: {
     id?: string;
     jobType?: string;
     duration?: string;
@@ -136,43 +210,29 @@ export default function CompanyJobsPage() {
     description?: string;
     images?: File[];
   }) => {
-    // Find and update job in mock data
-    const jobs = companyHomeData.allJobs;
-    const idx = jobs.findIndex((j) => j.id === jobData.id);
-    if (idx !== -1) {
-      const updated: DetailedJob = {
-        ...jobs[idx],
-        title: jobData.jobType || jobs[idx].title,
-        location: jobData.city || jobs[idx].location,
-        type: (jobData.type as DetailedJob['type']) || jobs[idx].type,
-        salary: jobData.salary || jobs[idx].salary,
-        description: jobData.description || jobs[idx].description,
-        image: jobData.images?.[0]
-          ? URL.createObjectURL(jobData.images[0])
-          : jobs[idx].image,
-        updatedAt: new Date().toISOString(),
-      };
-      jobs.splice(idx, 1, updated);
-      setToast({ message: 'Job updated successfully!', type: 'success' });
-    }
+    // TODO: Implement job update API call when backend provides update endpoint
+    // For now, just close the modal
+    setToast({
+      message: 'Job update not yet implemented',
+      type: 'error',
+    });
     setIsCreateJobModalOpen(false);
     setIsEditMode(false);
     setJobToEdit(null);
   };
 
-  const handleDeleteClick = (job: DetailedJob) => {
+  const handleDeleteClick = (job: Job) => {
     setJobToDelete(job);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (!jobToDelete) return;
-    const jobs = companyHomeData.allJobs;
-    const idx = jobs.findIndex((j) => j.id === jobToDelete.id);
-    if (idx !== -1) {
-      jobs.splice(idx, 1);
-      setToast({ message: 'Job deleted successfully', type: 'success' });
-    }
+  const confirmDelete = async () => {
+    // TODO: Implement job delete API call when backend provides delete endpoint
+    // For now, just close the modal
+    setToast({
+      message: 'Job deletion not yet implemented',
+      type: 'error',
+    });
     setIsDeleteModalOpen(false);
     setJobToDelete(null);
   };
@@ -343,174 +403,202 @@ export default function CompanyJobsPage() {
                 value={filterStatus}
                 onChange={(e) =>
                   setFilterStatus(
-                    e.target.value as 'all' | 'Active' | 'Paused' | 'Closed'
+                    e.target.value as 'all' | 'Active' | 'Inactive' | 'Filled'
                   )
                 }
                 className="w-full appearance-none rounded-xl border-2 border-gray-200 bg-white py-3 pl-12 pr-10 text-sm font-medium transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 sm:w-auto"
               >
                 <option value="all">All Status</option>
                 <option value="Active">Active</option>
-                <option value="Paused">Paused</option>
-                <option value="Closed">Closed</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Filled">Filled</option>
               </select>
             </div>
           </motion.div>
 
-          {/* Jobs List */}
-          {filteredJobs.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="rounded-3xl bg-white p-16 text-center shadow-sm"
-            >
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                <Briefcase className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-gray-900">
-                No Jobs Found
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></div>
+              <p className="ml-4 text-lg text-gray-600">Loading jobs...</p>
+            </div>
+          ) : error ? (
+            /* Error State */
+            <div className="rounded-3xl bg-red-50 p-16 text-center">
+              <AlertCircle className="mx-auto mb-4 h-16 w-16 text-red-500" />
+              <h3 className="mb-2 text-xl font-bold text-red-900">
+                Error Loading Jobs
               </h3>
-              <p className="text-gray-600">
-                {searchQuery || filterStatus !== 'all'
-                  ? 'Try adjusting your search or filter criteria'
-                  : 'Create your first job posting to get started'}
-              </p>
-            </motion.div>
+              <p className="mb-4 text-red-700">{error}</p>
+              <button
+                onClick={fetchJobs}
+                className="rounded-xl bg-red-600 px-6 py-2 text-white hover:bg-red-700"
+              >
+                Try Again
+              </button>
+            </div>
           ) : (
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="space-y-5"
-            >
-              {filteredJobs.map((job) => (
+            <>
+              {/* Jobs List */}
+              {filteredJobs.length === 0 ? (
                 <motion.div
-                  key={job.id}
-                  variants={item}
-                  className="group overflow-hidden rounded-3xl bg-gradient-to-br from-white to-primary-50/30 shadow-premium transition-all duration-500 hover:shadow-premium-lg"
-                  whileHover={{ scale: 1.01, x: 4 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="rounded-3xl bg-white p-16 text-center shadow-sm"
                 >
-                  <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center">
-                    {/* Image Section */}
-                    <div className="relative h-40 w-full flex-shrink-0 overflow-hidden rounded-2xl shadow-lg ring-4 ring-white lg:h-32 lg:w-48">
-                      <Image
-                        src={job.image}
-                        alt={job.title}
-                        fill
-                        className="object-cover transition-all duration-700 group-hover:rotate-2 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500/0 to-accent-500/0 opacity-0 transition-opacity duration-500 group-hover:from-primary-500/20 group-hover:to-accent-500/20 group-hover:opacity-100"></div>
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="flex-1">
-                      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <div className="mb-2 flex flex-wrap items-center gap-2">
-                            <h3 className="text-xl font-bold text-gray-900 transition-colors group-hover:text-primary-600">
-                              {job.title}
-                            </h3>
-                            {job.urgent && (
-                              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
-                                Urgent
-                              </span>
-                            )}
-                            <span
-                              className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusColor(job.status)}`}
-                            >
-                              {job.status}
-                            </span>
-                          </div>
-                          <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
-                            {job.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Meta Info Grid */}
-                      <div className="mb-4 grid grid-cols-1 gap-3 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="flex items-center gap-2">
-                          <Briefcase className="h-4 w-4 text-primary-500" />
-                          <span>{job.department}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-primary-500" />
-                          <span>{job.location}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-primary-500" />
-                          <span className="truncate">{job.salary}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-primary-500" />
-                          <span>
-                            {new Date(job.createdAt).toLocaleDateString(
-                              'en-US',
-                              {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              }
-                            )}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Stats Bar */}
-                      <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg bg-gray-50 px-4 py-2 text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <Users className="h-4 w-4 text-blue-500" />
-                          <span className="font-semibold text-gray-900">
-                            {job.applications.length}
-                          </span>
-                          <span className="text-gray-600">Applications</span>
-                        </div>
-                        <div className="h-4 w-px bg-gray-300"></div>
-                        <div className="flex items-center gap-1.5">
-                          <Eye className="h-4 w-4 text-purple-500" />
-                          <span className="font-semibold text-gray-900">
-                            {job.views}
-                          </span>
-                          <span className="text-gray-600">Views</span>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-3">
-                        <motion.button
-                          onClick={() => handleViewApplications(job)}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-glow"
-                        >
-                          <Users className="h-4 w-4" />
-                          <span>
-                            View Applications ({job.applications.length})
-                          </span>
-                        </motion.button>
-                        <motion.button
-                          onClick={() => handleEditClick(job)}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
-                        >
-                          <Edit className="h-4 w-4" />
-                          <span>Edit Job</span>
-                        </motion.button>
-                        <motion.button
-                          onClick={() => handleDeleteClick(job)}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 rounded-xl border-2 border-red-200 bg-white px-5 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition-all hover:border-red-300 hover:bg-red-50 hover:shadow-md"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Delete</span>
-                        </motion.button>
-                      </div>
-                    </div>
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                    <Briefcase className="h-8 w-8 text-gray-400" />
                   </div>
+                  <h3 className="mb-2 text-xl font-bold text-gray-900">
+                    No Jobs Found
+                  </h3>
+                  <p className="text-gray-600">
+                    {searchQuery || filterStatus !== 'all'
+                      ? 'Try adjusting your search or filter criteria'
+                      : 'Create your first job posting to get started'}
+                  </p>
                 </motion.div>
-              ))}
-            </motion.div>
+              ) : (
+                <motion.div
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-5"
+                >
+                  {filteredJobs.map((job) => (
+                    <motion.div
+                      key={job.id}
+                      variants={item}
+                      className="group overflow-hidden rounded-3xl bg-gradient-to-br from-white to-primary-50/30 shadow-premium transition-all duration-500 hover:shadow-premium-lg"
+                      whileHover={{ scale: 1.01, x: 4 }}
+                    >
+                      <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center">
+                        {/* Image Section */}
+                        <div className="relative h-40 w-full flex-shrink-0 overflow-hidden rounded-2xl shadow-lg ring-4 ring-white lg:h-32 lg:w-48">
+                          <Image
+                            src={job.image}
+                            alt={job.title}
+                            fill
+                            unoptimized
+                            className="object-cover transition-all duration-700 group-hover:rotate-2 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500/0 to-accent-500/0 opacity-0 transition-opacity duration-500 group-hover:from-primary-500/20 group-hover:to-accent-500/20 group-hover:opacity-100"></div>
+                        </div>
+
+                        {/* Content Section */}
+                        <div className="flex-1">
+                          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <div className="mb-2 flex flex-wrap items-center gap-2">
+                                <h3 className="text-xl font-bold text-gray-900 transition-colors group-hover:text-primary-600">
+                                  {job.title}
+                                </h3>
+                                {job.urgent && (
+                                  <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                                    Urgent
+                                  </span>
+                                )}
+                                <span
+                                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusColor(job.status)}`}
+                                >
+                                  {job.status}
+                                </span>
+                              </div>
+                              <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">
+                                {job.description}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Meta Info Grid */}
+                          <div className="mb-4 grid grid-cols-1 gap-3 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-4">
+                            <div className="flex items-center gap-2">
+                              <Briefcase className="h-4 w-4 text-primary-500" />
+                              <span>{job.department}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-primary-500" />
+                              <span>{job.location}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="h-4 w-4 text-primary-500" />
+                              <span className="truncate">{job.salary}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-primary-500" />
+                              <span>
+                                {new Date(job.createdAt).toLocaleDateString(
+                                  'en-US',
+                                  {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Stats Bar */}
+                          <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg bg-gray-50 px-4 py-2 text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <Users className="h-4 w-4 text-blue-500" />
+                              <span className="font-semibold text-gray-900">
+                                {job.applications.length}
+                              </span>
+                              <span className="text-gray-600">
+                                Applications
+                              </span>
+                            </div>
+                            <div className="h-4 w-px bg-gray-300"></div>
+                            <div className="flex items-center gap-1.5">
+                              <Eye className="h-4 w-4 text-purple-500" />
+                              <span className="font-semibold text-gray-900">
+                                {job.views}
+                              </span>
+                              <span className="text-gray-600">Views</span>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex flex-wrap gap-3">
+                            <motion.button
+                              onClick={() => handleViewApplications(job)}
+                              whileHover={{ scale: 1.05, y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-glow"
+                            >
+                              <Users className="h-4 w-4" />
+                              <span>
+                                View Applications ({job.applications.length})
+                              </span>
+                            </motion.button>
+                            <motion.button
+                              onClick={() => handleEditClick(job)}
+                              whileHover={{ scale: 1.05, y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span>Edit Job</span>
+                            </motion.button>
+                            <motion.button
+                              onClick={() => handleDeleteClick(job)}
+                              whileHover={{ scale: 1.05, y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-2 rounded-xl border-2 border-red-200 bg-white px-5 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition-all hover:border-red-300 hover:bg-red-50 hover:shadow-md"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Delete</span>
+                            </motion.button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -524,7 +612,7 @@ export default function CompanyJobsPage() {
             setSelectedJob(null);
           }}
           jobTitle={selectedJob.title}
-          applications={selectedJob.applications}
+          applications={[]} // TODO: Convert API applications to modal format
         />
       )}
 
@@ -544,13 +632,13 @@ export default function CompanyJobsPage() {
                 jobType: '' as ModalJobType,
                 duration: 'Permanent',
                 openings: '',
-                salary: jobToEdit.salary,
+                salary: jobToEdit.salary.toString(),
                 city: jobToEdit.location,
                 type: ['Full-time', 'Part-time', 'Contract'].includes(
                   jobToEdit.type
                 )
-                  ? (jobToEdit.type as DetailedJob['type'])
-                  : ('Full-time' as DetailedJob['type']),
+                  ? (jobToEdit.type as Job['type'])
+                  : ('Full-time' as Job['type']),
                 description: jobToEdit.description,
                 images: [],
               }
@@ -590,7 +678,7 @@ export default function CompanyJobsPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
         title="Delete Job"
-        description="Are you sure you want to delete this job posting? This action cannot be undone."
+        description={`Are you sure you want to delete "${jobToDelete?.title}"? This action cannot be undone.`}
       />
 
       {/* Toast */}

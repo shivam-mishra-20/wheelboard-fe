@@ -14,7 +14,7 @@ interface CreatePostModalProps {
   onPostCreated: (
     content: string,
     category: CategoryType,
-    image?: string
+    imageFile?: File
   ) => void;
 }
 
@@ -25,7 +25,10 @@ export default function CreatePostModal({
 }: CreatePostModalProps) {
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('tip');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [selectedImagePreview, setSelectedImagePreview] = useState<
+    string | null
+  >(null);
 
   const categories: {
     value: CategoryType;
@@ -40,24 +43,30 @@ export default function CreatePostModal({
   ];
 
   const handleImageSelect = () => {
-    // Placeholder for image upload - in production would use file input
-    const demoImages = [
-      '/truck-01.jpg',
-      '/mining-truck.jpg',
-      '/yellow-truck.jpg',
-      '/excavator.jpg',
-    ];
-    const randomImage =
-      demoImages[Math.floor(Math.random() * demoImages.length)];
-    setSelectedImage(randomImage);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        setSelectedImageFile(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setSelectedImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
   };
 
   const handlePost = () => {
     if (content.trim() && selectedCategory) {
-      onPostCreated(content, selectedCategory, selectedImage || undefined);
+      onPostCreated(content, selectedCategory, selectedImageFile || undefined);
       setContent('');
       setSelectedCategory('tip');
-      setSelectedImage(null);
+      setSelectedImageFile(null);
+      setSelectedImagePreview(null);
       onClose();
     }
   };
@@ -65,7 +74,8 @@ export default function CreatePostModal({
   const handleClose = () => {
     setContent('');
     setSelectedCategory('tip');
-    setSelectedImage(null);
+    setSelectedImageFile(null);
+    setSelectedImagePreview(null);
     onClose();
   };
 
@@ -175,16 +185,19 @@ export default function CreatePostModal({
             </div>
 
             {/* Selected Image Preview */}
-            {selectedImage && (
+            {selectedImagePreview && (
               <div className="relative mb-4 h-48 overflow-hidden rounded-lg sm:mb-6 sm:h-64 sm:rounded-xl">
                 <Image
-                  src={selectedImage}
+                  src={selectedImagePreview}
                   alt="Selected"
                   fill
                   className="object-cover"
                 />
                 <button
-                  onClick={() => setSelectedImage(null)}
+                  onClick={() => {
+                    setSelectedImageFile(null);
+                    setSelectedImagePreview(null);
+                  }}
                   className="absolute right-2 top-2 rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
                 >
                   <X className="h-4 w-4" />

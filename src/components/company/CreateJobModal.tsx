@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, User, Wrench, Users as UsersIcon } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -171,6 +171,11 @@ export default function CreateJobModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto bg-gradient-to-br from-pink-50 via-white to-red-50 p-0">
+        {/* Hidden DialogTitle for accessibility */}
+        <DialogTitle className="sr-only">
+          {mode === 'edit' ? 'Edit Job' : 'Post a Job'}
+        </DialogTitle>
+
         {/* Custom Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-6 py-4 backdrop-blur-sm">
           <div className="flex items-center gap-4">

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -24,7 +24,9 @@ import Footer from '@/components/Footer';
 import LoginSimulator from '@/components/LoginSimulator';
 import ServiceEnquiryModal from '@/components/ServiceEnquiryModal';
 import ServiceAssignmentModal from '@/components/ServiceAssignmentModal';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
+// UI Service interface (separate from API)
 interface Service {
   id: string;
   name: string;
@@ -39,6 +41,13 @@ interface Service {
   response: string;
   // Icon component type
   icon: React.ComponentType<Record<string, unknown>>;
+  // Optional API fields
+  serviceId?: string;
+  serviceName?: string;
+  availability?: string;
+  providerId?: string;
+  providerName?: string;
+  imageUrls?: string[];
 }
 
 const mockServices: Service[] = [
@@ -167,6 +176,73 @@ export default function ServicesPage() {
   const [serviceEnquiryModalOpen, setServiceEnquiryModalOpen] = useState(false);
   const [serviceAssignmentModalOpen, setServiceAssignmentModalOpen] =
     useState(false);
+
+  // API State
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch services from API
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await wheelboardApi.masterData.getAllServices();
+        const servicesData = (response.data as any[]) || [];
+
+        // Map API services to UI format with fallback to mock structure
+        const mappedServices: Service[] = servicesData.map(
+          (apiService: any, index: number) => {
+            // Icon mapping based on category or index
+            const iconMap = [Truck, Package, Shield, Settings];
+            const categories: Array<
+              'transport' | 'storage' | 'insurance' | 'maintenance'
+            > = ['transport', 'storage', 'insurance', 'maintenance'];
+
+            return {
+              // API fields
+              serviceId: apiService.serviceId,
+              serviceName: apiService.serviceName || apiService.name,
+              availability: apiService.availability,
+              providerId: apiService.providerId,
+              providerName: apiService.providerName,
+              imageUrls: apiService.imageUrls,
+
+              // UI fields (with fallbacks)
+              id: apiService.serviceId || `s${index + 1}`,
+              name:
+                apiService.serviceName ||
+                apiService.name ||
+                `Service ${index + 1}`,
+              category: categories[index % categories.length],
+              description:
+                apiService.description || 'Professional service description',
+              provider: apiService.providerName || `Provider ${index + 1}`,
+              rating: apiService.rating || 4.5 + Math.random() * 0.4,
+              reviews: Math.floor(150 + Math.random() * 200),
+              price: apiService.price || 5000 + Math.random() * 15000,
+              status: (apiService.availability === 'Available'
+                ? 'active'
+                : 'inactive') as 'active' | 'inactive',
+              coverage: 'Pan India',
+              response: '< 24 hours',
+              icon: iconMap[index % iconMap.length],
+            };
+          }
+        );
+
+        setServices(mappedServices);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        // Fallback to mock data on error
+        setServices(mockServices);
+        setError('Failed to load services, showing cached data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
   const [selectedServiceForAssignment, setSelectedServiceForAssignment] =
     useState<Service | null>(null);
 
@@ -191,7 +267,7 @@ export default function ServicesPage() {
     setSelectedServiceForAssignment(null);
   };
 
-  const filteredServices = mockServices.filter((service) => {
+  const filteredServices = services.filter((service) => {
     const matchesSearch =
       service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       service.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -369,7 +445,7 @@ export default function ServicesPage() {
               <h3 className="mb-3 text-lg font-bold">Assigned Services</h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {assignedServices.map((sid) => {
-                  const svc = mockServices.find((s) => s.id === sid);
+                  const svc = services.find((s) => s.id === sid);
                   if (!svc) return null;
                   return (
                     <div
@@ -599,8 +675,52 @@ export default function ServicesPage() {
             })}
           </div>
 
+          {/* Loading State */}
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-16 text-center"
+            >
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-orange-600"></div>
+              <h3 className="mb-2 text-xl font-bold text-gray-900">
+                Loading Services...
+              </h3>
+              <p className="text-gray-600">
+                Fetching available services from our network
+              </p>
+            </motion.div>
+          )}
+
+          {/* Error State */}
+          {error && !isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-16 text-center"
+            >
+              <div className="mx-auto mb-4 text-red-500">
+                <svg
+                  className="mx-auto h-12 w-12"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-gray-900">{error}</h3>
+              <p className="text-gray-600">Showing cached services data</p>
+            </motion.div>
+          )}
+
           {/* Empty State */}
-          {filteredServices.length === 0 && (
+          {!isLoading && !error && filteredServices.length === 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

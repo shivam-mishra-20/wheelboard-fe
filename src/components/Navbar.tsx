@@ -2,10 +2,40 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '@/lib/apiAdapter';
+import UserProfile from './UserProfile';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if user is logged in on mount
+    const checkLoginStatus = () => {
+      const user = api.getCurrentUser();
+      setIsLoggedIn(!!user);
+    };
+
+    checkLoginStatus();
+
+    // Listen for storage changes (when user logs in/out in another tab or after navigation)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'wheelboard_current_user' || e.key === 'authToken') {
+        checkLoginStatus();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check periodically in case localStorage was updated in same tab
+    const interval = setInterval(checkLoginStatus, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <nav className="border-b border-gray-200 bg-white shadow-sm">
@@ -97,12 +127,16 @@ export default function Navbar() {
                   />
                 </svg>
               </button>
-              <Link
-                href="/login"
-                className="rounded-lg bg-primary-button px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-button/90"
-              >
-                Sign In
-              </Link>
+              {isLoggedIn ? (
+                <UserProfile />
+              ) : (
+                <Link
+                  href="/login"
+                  className="rounded-lg bg-primary-button px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-button/90"
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
           </div>
 
@@ -173,12 +207,18 @@ export default function Navbar() {
             >
               Analytics
             </Link>
-            <Link
-              href="/login"
-              className="mt-4 block rounded-md bg-primary-button px-3 py-2 text-base font-medium text-white hover:bg-primary-button/90"
-            >
-              Sign In
-            </Link>
+            {isLoggedIn ? (
+              <div className="mt-4 border-t pt-4">
+                <UserProfile />
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="mt-4 block rounded-md bg-primary-button px-3 py-2 text-base font-medium text-white hover:bg-primary-button/90"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}

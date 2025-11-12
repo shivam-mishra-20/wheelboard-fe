@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api, saveAuthUser } from '@/lib/apiAdapter';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       // Use unified API - works with both mock and real API based on env config
       const result = await api.login({
-        email, // Will use mobileNo field if NEXT_PUBLIC_API_MODE=real
+        mobileNo: mobileNumber, // Will use mobileNo field if NEXT_PUBLIC_API_MODE=real
         password,
       });
 
@@ -195,14 +195,14 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
-                  Email Address
+                  Mobile Number
                 </label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="number"
+                  value={mobileNumber}
+                  onChange={(e) => setMobileNumber(e.target.value)}
                   className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  placeholder="your@email.com"
+                  placeholder="98162561291"
                   required
                 />
               </div>

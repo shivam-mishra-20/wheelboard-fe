@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockAPI } from '../lib/mockApi';
+import { api } from '../lib/apiAdapter';
 
 const LoginSimulator = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -10,9 +10,28 @@ const LoginSimulator = () => {
 
   const handleSimulateLogin = async (userType) => {
     try {
-      const result = await mockAPI.simulateLogin(userType);
-      if (result.success) {
-        // Navigate to role-specific home instead of reloading
+      // For mock mode, use mock credentials
+      const mockCredentials = {
+        company: { email: 'john@transport.com', password: 'password123' },
+        business: { email: 'mike@parts.com', password: 'password123' },
+        professional: { email: 'sarah@mining.com', password: 'password123' },
+      };
+
+      const credentials = mockCredentials[userType];
+      if (!credentials) {
+        alert('Invalid user type');
+        return;
+      }
+
+      const result = await api.login(credentials);
+      if (result.success && result.user) {
+        // Save user session
+        if (result.token) {
+          localStorage.setItem('authToken', result.token);
+        }
+        localStorage.setItem('currentUser', JSON.stringify(result.user));
+
+        // Navigate to role-specific home
         const redirectMap = {
           company: '/company/home',
           business: '/business/home',
@@ -21,7 +40,6 @@ const LoginSimulator = () => {
         const target = redirectMap[userType] || '/';
         router.push(target);
       } else {
-        // Keep inline alert for quick feedback
         alert(`Login failed: ${result.message}`);
       }
     } catch (error) {
@@ -31,7 +49,7 @@ const LoginSimulator = () => {
 
   const handleLogout = async () => {
     try {
-      await mockAPI.logout();
+      await api.logout();
       // Redirect to public home after logout
       router.push('/');
     } catch (error) {

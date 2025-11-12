@@ -13,6 +13,8 @@ interface Job {
 
 interface RecentJobsProps {
   jobs: Job[];
+  onCreateJob?: () => void;
+  onEditJob?: (jobId: string) => void;
 }
 
 const container = {
@@ -34,7 +36,11 @@ const item = {
   },
 };
 
-export default function RecentJobs({ jobs }: RecentJobsProps) {
+export default function RecentJobs({
+  jobs,
+  onCreateJob,
+  onEditJob,
+}: RecentJobsProps) {
   return (
     <div className="mb-12 md:mb-20">
       <motion.div
@@ -50,6 +56,7 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
         <motion.button
           className="group flex items-center gap-1 rounded-full bg-gradient-to-r from-[#f36969] to-[#f36565] px-2.5 py-2.5 text-xs font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-[#f36969]/20 md:px-6 md:py-3"
           whileTap={{ scale: 0.95 }}
+          onClick={onCreateJob}
         >
           <svg
             className="h-5 w-5"
@@ -90,6 +97,7 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
                   src={job.image}
                   alt={job.title}
                   fill
+                  unoptimized
                   sizes="(max-width: 640px) 144px, 128px"
                   className="object-cover transition-all duration-700"
                 />
@@ -176,6 +184,7 @@ export default function RecentJobs({ jobs }: RecentJobsProps) {
                   <motion.button
                     className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:shadow-[#f36969]/30 md:px-5"
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => onEditJob?.(job.id)}
                   >
                     <svg
                       className="h-4 w-4"

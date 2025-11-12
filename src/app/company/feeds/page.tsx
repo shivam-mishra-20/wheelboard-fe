@@ -1,23 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Plus,
-  TrendingUp,
-  Users,
-  Filter,
-  CheckCircle2,
-  Share2,
-} from 'lucide-react';
+import { Plus, Filter, CheckCircle2, Share2 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeedCard from '@/components/company/FeedCard';
 import CreatePostModal from '@/components/company/CreatePostModal';
-import { communityFeeds, mockAPI } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 import type { FeedPost, CategoryType } from '@/lib/mockApi';
+
+// Helper function to format time ago
+function formatTimeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 2592000)
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+}
 
 const container = {
   hidden: { opacity: 0 },
@@ -30,48 +38,145 @@ const container = {
 };
 
 export default function CompanyFeedsPage() {
-  const [feeds, setFeeds] = useState<FeedPost[]>(communityFeeds);
-  const session = mockAPI.getCurrentSession();
-  const currentUserId = session?.user?.id || null;
+  const [feeds, setFeeds] = useState<FeedPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const currentUser = api.getCurrentUser();
+  const currentUserId = currentUser?.id || null;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const handlePostCreated = (
-    content: string,
-    category: CategoryType,
-    image?: string
-  ) => {
-    const newPost: FeedPost = {
-      id: `feed-${Date.now()}`,
-      author: {
-        name: 'John Transport Co.',
-        id: currentUserId || `user-${Date.now()}`,
-        avatar: '/profile.png',
-        initials: 'JT',
-        userType: 'company',
-        company: 'John Transport Co.',
-      },
-      content,
-      image,
-      timestamp: new Date().toISOString(),
-      timeAgo: 'Just now',
-      likes: 0,
-      shares: 0,
-      comments: [],
-      isLiked: false,
-      category,
+  // Fetch posts from API - only run once on mount
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        if (!currentUser) {
+          setError('Please log in to view posts');
+          setIsLoading(false);
+          return;
+        }
+
+        // Get posts for current user
+        const response = await wheelboardApi.post.getPostsByUser(
+          currentUser.id
+        );
+        const posts = (response.data as any[]) || [];
+
+        // Transform API Post data to FeedPost format
+        const transformedPosts: FeedPost[] = posts.map((post: any) => ({
+          id: post.postId,
+          author: {
+            name:
+              currentUser?.name || currentUser?.companyName || 'Anonymous User',
+            avatar: '/profile.png',
+            initials: (currentUser?.name || currentUser?.companyName || 'A')
+              .substring(0, 2)
+              .toUpperCase(),
+            userType: 'company' as const,
+            id: currentUser?.id || 'unknown',
+            company: currentUser?.companyName || 'Company',
+          },
+          content: post.content,
+          image:
+            post.imageUrls && post.imageUrls.length > 0
+              ? encodeURI(post.imageUrls[0])
+              : undefined,
+          timestamp: post.dateEntered,
+          timeAgo: formatTimeAgo(post.dateEntered),
+          likes: 0, // API doesn't provide likes
+          shares: 0, // API doesn't provide shares
+          comments: [], // API doesn't provide comments
+          isLiked: false,
+          category: post.category,
+        }));
+
+        setFeeds(transformedPosts);
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+        setError('Failed to load posts from API.');
+        setFeeds([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setFeeds([newPost, ...feeds]);
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 5000);
+    fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - currentUser is stable from api.getCurrentUser()
+
+  const handlePostCreated = async (
+    content: string,
+    category: CategoryType,
+    imageFile?: File
+  ) => {
+    try {
+      if (!currentUser) {
+        setError('Please log in to create posts');
+        return;
+      }
+
+      // Create post via API with proper field mapping
+      const postData = {
+        UserId: currentUser.id,
+        Content: content,
+        Category: category,
+        Images: imageFile ? [imageFile] : [], // Pass the actual image file
+        CreatedBy: currentUser.id,
+        PartnerId: 0,
+      };
+
+      console.log('Creating post with data:', postData);
+      const response = await wheelboardApi.post.addPost(postData);
+
+      if (response.success) {
+        // Add new post to state
+        const newPost: FeedPost = {
+          id: `post-${Date.now()}`,
+          author: {
+            name: currentUser.name || currentUser.companyName || 'Anonymous',
+            avatar: '/profile.png',
+            initials: (currentUser.name || currentUser.companyName || 'A')
+              .substring(0, 2)
+              .toUpperCase(),
+            userType: 'company' as const,
+            id: currentUser.id,
+            company: currentUser.companyName || 'Company',
+          },
+          content: content,
+          image: imageFile ? URL.createObjectURL(imageFile) : undefined,
+          timestamp: new Date().toISOString(),
+          timeAgo: 'Just now',
+          likes: 0,
+          shares: 0,
+          comments: [],
+          isLiked: false,
+          category: category,
+        };
+
+        setFeeds([newPost, ...feeds]);
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 5000);
+      }
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError('Failed to create post');
+    }
   };
 
-  const handleDelete = (postId: string) => {
-    setFeeds((prev) => prev.filter((f) => f.id !== postId));
+  const handleDelete = async (postId: string) => {
+    try {
+      await wheelboardApi.post.deletePost(postId);
+      setFeeds((prev) => prev.filter((f) => f.id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      setError('Failed to delete post');
+    }
   };
 
   const handleDeleteComment = (postId: string, commentId: string) => {
@@ -110,6 +215,8 @@ export default function CompanyFeedsPage() {
   };
 
   const handleComment = (postId: string, commentText: string) => {
+    if (!currentUserId || !commentText.trim()) return;
+
     setFeeds((prevFeeds) =>
       prevFeeds.map((feed) =>
         feed.id === postId
@@ -120,9 +227,12 @@ export default function CompanyFeedsPage() {
                 {
                   id: `comment-${Date.now()}`,
                   author: {
-                    name: 'John Transport Co.',
+                    name:
+                      currentUser?.name ||
+                      currentUser?.companyName ||
+                      'Anonymous',
                     avatar: '/profile.png',
-                    id: currentUserId || `user-${Date.now()}`,
+                    id: currentUserId,
                   },
                   content: commentText,
                   timestamp: new Date().toISOString(),
@@ -139,30 +249,6 @@ export default function CompanyFeedsPage() {
     filterCategory === 'all'
       ? feeds
       : feeds.filter((feed) => feed.category === filterCategory);
-
-  const stats = [
-    {
-      icon: Users,
-      label: 'Community Members',
-      value: '12,547',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Active Discussions',
-      value: '342',
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    {
-      icon: Share2,
-      label: 'Posts This Week',
-      value: '1,234',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
-    },
-  ];
 
   return (
     <CompanyProtected>
@@ -201,34 +287,6 @@ export default function CompanyFeedsPage() {
                 Create Post
               </motion.button>
             </div>
-          </motion.div>
-
-          {/* Stats Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3"
-          >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + index * 0.1 }}
-                className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-md"
-              >
-                <div className={`rounded-xl ${stat.bg} p-3`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stat.value}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
           </motion.div>
 
           {/* Filter Bar */}
@@ -311,44 +369,90 @@ export default function CompanyFeedsPage() {
             )}
           </motion.div>
 
-          {/* Feeds Grid */}
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="space-y-6"
-          >
-            {filteredFeeds.map((feed) => (
-              <FeedCard
-                key={feed.id}
-                post={feed}
-                onLike={handleLike}
-                onShare={handleShare}
-                onComment={handleComment}
-                currentUserId={currentUserId}
-                onDelete={handleDelete}
-                onDeleteComment={handleDeleteComment}
-              />
-            ))}
-          </motion.div>
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600"></div>
+              <p className="ml-3 text-gray-600">Loading posts...</p>
+            </div>
+          )}
 
-          {/* Empty State */}
-          {filteredFeeds.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="rounded-3xl bg-white p-16 text-center shadow-sm"
-            >
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                <Filter className="h-8 w-8 text-gray-400" />
+          {/* Error State */}
+          {error && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-red-100 p-1">
+                  <svg
+                    className="h-4 w-4 text-red-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <p className="font-medium text-red-800">Error loading posts</p>
               </div>
-              <h3 className="mb-2 text-xl font-bold text-gray-900">
-                No Posts Found
-              </h3>
-              <p className="text-gray-600">
-                Try adjusting your filter to see more posts
-              </p>
-            </motion.div>
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Feeds Grid */}
+          {!isLoading && (
+            <>
+              {filteredFeeds.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="rounded-3xl bg-white p-16 text-center shadow-sm"
+                >
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                    <Filter className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-bold text-gray-900">
+                    No Posts Found
+                  </h3>
+                  <p className="text-gray-600">
+                    Try adjusting your filter to see more posts, or create the
+                    first post!
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg"
+                  >
+                    <Plus className="h-5 w-5" />
+                    Create Post
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-6"
+                >
+                  {filteredFeeds.map((feed) => (
+                    <FeedCard
+                      key={feed.id}
+                      post={feed}
+                      onLike={handleLike}
+                      onShare={handleShare}
+                      onComment={handleComment}
+                      currentUserId={currentUserId}
+                      onDelete={handleDelete}
+                      onDeleteComment={handleDeleteComment}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </>
           )}
 
           {/* Floating Create Post Button (Mobile) */}

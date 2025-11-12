@@ -113,7 +113,7 @@ export default function FeedCard({
                   src={post.author.avatar}
                   alt={post.author.name}
                   fill
-                  className="object-cover"
+                  className="rounded-sm object-cover"
                 />
               ) : (
                 <span className="text-base font-bold text-white sm:text-lg">

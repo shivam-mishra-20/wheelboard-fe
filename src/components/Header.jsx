@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { mockAPI } from '../lib/mockApi';
+import { api } from '../lib/apiAdapter';
 import {
   FiMenu,
   FiX,
@@ -174,16 +174,151 @@ const Header = () => {
     return undefined;
   }, []);
 
+  // Get navigation links for user type
+  const getNavigationLinksForUserType = (userType) => {
+    const icons = {
+      home: <FiHome className="mr-2" />,
+      dashboard: <FiHome className="mr-2" />,
+      fleet: <FiLayers className="mr-2" />,
+      fleets: <FiLayers className="mr-2" />,
+      trips: <FiBriefcase className="mr-2" />,
+      feeds: <FiUsers className="mr-2" />,
+      jobs: <FiBriefcase className="mr-2" />,
+      profile: <FiUser className="mr-2" />,
+      listings: <FiBriefcase className="mr-2" />,
+      services: <FiTarget className="mr-2" />,
+      earnings: <FiBriefcase className="mr-2" />,
+      expenses: <FiMail className="mr-2" />,
+    };
+
+    switch (userType) {
+      case 'company':
+        return [
+          {
+            id: 'home',
+            label: 'Home',
+            href: '/company/home',
+            icon: icons.home,
+          },
+
+          {
+            id: 'fleet',
+            label: 'Fleet',
+            href: '/company/fleet',
+            icon: icons.fleets,
+          },
+          {
+            id: 'trips',
+            label: 'Trips',
+            href: '/company/trips',
+            icon: icons.trips,
+          },
+          {
+            id: 'jobs',
+            label: 'Jobs',
+            href: '/company/jobs',
+            icon: icons.jobs,
+          },
+
+          {
+            id: 'feeds',
+            label: 'Feeds',
+            href: '/company/feeds',
+            icon: icons.feeds,
+          },
+        ];
+      case 'business':
+        return [
+          {
+            id: 'home',
+            label: 'Home',
+            href: '/business/home',
+            icon: icons.home,
+          },
+          {
+            id: 'listings',
+            label: 'Listings',
+            href: '/business/listings',
+            icon: icons.listings,
+          },
+          {
+            id: 'services',
+            label: 'Services',
+            href: '/business/services',
+            icon: icons.services,
+          },
+          {
+            id: 'feeds',
+            label: 'Feeds',
+            href: '/business/feeds',
+            icon: icons.feeds,
+          },
+        ];
+      case 'professional':
+        return [
+          {
+            id: 'home',
+            label: 'Home',
+            href: '/professional/home',
+            icon: icons.home,
+          },
+          {
+            id: 'jobs',
+            label: 'Jobs',
+            href: '/professional/jobs',
+            icon: icons.jobs,
+          },
+          {
+            id: 'trips',
+            label: 'Trips',
+            href: '/professional/trips',
+            icon: icons.trips,
+          },
+          {
+            id: 'earnings',
+            label: 'Earnings',
+            href: '/professional/earnings',
+            icon: icons.earnings,
+          },
+          {
+            id: 'feeds',
+            label: 'Feeds',
+            href: '/professional/feeds',
+            icon: icons.feeds,
+          },
+        ];
+      default:
+        return DEFAULT_NAV_LINKS.map((link) => ({
+          ...link,
+          href: link.id === 'home' ? '/' : `#${link.id}`,
+        }));
+    }
+  };
+
   // Check for user session and update navigation - memoized with useCallback
   const updateSessionAndNavigation = useCallback(() => {
-    const session = mockAPI.getCurrentSession();
-    if (session && session.isAuthenticated) {
+    const user = api.getCurrentUser();
+    if (user) {
+      // Get role-based navigation links
+      const navigationLinks = getNavigationLinksForUserType(user.userType);
+
+      // Create a session-like object for the Header
+      const session = {
+        isAuthenticated: true,
+        user: user,
+        profileImage: user.profileImage || user.avatar || '/profile.png',
+        navigationLinks: navigationLinks,
+      };
       setUserSession(session);
-      setCurrentNavLinks(session.navigationLinks);
+      setCurrentNavLinks(navigationLinks);
+
       // Set active link based on current pathname
       const currentPath = pathname;
-      const matchingLink = session.navigationLinks.find(
-        (link) => currentPath === link.href || currentPath.startsWith(link.href)
+      const matchingLink = navigationLinks.find(
+        (link) =>
+          currentPath === link.href ||
+          (currentPath.startsWith(link.href) && link.href !== '/') ||
+          (link.href.includes(currentPath.split('/')[2]) && currentPath !== '/')
       );
       if (matchingLink) {
         setActiveLink(matchingLink.id);
@@ -196,6 +331,23 @@ const Header = () => {
 
   useEffect(() => {
     updateSessionAndNavigation();
+
+    // Listen for storage changes (when user logs in/out)
+    const handleStorageChange = (e) => {
+      if (e.key === 'wheelboard_current_user' || e.key === 'authToken') {
+        updateSessionAndNavigation();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check periodically in case localStorage was updated in same tab
+    const interval = setInterval(updateSessionAndNavigation, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, [updateSessionAndNavigation]);
 
   // Centralized nav handler - improved and memoized
@@ -365,7 +517,7 @@ const Header = () => {
 
   // Handle logout - memoized
   const handleLogout = useCallback(async () => {
-    await mockAPI.logout();
+    await api.logout();
     setUserSession(null);
     setCurrentNavLinks(DEFAULT_NAV_LINKS);
     setIsOpen(false);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockAPI } from '../lib/mockApi';
+import { api } from '../lib/apiAdapter';
 import { motion } from 'framer-motion';
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
@@ -10,8 +10,10 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const session = mockAPI.getCurrentSession();
-    if (!session || !session.isAuthenticated) {
+    // Check for authenticated user using the unified API
+    const user = api.getCurrentUser();
+
+    if (!user) {
       // Not logged in -> redirect to login
       router.replace('/login');
       return;
@@ -19,7 +21,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
 
     // If allowedRoles provided, ensure the current user's type is permitted
     if (allowedRoles && allowedRoles.length > 0) {
-      const userType = session.user.userType;
+      const userType = user.userType;
       if (!allowedRoles.includes(userType)) {
         // Redirect to the correct home for the user's role
         const redirectMap = {

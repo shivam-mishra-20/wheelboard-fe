@@ -127,6 +127,7 @@ export default function PopularFeeds({ feeds }: PopularFeedsProps) {
                   src={imageSrc}
                   alt={titleText}
                   fill
+                  unoptimized
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-105"
                 />

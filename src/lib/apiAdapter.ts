@@ -2,7 +2,7 @@
 // This file provides a unified interface that switches between mock API and real API
 // based on environment configuration
 
-import { userApi, type LoginRequest, type ApiResponse } from './userApi';
+import { wheelboardApi } from './wheelboardApi';
 import { mockAPI, type LoginCredentials } from './mockApi';
 
 // Configuration: Set to 'real' to use live API, 'mock' for development
@@ -19,6 +19,7 @@ export interface UnifiedUser {
   phoneNumber?: string;
   userType: 'professional' | 'company' | 'business';
   businessCategory?: string;
+  isProfileComplete?: boolean;
   avatar?: string | null;
   profileImage?: string;
   createdAt: string;
@@ -76,28 +77,48 @@ export const api = {
   }): Promise<UnifiedLoginResponse> => {
     if (API_MODE === 'real') {
       // Use real API
-      const loginData: LoginRequest = {
+      const loginData = {
         mobileNo: credentials.mobileNo || credentials.email || '',
         password: credentials.password,
       };
 
-      const response = await userApi.login(loginData);
+      const response = await wheelboardApi.user.login(loginData);
 
       if (response.success && response.data) {
+        // Map actual API response structure
+        const userData = response.data as {
+          userId: string;
+          token: string;
+          userType: string; // "Company", "Professional", "Business" (capitalized)
+          businessCategory?: string;
+          isProfileComplete: boolean;
+          email?: string;
+          mobileNo?: string;
+          name?: string;
+          companyName?: string;
+        };
+
+        // Normalize userType to lowercase for frontend consistency
+        const normalizedUserType = userData.userType.toLowerCase() as
+          | 'professional'
+          | 'company'
+          | 'business';
+
         return {
           success: true,
           message: response.message,
           user: {
-            id: response.data.userId,
-            email: response.data.email || '',
-            mobileNo: response.data.mobileNo,
-            name: response.data.name,
-            companyName: response.data.companyName,
-            businessName: response.data.businessName,
-            userType: response.data.userType,
+            id: userData.userId,
+            email: userData.email || '',
+            mobileNo: userData.mobileNo || '',
+            name: userData.name || '',
+            companyName: userData.companyName || '',
+            userType: normalizedUserType,
+            businessCategory: userData.businessCategory,
+            isProfileComplete: userData.isProfileComplete,
             createdAt: new Date().toISOString(),
           },
-          token: response.data.token,
+          token: userData.token,
         };
       }
 
@@ -147,19 +168,19 @@ export const api = {
     if (API_MODE === 'real') {
       // Use real API
       if (data.userType === 'professional') {
-        const response = await userApi.professionalSignup({
-          email: data.email || '',
-          password: data.password,
-          name: data.name || data.fullName || '',
-          fatherName: data.fatherName || '',
-          dateOfBirth:
+        const response = await wheelboardApi.user.professionalSignup({
+          Email: data.email || '',
+          Password: data.password,
+          Name: data.name || data.fullName || '',
+          FatherName: data.fatherName || '',
+          DateOfBirth:
             data.dateOfBirth || data.birthDate || new Date().toISOString(),
-          mobileNo: data.mobileNo || data.phoneNumber || '',
-          state: data.state || '',
-          city: data.city || '',
-          professionalType:
+          MobileNo: data.mobileNo || data.phoneNumber || '',
+          State: data.state || '',
+          City: data.city || '',
+          ProfessionalType:
             data.professionalType || data.businessCategory || '',
-          profileImage: data.profileImage,
+          ProfileImage: data.profileImage as File | undefined,
         });
 
         return {
@@ -167,7 +188,7 @@ export const api = {
           message: response.message,
         };
       } else if (data.userType === 'company') {
-        const response = await userApi.companySignup({
+        const response = await wheelboardApi.user.companySignup({
           companyName: data.companyName || '',
           mobileNo: data.mobileNo || data.phoneNumber || '',
           email: data.email || '',
@@ -181,7 +202,7 @@ export const api = {
         };
       } else {
         // Business type - use company signup for now
-        const response = await userApi.companySignup({
+        const response = await wheelboardApi.user.companySignup({
           companyName: data.businessName || data.companyName || '',
           mobileNo: data.mobileNo || data.phoneNumber || '',
           email: data.email || '',
@@ -273,7 +294,7 @@ export const api = {
   logout: async (): Promise<{ success: boolean; message: string }> => {
     if (API_MODE === 'real') {
       localStorage.removeItem('wheelboard_current_user');
-      localStorage.removeItem('wheelboard_auth_token');
+      localStorage.removeItem('authToken');
       return {
         success: true,
         message: 'Logged out successfully!',
@@ -286,23 +307,36 @@ export const api = {
   /**
    * Get user profile by ID
    */
-  getUserProfile: async (userId: string): Promise<ApiResponse<UnifiedUser>> => {
+  getUserProfile: async (
+    userId: string
+  ): Promise<{ success: boolean; message: string; data?: UnifiedUser }> => {
     if (API_MODE === 'real') {
-      const response = await userApi.getUserProfile(userId);
+      const response = await wheelboardApi.user.getUserProfile(userId);
 
       if (response.success && response.data) {
+        const profileData = response.data as {
+          userId: string;
+          email: string;
+          mobileNo?: string;
+          name?: string;
+          companyName?: string;
+          businessName?: string;
+          userType: 'professional' | 'company' | 'business';
+          profileImage?: string;
+        };
+
         return {
           success: true,
           message: response.message,
           data: {
-            id: response.data.userId,
-            email: response.data.email,
-            mobileNo: response.data.mobileNo,
-            name: response.data.name,
-            companyName: response.data.companyName,
-            businessName: response.data.businessName,
-            userType: response.data.userType,
-            profileImage: response.data.profileImage,
+            id: profileData.userId,
+            email: profileData.email,
+            mobileNo: profileData.mobileNo,
+            name: profileData.name,
+            companyName: profileData.companyName,
+            businessName: profileData.businessName,
+            userType: profileData.userType,
+            profileImage: profileData.profileImage,
             createdAt: new Date().toISOString(),
           },
         };
@@ -328,7 +362,7 @@ export const api = {
 export const saveAuthUser = (user: UnifiedUser, token?: string): void => {
   localStorage.setItem('wheelboard_current_user', JSON.stringify(user));
   if (token) {
-    localStorage.setItem('wheelboard_auth_token', token);
+    localStorage.setItem('authToken', token);
   }
 };
 
@@ -336,7 +370,7 @@ export const saveAuthUser = (user: UnifiedUser, token?: string): void => {
  * Helper to get auth token
  */
 export const getAuthToken = (): string | null => {
-  return localStorage.getItem('wheelboard_auth_token');
+  return localStorage.getItem('authToken');
 };
 
 /**
