@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -13,7 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import Headers from '@/components/Header';
-import { professionalCalendarData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MONTHS = [
@@ -33,11 +33,77 @@ const MONTHS = [
 
 export default function CalendarPage() {
   const router = useRouter();
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 8, 1)); // September 2025
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalActiveDays: 0,
+    totalEventsScheduled: 0,
+    thisMonthAvailability: 0,
+  });
 
   const currentMonth = MONTHS[currentDate.getMonth()];
   const currentYear = currentDate.getFullYear();
+
+  // Fetch calendar events from API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        console.log('🔍 Fetching calendar events...');
+        setLoading(true);
+
+        // Get current user
+        const currentUser = localStorage.getItem('currentUser');
+        const userId = currentUser
+          ? JSON.parse(currentUser).id
+          : '99b58c17-1812-4816-b2fd-20cfb386346c';
+
+        const response = await wheelboardApi.trip.getCalendarEvents(userId);
+        console.log('📅 Calendar events response:', response);
+
+        const eventsData: any[] = Array.isArray(response)
+          ? response
+          : response?.data && Array.isArray(response.data)
+            ? response.data
+            : [];
+        setEvents(eventsData);
+
+        // Calculate stats
+        const activeEvents = eventsData.filter((e: any) => e.isActive);
+        const thisMonth = new Date().getMonth();
+        const thisYear = new Date().getFullYear();
+        const thisMonthEvents = activeEvents.filter((e: any) => {
+          const eventDate = new Date(e.startTime);
+          return (
+            eventDate.getMonth() === thisMonth &&
+            eventDate.getFullYear() === thisYear
+          );
+        });
+
+        setStats({
+          totalActiveDays: activeEvents.length,
+          totalEventsScheduled: eventsData.length,
+          thisMonthAvailability:
+            thisMonthEvents.length > 0
+              ? Math.round(
+                  (thisMonthEvents.length /
+                    new Date(thisYear, thisMonth + 1, 0).getDate()) *
+                    100
+                )
+              : 0,
+        });
+
+        console.log('✅ Events loaded:', eventsData.length);
+      } catch (error) {
+        console.error('❌ Error fetching events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   // Get days in month
   const getDaysInMonth = (date: Date) => {
@@ -91,9 +157,26 @@ export default function CalendarPage() {
   const days = getDaysInMonth(currentDate);
 
   const getDateInfo = (fullDate: string) => {
-    return professionalCalendarData.markedDates.find(
-      (d) => d.date === fullDate
-    );
+    // Find events for this date
+    const dateEvents = events.filter((event) => {
+      const eventDate = new Date(event.startTime).toISOString().split('T')[0];
+      return eventDate === fullDate;
+    });
+
+    if (dateEvents.length === 0) return null;
+
+    return {
+      date: fullDate,
+      hasEvent: true,
+      isActive: dateEvents.some((e) => e.isActive),
+      events: dateEvents.map((e) => ({
+        id: e.eventId,
+        title: e.eventName,
+        time: `${new Date(e.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(e.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+        location: e.note || '',
+        category: e.category || 'General',
+      })),
+    };
   };
 
   const handlePrevMonth = () => {
@@ -124,6 +207,20 @@ export default function CalendarPage() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-3 py-4 pt-16 lg:px-6 lg:py-6 lg:pt-20">
+        {/* Loading State */}
+        {loading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
+            <div className="rounded-lg bg-white p-6 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="h-6 w-6 animate-spin rounded-full border-4 border-gray-200 border-t-[#F36969]" />
+                <p className="text-sm font-medium text-gray-700">
+                  Loading calendar...
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-4 flex items-center justify-between lg:mb-6">
           <div className="flex items-center gap-3 lg:gap-4">
@@ -255,7 +352,7 @@ export default function CalendarPage() {
                   </p>
                 </div>
                 <p className="text-2xl font-bold text-green-600">
-                  {professionalCalendarData.stats.totalActiveDays}
+                  {stats.totalActiveDays}
                 </p>
               </div>
 
@@ -267,7 +364,7 @@ export default function CalendarPage() {
                   <p className="text-xs font-medium text-gray-600">Events</p>
                 </div>
                 <p className="text-2xl font-bold text-[#535353]">
-                  {professionalCalendarData.stats.totalEventsScheduled}
+                  {stats.totalEventsScheduled}
                 </p>
               </div>
             </div>
@@ -288,11 +385,10 @@ export default function CalendarPage() {
                     </p>
                   </div>
                   <p className="text-3xl font-bold text-green-600">
-                    {professionalCalendarData.stats.totalActiveDays}
+                    {stats.totalActiveDays}
                   </p>
                   <p className="mt-1 text-xs text-gray-600">
-                    {professionalCalendarData.stats.thisMonthAvailability}%
-                    availability
+                    {stats.thisMonthAvailability}% availability
                   </p>
                 </div>
 
@@ -306,7 +402,7 @@ export default function CalendarPage() {
                     </p>
                   </div>
                   <p className="text-3xl font-bold text-[#535353]">
-                    {professionalCalendarData.stats.totalEventsScheduled}
+                    {stats.totalEventsScheduled}
                   </p>
                 </div>
               </div>
@@ -330,11 +426,11 @@ export default function CalendarPage() {
                     >
                       <div className="mb-2 flex items-start justify-between">
                         <h4 className="text-sm font-semibold text-[#535353] lg:text-base">
-                          {event.eventName}
+                          {event.title}
                         </h4>
                         <span
                           className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            event.category === 'trip'
+                            event.category.toLowerCase() === 'trip'
                               ? 'bg-blue-100 text-blue-700'
                               : 'bg-teal-100 text-teal-700'
                           }`}
@@ -346,43 +442,14 @@ export default function CalendarPage() {
                       {event.location && (
                         <div className="mb-2 flex items-center gap-2 text-xs text-gray-600 lg:text-sm">
                           <MapPin className="h-3 w-3 lg:h-4 lg:w-4" />
-                          <span>
-                            {event.location.from} → {event.location.to}
-                          </span>
+                          <span>{event.location}</span>
                         </div>
                       )}
 
-                      {event.startTime && (
-                        <div className="flex items-center gap-2 text-xs text-gray-600 lg:text-sm">
-                          <Clock className="h-3 w-3 lg:h-4 lg:w-4" />
-                          <span>
-                            {event.startTime}
-                            {event.endTime && ` - ${event.endTime}`}
-                          </span>
-                        </div>
-                      )}
-
-                      {event.note && (
-                        <p className="mt-2 text-xs text-gray-500 lg:text-sm">
-                          {event.note}
-                        </p>
-                      )}
-
-                      {event.status && (
-                        <div className="mt-2">
-                          <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                              event.status === 'in-transit'
-                                ? 'bg-blue-100 text-blue-700'
-                                : event.status === 'scheduled'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-green-100 text-green-700'
-                            }`}
-                          >
-                            {event.status}
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-xs text-gray-600 lg:text-sm">
+                        <Clock className="h-3 w-3 lg:h-4 lg:w-4" />
+                        <span>{event.time}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

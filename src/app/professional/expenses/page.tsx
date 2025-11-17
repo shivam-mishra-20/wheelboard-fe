@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Headers from '@/components/Header';
 import { professionalExpensesData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
 export default function ProfessionalExpensesPage() {
   const router = useRouter();
@@ -28,8 +29,74 @@ export default function ProfessionalExpensesPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<
     'week' | 'month' | 'year'
   >('month');
+  const [expensePurposes, setExpensePurposes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const expenses = professionalExpensesData;
+
+  // Fetch expense purposes from API
+  useEffect(() => {
+    const fetchExpensePurposes = async () => {
+      try {
+        console.log('🔍 Fetching expense purposes...');
+        const response = await wheelboardApi.trip.getExpensePurposes();
+        console.log('📦 Expense purposes response:', response);
+
+        const purposes = Array.isArray(response)
+          ? response
+          : response.data || [];
+        setExpensePurposes(purposes);
+        console.log('✅ Expense purposes loaded:', purposes.length);
+      } catch (error) {
+        console.error('❌ Error fetching expense purposes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpensePurposes();
+  }, []);
+
+  // Map API expense purposes to category breakdown with icons and colors
+  const getCategoryIcon = (purposeName: string) => {
+    const iconMap: Record<string, string> = {
+      Fuel: '⛽',
+      Food: '🍔',
+      Challan: '🚨',
+      Enroute: '🛣️',
+      Advance: '💰',
+      Salary: '💵',
+      Other: '📦',
+    };
+    return iconMap[purposeName] || '📦';
+  };
+
+  const getCategoryColor = (purposeName: string) => {
+    const colorMap: Record<string, string> = {
+      Fuel: '#3B82F6',
+      Food: '#F59E0B',
+      Challan: '#F97316',
+      Enroute: '#10B981',
+      Advance: '#8B5CF6',
+      Salary: '#06B6D4',
+      Other: '#6B7280',
+    };
+    return colorMap[purposeName] || '#6B7280';
+  };
+
+  // Create dynamic category breakdown from API data
+  const categoryBreakdown = expensePurposes.map((purpose) => ({
+    id: purpose.purposeName.toLowerCase(),
+    name: purpose.purposeName,
+    icon: getCategoryIcon(purpose.purposeName),
+    color: getCategoryColor(purpose.purposeName),
+    total: 0, // Will be calculated from actual expenses later
+    count: 0,
+  }));
+
+  // Use dynamic categories if loaded, otherwise fallback to mock
+  const displayCategories =
+    expensePurposes.length > 0 ? categoryBreakdown : expenses.categoryBreakdown;
 
   // Filter expenses
   const filteredExpenses = expenses.recentExpenses.filter((expense) => {
@@ -41,17 +108,15 @@ export default function ProfessionalExpensesPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const getCategoryIcon = (category: string) => {
-    const categoryData = expenses.categoryBreakdown.find(
-      (c) => c.id === category
-    );
+  // Helper to get icon for expense category in list
+  const getExpenseCategoryIcon = (category: string) => {
+    const categoryData = displayCategories.find((c) => c.id === category);
     return categoryData?.icon || '📦';
   };
 
-  const getCategoryColor = (category: string) => {
-    const categoryData = expenses.categoryBreakdown.find(
-      (c) => c.id === category
-    );
+  // Helper to get color for expense category in list
+  const getExpenseCategoryColor = (category: string) => {
+    const categoryData = displayCategories.find((c) => c.id === category);
     return categoryData?.color || '#6B7280';
   };
 
@@ -84,7 +149,7 @@ export default function ProfessionalExpensesPage() {
   const maxExpense = Math.max(
     ...expenses.monthlyExpenseData.map((d) => d.amount)
   );
-  const totalCategoryAmount = expenses.categoryBreakdown.reduce(
+  const totalCategoryAmount = displayCategories.reduce(
     (sum, cat) => sum + cat.total,
     0
   );
@@ -191,14 +256,14 @@ export default function ProfessionalExpensesPage() {
             {/* Donut Chart */}
             <div className="relative mx-auto mb-6 h-48 w-48 lg:h-64 lg:w-64">
               <svg viewBox="0 0 200 200" className="h-full w-full -rotate-90">
-                {expenses.categoryBreakdown.map((category, index) => {
-                  const total = expenses.categoryBreakdown.reduce(
+                {displayCategories.map((category, index) => {
+                  const total = displayCategories.reduce(
                     (sum, cat) => sum + cat.total,
                     0
                   );
                   const percentage = (category.total / total) * 100;
                   const circumference = 2 * Math.PI * 70;
-                  const offset = expenses.categoryBreakdown
+                  const offset = displayCategories
                     .slice(0, index)
                     .reduce(
                       (sum, cat) => sum + (cat.total / total) * circumference,
@@ -233,7 +298,7 @@ export default function ProfessionalExpensesPage() {
 
             {/* Legend */}
             <div className="grid grid-cols-2 gap-2 lg:gap-3">
-              {expenses.categoryBreakdown.map((category) => (
+              {displayCategories.map((category) => (
                 <div
                   key={category.id}
                   className="flex items-center gap-2 rounded-lg bg-gray-50 p-2"
@@ -349,7 +414,7 @@ export default function ProfessionalExpensesPage() {
               >
                 All
               </button>
-              {expenses.categoryBreakdown.slice(0, 5).map((category) => (
+              {displayCategories.slice(0, 5).map((category) => (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
@@ -423,10 +488,10 @@ export default function ProfessionalExpensesPage() {
                       <div
                         className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-xl lg:h-12 lg:w-12 lg:rounded-xl lg:text-2xl"
                         style={{
-                          backgroundColor: `${getCategoryColor(expense.category)}20`,
+                          backgroundColor: `${getExpenseCategoryColor(expense.category)}20`,
                         }}
                       >
-                        {getCategoryIcon(expense.category)}
+                        {getExpenseCategoryIcon(expense.category)}
                       </div>
 
                       {/* Details */}

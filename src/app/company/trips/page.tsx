@@ -803,7 +803,6 @@ export default function CompanyTripsPage() {
             open={isCreateModalOpen}
             onClose={() => setIsCreateModalOpen(false)}
             onTripCreated={handleTripCreated}
-            vehicles={vehicles}
           />
 
           {/* Schedule Trip Modal */}
@@ -811,8 +810,6 @@ export default function CompanyTripsPage() {
             open={isScheduleModalOpen}
             onClose={() => setIsScheduleModalOpen(false)}
             onTripScheduled={handleTripScheduled}
-            vehicles={vehicles}
-            drivers={drivers}
           />
 
           {/* Trip Details Modal */}

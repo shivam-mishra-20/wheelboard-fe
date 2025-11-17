@@ -9,6 +9,15 @@ import {
   MapPin,
 } from 'lucide-react';
 import Headers from '@/components/Header';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface MarkDateFormData {
   date: string;
@@ -26,6 +35,7 @@ interface MarkDateFormData {
 
 export default function MarkDatePage() {
   const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [formData, setFormData] = useState<MarkDateFormData>({
     date: new Date().toISOString().split('T')[0],
     eventName: '',
@@ -67,10 +77,81 @@ export default function MarkDatePage() {
     setFormData((prev) => ({ ...prev, isActive: !prev.isActive }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setFormData((prev) => ({
+        ...prev,
+        date: date.toISOString().split('T')[0],
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Calendar Event Data:', formData);
-    router.push('/professional/calendar');
+
+    try {
+      // Get current user data - using correct localStorage key
+      const currentUser = localStorage.getItem('wheelboard_current_user');
+      if (!currentUser) {
+        alert('Please login to continue');
+        return;
+      }
+      const userData = JSON.parse(currentUser);
+      // Use 'id' field to match profile page storage format
+      const userId =
+        userData.id ||
+        userData.userId ||
+        '99b58c17-1812-4816-b2fd-20cfb386346c';
+
+      console.log('👤 Current user data:', userData);
+      console.log('🆔 Using userId:', userId);
+
+      // Convert date and time to ISO 8601 format
+      const dateStr = formData.date;
+      const startTimeStr = formData.startTime || '00:00';
+      const endTimeStr = formData.endTime || '23:59';
+
+      // Create ISO datetime strings
+      const startDateTime =
+        dateStr && startTimeStr
+          ? new Date(`${dateStr}T${startTimeStr}:00`).toISOString()
+          : new Date().toISOString();
+      const endDateTime =
+        dateStr && endTimeStr
+          ? new Date(`${dateStr}T${endTimeStr}:00`).toISOString()
+          : new Date().toISOString();
+
+      // Prepare API payload
+      const payload = {
+        eventId: '00000000-0000-0000-0000-000000000000', // Default GUID for new events
+        createdBy: userId,
+        partnerId: 0,
+        userId: userId,
+        eventName: formData.eventName,
+        note: formData.note || '',
+        startTime: startDateTime,
+        endTime: endDateTime,
+        category: formData.category || '',
+        isActive: formData.isActive,
+      };
+
+      console.log('🚀 Saving calendar event:', payload);
+      console.log('📅 Using userId:', userId);
+
+      // Call save calendar event API
+      const response = await wheelboardApi.trip.saveCalendarEvent(payload);
+
+      console.log('✅ API Response:', response);
+
+      if (response) {
+        alert('Calendar event saved successfully!');
+        router.push('/professional/calendar');
+      }
+    } catch (error) {
+      console.error('❌ Error saving calendar event:', error);
+      alert('Failed to save calendar event. Please try again.');
+    }
   };
 
   const isFormValid = formData.date;
@@ -107,17 +188,34 @@ export default function MarkDatePage() {
                 Select Date
                 <span className="text-[#f36969]">*</span>
               </label>
-              <div className="relative">
-                <CalendarIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full rounded-xl border border-gray-300 py-3 pl-12 pr-4 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20 lg:text-base"
-                />
-              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex w-full items-center justify-start gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm transition-all hover:border-[#f36969] focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20 lg:text-base',
+                      !selectedDate && 'text-gray-400'
+                    )}
+                  >
+                    <CalendarIcon className="h-5 w-5 text-gray-400" />
+                    {selectedDate ? (
+                      <span className="font-medium text-gray-900">
+                        {format(selectedDate, 'PPP')}
+                      </span>
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Event Name */}

@@ -181,80 +181,209 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Fetch services from API
+  // Fetch services and assigned services from API
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
-        const response = await wheelboardApi.masterData.getAllServices();
-        const servicesData = (response.data as any[]) || [];
+        setIsLoading(true);
 
-        // Map API services to UI format with fallback to mock structure
+        // Get current user
+        const user = wheelboardApi.getCurrentUser?.() || {
+          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
+        };
+        setCurrentUser(user);
+
+        // Fetch all available services from master data
+        const servicesResponse =
+          await wheelboardApi.masterData.getAllServices();
+        console.log('🔍 Services API Response:', servicesResponse);
+
+        // API returns flat array directly: [{id, serviceName}, ...]
+        const servicesData: any[] = Array.isArray(servicesResponse)
+          ? servicesResponse
+          : [];
+        console.log('📦 Parsed Services Data:', servicesData);
+
+        // Fetch assigned services for current user
+        let assignedServiceIds: string[] = [];
+        try {
+          const assignedResponse =
+            await wheelboardApi.service.getAssignedServices(user.id);
+          console.log('✅ Assigned Services Response:', assignedResponse);
+          // API returns flat array directly or empty array
+          const assignedData: any[] = Array.isArray(assignedResponse)
+            ? assignedResponse
+            : [];
+          assignedServiceIds = assignedData.map(
+            (a: any) => a.serviceId || a.id
+          );
+          setAssignedServices(assignedServiceIds);
+          console.log('📌 Assigned Service IDs:', assignedServiceIds);
+        } catch (err) {
+          console.log('No assigned services yet:', err);
+        }
+
+        // Map API services to UI format
+        // API only returns: {id: string, serviceName: string}
         const mappedServices: Service[] = servicesData.map(
           (apiService: any, index: number) => {
-            // Icon mapping based on category or index
-            const iconMap = [Truck, Package, Shield, Settings];
-            const categories: Array<
-              'transport' | 'storage' | 'insurance' | 'maintenance'
-            > = ['transport', 'storage', 'insurance', 'maintenance'];
+            const serviceName =
+              apiService.serviceName ||
+              apiService.name ||
+              `Service ${index + 1}`;
+            const lowerName = serviceName.toLowerCase();
+
+            // Icon mapping based on service name
+            const getIcon = () => {
+              if (lowerName.includes('tyre') || lowerName.includes('tire'))
+                return Settings;
+              if (
+                lowerName.includes('vehicle') ||
+                lowerName.includes('maintenance') ||
+                lowerName.includes('repair')
+              )
+                return Settings;
+              if (
+                lowerName.includes('transport') ||
+                lowerName.includes('delivery')
+              )
+                return Truck;
+              if (
+                lowerName.includes('storage') ||
+                lowerName.includes('warehouse')
+              )
+                return Package;
+              if (
+                lowerName.includes('insurance') ||
+                lowerName.includes('cover')
+              )
+                return Shield;
+              return Settings;
+            };
+
+            // Category mapping based on service name
+            const getCategory = ():
+              | 'transport'
+              | 'storage'
+              | 'insurance'
+              | 'maintenance' => {
+              if (
+                lowerName.includes('storage') ||
+                lowerName.includes('warehouse')
+              )
+                return 'storage';
+              if (
+                lowerName.includes('insurance') ||
+                lowerName.includes('cover')
+              )
+                return 'insurance';
+              if (
+                lowerName.includes('transport') ||
+                lowerName.includes('delivery')
+              )
+                return 'transport';
+              return 'maintenance';
+            };
+
+            // Description based on service name
+            const getDescription = () => {
+              if (lowerName.includes('tyre'))
+                return 'Professional tyre services including replacement, repair, and maintenance';
+              if (lowerName.includes('retreader'))
+                return 'Expert tyre retreading services for cost-effective solutions';
+              if (lowerName.includes('vehicle'))
+                return 'Comprehensive vehicle maintenance and repair services';
+              return 'Professional service for your business needs';
+            };
 
             return {
-              // API fields
-              serviceId: apiService.serviceId,
-              serviceName: apiService.serviceName || apiService.name,
-              availability: apiService.availability,
-              providerId: apiService.providerId,
-              providerName: apiService.providerName,
-              imageUrls: apiService.imageUrls,
+              // API fields (only id and serviceName)
+              serviceId: apiService.id,
+              serviceName: serviceName,
 
-              // UI fields (with fallbacks)
-              id: apiService.serviceId || `s${index + 1}`,
-              name:
-                apiService.serviceName ||
-                apiService.name ||
-                `Service ${index + 1}`,
-              category: categories[index % categories.length],
-              description:
-                apiService.description || 'Professional service description',
-              provider: apiService.providerName || `Provider ${index + 1}`,
-              rating: apiService.rating || 4.5 + Math.random() * 0.4,
+              // UI fields (required for display)
+              id: apiService.id,
+              name: serviceName,
+              category: getCategory(),
+              description: getDescription(),
+              provider: 'WheelBoard Services',
+              rating: 4.5 + Math.random() * 0.4,
               reviews: Math.floor(150 + Math.random() * 200),
-              price: apiService.price || 5000 + Math.random() * 15000,
-              status: (apiService.availability === 'Available'
-                ? 'active'
-                : 'inactive') as 'active' | 'inactive',
+              price: Math.floor(3000 + Math.random() * 12000),
+              status: 'active' as const,
               coverage: 'Pan India',
               response: '< 24 hours',
-              icon: iconMap[index % iconMap.length],
+              icon: getIcon(),
             };
           }
         );
 
+        console.log('🎯 Final Mapped Services:', mappedServices);
+
+        // Always use API data (even if empty)
         setServices(mappedServices);
+
+        if (mappedServices.length === 0) {
+          setError(
+            'No services available. Please add services from admin panel.'
+          );
+        }
       } catch (error) {
-        console.error('Error fetching services:', error);
-        // Fallback to mock data on error
-        setServices(mockServices);
-        setError('Failed to load services, showing cached data');
+        console.error('❌ Error fetching services:', error);
+        setError(
+          'Failed to load services from API. Please check your connection.'
+        );
+        setServices([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchServices();
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [selectedServiceForAssignment, setSelectedServiceForAssignment] =
     useState<Service | null>(null);
 
-  const handleAssign = (serviceId: string) => {
-    setAssignedServices((prev) => {
-      if (prev.includes(serviceId)) return prev;
-      return [...prev, serviceId];
-    });
+  const handleAssign = async (serviceId: string, assignmentData?: any) => {
+    try {
+      if (!currentUser) {
+        setError('Please log in to assign services');
+        return;
+      }
+
+      // Call API to assign service
+      await wheelboardApi.service.assignService({
+        ServiceId: serviceId,
+        UserId: currentUser.id,
+        AssignedDate: assignmentData?.scheduledDate || new Date().toISOString(),
+        Notes: assignmentData?.description || 'Service assigned',
+      });
+
+      // Update local state
+      setAssignedServices((prev) => {
+        if (prev.includes(serviceId)) return prev;
+        return [...prev, serviceId];
+      });
+    } catch (error) {
+      console.error('Error assigning service:', error);
+      setError('Failed to assign service');
+    }
   };
 
-  const handleUnassign = (serviceId: string) => {
-    setAssignedServices((prev) => prev.filter((i) => i !== serviceId));
+  const handleUnassign = async (assignmentId: string) => {
+    try {
+      // Call API to delete service assignment
+      await wheelboardApi.service.deleteServiceAssignment(assignmentId);
+
+      // Update local state
+      setAssignedServices((prev) => prev.filter((i) => i !== assignmentId));
+    } catch (error) {
+      console.error('Error unassigning service:', error);
+      setError('Failed to unassign service');
+    }
   };
 
   const handleOpenAssignmentModal = (service: Service) => {

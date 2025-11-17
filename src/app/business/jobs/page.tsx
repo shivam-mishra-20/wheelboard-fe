@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
@@ -24,7 +24,8 @@ import Footer from '@/components/Footer';
 import CreateJobModal from '@/components/company/CreateJobModal';
 import ConfirmDeleteModal from '@/components/company/ConfirmDeleteModal';
 import JobApplicationsModal from '@/components/business/JobApplicationsModal';
-import { businessJobsData, type BusinessJob } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import type { BusinessJob } from '@/lib/mockApi';
 
 const container = {
   hidden: { opacity: 0 },
@@ -52,7 +53,10 @@ export default function BusinessJobsPage() {
   const [filterStatus, setFilterStatus] = useState<
     'all' | 'Active' | 'Paused' | 'Closed'
   >('all');
-  const [jobs, setJobs] = useState<BusinessJob[]>(businessJobsData);
+  const [jobs, setJobs] = useState<BusinessJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [isCreateJobModalOpen, setIsCreateJobModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [jobToEdit, setJobToEdit] = useState<BusinessJob | null>(null);
@@ -66,6 +70,59 @@ export default function BusinessJobsPage() {
     type?: 'success' | 'error';
   } | null>(null);
 
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true);
+
+        // Get current user
+        const user = wheelboardApi.getCurrentUser?.() || {
+          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
+        };
+        setCurrentUser(user);
+
+        // Fetch jobs for this business user
+        const response = await wheelboardApi.job.getJobsByUser(user.id);
+        console.log('💼 Business Jobs Response:', response);
+
+        // Handle response
+        const jobsData: any[] = Array.isArray(response)
+          ? response
+          : response.data || [];
+
+        // Map API data to BusinessJob format
+        const mappedJobs: BusinessJob[] = jobsData.map((apiJob: any) => ({
+          id: apiJob.jobId || apiJob.id,
+          title: apiJob.role || apiJob.title || 'Job Position',
+          department: apiJob.department || 'General',
+          location: apiJob.city || apiJob.location || 'Not specified',
+          type: apiJob.jobType || ('Full-time' as BusinessJob['type']),
+          salary: apiJob.salary || 'Competitive',
+          description: apiJob.description || '',
+          requirements: apiJob.requirements || [],
+          benefits: apiJob.benefits || [],
+          image: apiJob.imageUrls?.[0] || '/tires.png',
+          createdAt: apiJob.createdAt || new Date().toISOString(),
+          status: apiJob.status || ('Active' as 'Active' | 'Paused' | 'Closed'),
+          views: apiJob.views || 0,
+          applications: apiJob.applications || [],
+        }));
+
+        setJobs(mappedJobs);
+        console.log('✅ Mapped Jobs:', mappedJobs);
+      } catch (error) {
+        console.error('❌ Error fetching jobs:', error);
+        setError('Failed to load jobs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Filter jobs based on search and status
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
@@ -76,7 +133,7 @@ export default function BusinessJobsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateJob = (jobData: {
+  const handleCreateJob = async (jobData: {
     jobType: string;
     duration: string;
     openings: string;
@@ -86,28 +143,55 @@ export default function BusinessJobsPage() {
     description: string;
     images: File[];
   }) => {
-    const newJob: BusinessJob = {
-      id: 'job-' + Date.now(),
-      title: jobData.jobType || 'New Job',
-      department: 'Service',
-      location: jobData.city || 'Unknown',
-      type: (jobData.type as BusinessJob['type']) || 'Full-time',
-      salary: jobData.salary || 'Not specified',
-      description: jobData.description || '',
-      requirements: [],
-      benefits: [],
-      image: jobData.images?.[0]
-        ? URL.createObjectURL(jobData.images[0])
-        : '/tires.png',
-      createdAt: new Date().toISOString(),
-      status: 'Active',
-      views: 0,
-      applications: [],
-    };
+    if (!currentUser) {
+      setToast({ message: 'Please log in to create jobs', type: 'error' });
+      return;
+    }
 
-    setJobs([newJob, ...jobs]);
-    setToast({ message: 'Job created successfully!', type: 'success' });
-    setIsCreateJobModalOpen(false);
+    try {
+      setIsLoading(true);
+
+      // Call API to add job
+      const response = await wheelboardApi.job.addJob({
+        UserId: currentUser.id,
+        Role: jobData.jobType,
+        City: jobData.city,
+        Description: jobData.description,
+        JobType: jobData.type,
+        JobDuration: jobData.duration,
+        Images: jobData.images,
+      });
+
+      // Create new job object
+      const newJob: BusinessJob = {
+        id: response.data?.jobId || 'job-' + Date.now(),
+        title: jobData.jobType || 'New Job',
+        department: 'Service',
+        location: jobData.city || 'Unknown',
+        type: (jobData.type as BusinessJob['type']) || 'Full-time',
+        salary: jobData.salary || 'Not specified',
+        description: jobData.description || '',
+        requirements: [],
+        benefits: [],
+        image: jobData.images?.[0]
+          ? URL.createObjectURL(jobData.images[0])
+          : '/tires.png',
+        createdAt: new Date().toISOString(),
+        status: 'Active',
+        views: 0,
+        applications: [],
+      };
+
+      setJobs([newJob, ...jobs]);
+      setToast({ message: 'Job created successfully!', type: 'success' });
+      setIsCreateJobModalOpen(false);
+      console.log('✅ Job created successfully');
+    } catch (error) {
+      console.error('❌ Error creating job:', error);
+      setToast({ message: 'Failed to create job', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
 
     // Auto-hide toast
     setTimeout(() => setToast(null), 3000);
@@ -119,7 +203,7 @@ export default function BusinessJobsPage() {
     setIsCreateJobModalOpen(true);
   };
 
-  const handleSaveEditedJob = (jobData: {
+  const handleSaveEditedJob = async (jobData: {
     id?: string;
     jobType?: string;
     duration?: string;
@@ -130,28 +214,56 @@ export default function BusinessJobsPage() {
     description?: string;
     images?: File[];
   }) => {
-    const updatedJobs = jobs.map((job) => {
-      if (job.id === jobData.id) {
-        return {
-          ...job,
-          title: jobData.jobType || job.title,
-          location: jobData.city || job.location,
-          type: (jobData.type as BusinessJob['type']) || job.type,
-          salary: jobData.salary || job.salary,
-          description: jobData.description || job.description,
-          image: jobData.images?.[0]
-            ? URL.createObjectURL(jobData.images[0])
-            : job.image,
-        };
-      }
-      return job;
-    });
+    if (!currentUser || !jobData.id) {
+      setToast({ message: 'Invalid job data', type: 'error' });
+      return;
+    }
 
-    setJobs(updatedJobs);
-    setToast({ message: 'Job updated successfully!', type: 'success' });
-    setIsCreateJobModalOpen(false);
-    setIsEditMode(false);
-    setJobToEdit(null);
+    try {
+      setIsLoading(true);
+
+      // Call API to update job
+      await wheelboardApi.job.updateJob({
+        JobId: jobData.id,
+        UserId: currentUser.id,
+        Role: jobData.jobType || '',
+        City: jobData.city || '',
+        Description: jobData.description || '',
+        JobType: jobData.type || '',
+        JobDuration: jobData.duration || '',
+        NewImages: jobData.images || [],
+      });
+
+      // Update local state
+      const updatedJobs = jobs.map((job) => {
+        if (job.id === jobData.id) {
+          return {
+            ...job,
+            title: jobData.jobType || job.title,
+            location: jobData.city || job.location,
+            type: (jobData.type as BusinessJob['type']) || job.type,
+            salary: jobData.salary || job.salary,
+            description: jobData.description || job.description,
+            image: jobData.images?.[0]
+              ? URL.createObjectURL(jobData.images[0])
+              : job.image,
+          };
+        }
+        return job;
+      });
+
+      setJobs(updatedJobs);
+      setToast({ message: 'Job updated successfully!', type: 'success' });
+      setIsCreateJobModalOpen(false);
+      setIsEditMode(false);
+      setJobToEdit(null);
+      console.log('✅ Job updated successfully');
+    } catch (error) {
+      console.error('❌ Error updating job:', error);
+      setToast({ message: 'Failed to update job', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
 
     // Auto-hide toast
     setTimeout(() => setToast(null), 3000);
@@ -162,12 +274,27 @@ export default function BusinessJobsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (!jobToDelete) return;
-    setJobs(jobs.filter((job) => job.id !== jobToDelete.id));
-    setToast({ message: 'Job deleted successfully', type: 'success' });
-    setIsDeleteModalOpen(false);
-    setJobToDelete(null);
+  const confirmDelete = async () => {
+    if (!jobToDelete || !currentUser) return;
+
+    try {
+      setIsLoading(true);
+
+      // Call API to delete job
+      await wheelboardApi.job.deleteJob(jobToDelete.id, currentUser.id);
+
+      // Update local state
+      setJobs(jobs.filter((job) => job.id !== jobToDelete.id));
+      setToast({ message: 'Job deleted successfully', type: 'success' });
+      setIsDeleteModalOpen(false);
+      setJobToDelete(null);
+      console.log('✅ Job deleted successfully');
+    } catch (error) {
+      console.error('❌ Error deleting job:', error);
+      setToast({ message: 'Failed to delete job', type: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
 
     // Auto-hide toast
     setTimeout(() => setToast(null), 3000);

@@ -87,62 +87,164 @@ const ProfessionalProfilePage = () => {
   const [language, setLanguage] = useState('English');
 
   useEffect(() => {
-    const mockProfile: ProfessionalProfile = {
-      id: '1',
-      email: 'rohit.sharma@email.com',
-      fullName: 'Rohit Sharma',
-      fatherName: 'Jitendra Sharma',
-      phoneNumber: '+91 98765 43210',
-      whatsappNumber: '+91 98765 43210',
-      birthDate: '1990-06-17',
-      businessCategory: 'Heavy Vehicle Driver',
-      userType: 'professional',
-      address: 'Residential Colony, Driver Housing Sector 10',
-      city: 'Pune',
-      state: 'Maharashtra',
-      zipCode: '411001',
-      experience: '4 Years',
-      skills: [
-        'Heavy Vehicle Driving',
-        'Long Distance Routes',
-        'Safety Protocols',
-      ],
-      licenseNumber: 'DL-1420110012345',
-      description:
-        'Experienced professional driver with over 4 years in the transportation industry. Specialized in heavy vehicle operations and long-distance routes. Committed to safety, punctuality, and excellent service. Hold a valid commercial driving license and have a clean driving record.',
-      avatar: '/profile.png',
-      createdAt: '2024-02-01T10:00:00Z',
-      membershipTier: 'Gold Member',
-      rating: 4.7,
-      jobsCompleted: 128,
-      availableToday: true,
-      kycProgress: 80,
-      kycDocuments: {
-        aadharCard: 'verified',
-        panCard: 'pending',
-        drivingLicense: 'missing',
-        bankAccount: 'pending',
-        profilePhoto: 'verified',
-      },
-      preferences: {
-        language: 'English',
-        darkTheme: false,
-        smsNotifications: true,
-        emailNotifications: false,
-        whatsappNotifications: true,
-      },
+    const fetchProfile = async () => {
+      try {
+        console.log('🔍 Fetching professional profile...');
+
+        // Get current user ID from localStorage
+        const currentUser = localStorage.getItem('currentUser');
+        const userId = currentUser
+          ? JSON.parse(currentUser).id
+          : '99b58c17-1812-4816-b2fd-20cfb386346c';
+
+        console.log('👤 Using userId:', userId);
+
+        // Fetch user profile from API
+        const response = await fetch(
+          `https://wheelboardapi.addonshareware.com/api/User/user-profile/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Profile API Response:', data);
+
+          // Map API response to ProfessionalProfile interface
+          const apiProfile: ProfessionalProfile = {
+            id: data.userId || userId,
+            email: data.email || '',
+            fullName: data.name || 'Professional User',
+            fatherName: data.fatherName || '',
+            phoneNumber: data.mobileNo || '',
+            whatsappNumber: data.whatsappNumber || data.mobileNo || '',
+            birthDate: data.dateOfBirth
+              ? new Date(data.dateOfBirth).toISOString().split('T')[0]
+              : undefined,
+            businessCategory: data.professionalType || 'Driver',
+            userType: data.userType?.toLowerCase() || 'professional',
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            zipCode: data.zipCode || '',
+            experience: data.experience || '',
+            skills: data.skills || [],
+            licenseNumber: data.licenseNumber || '',
+            description: data.description || '',
+            avatar: data.profileImagePath || '/profile.png',
+            createdAt: data.createdAt || new Date().toISOString(),
+            membershipTier: data.membershipTier || 'Standard Member',
+            rating: data.rating || 0,
+            jobsCompleted: data.jobsCompleted || 0,
+            availableToday: data.availableToday || false,
+            kycProgress: data.kycProgress || 0,
+            kycDocuments: data.kycDocuments || {
+              aadharCard: 'missing',
+              panCard: 'missing',
+              drivingLicense: 'missing',
+              bankAccount: 'missing',
+              profilePhoto: 'missing',
+            },
+            preferences: data.preferences || {
+              language: 'English',
+              darkTheme: false,
+              smsNotifications: false,
+              emailNotifications: false,
+              whatsappNotifications: true,
+            },
+          };
+
+          setProfile(apiProfile);
+          setEditedProfile(apiProfile);
+          setAvatarPreview(apiProfile.avatar || null);
+          setDarkTheme(apiProfile.preferences?.darkTheme || false);
+          setSmsNotifications(
+            apiProfile.preferences?.smsNotifications || false
+          );
+          setEmailNotifications(
+            apiProfile.preferences?.emailNotifications || false
+          );
+          setWhatsappNotifications(
+            apiProfile.preferences?.whatsappNotifications || false
+          );
+          setLanguage(apiProfile.preferences?.language || 'English');
+        } else {
+          console.error('❌ Failed to fetch profile:', response.statusText);
+          // Fallback to mock data if API fails
+          loadMockData();
+        }
+      } catch (error) {
+        console.error('❌ Error fetching profile:', error);
+        // Fallback to mock data on error
+        loadMockData();
+      }
     };
 
-    setProfile(mockProfile);
-    setEditedProfile(mockProfile);
-    setAvatarPreview(mockProfile.avatar || null);
-    setDarkTheme(mockProfile.preferences?.darkTheme || false);
-    setSmsNotifications(mockProfile.preferences?.smsNotifications || false);
-    setEmailNotifications(mockProfile.preferences?.emailNotifications || false);
-    setWhatsappNotifications(
-      mockProfile.preferences?.whatsappNotifications || false
-    );
-    setLanguage(mockProfile.preferences?.language || 'English');
+    const loadMockData = () => {
+      const mockProfile: ProfessionalProfile = {
+        id: '1',
+        email: 'rohit.sharma@email.com',
+        fullName: 'Rohit Sharma',
+        fatherName: 'Jitendra Sharma',
+        phoneNumber: '+91 98765 43210',
+        whatsappNumber: '+91 98765 43210',
+        birthDate: '1990-06-17',
+        businessCategory: 'Heavy Vehicle Driver',
+        userType: 'professional',
+        address: 'Residential Colony, Driver Housing Sector 10',
+        city: 'Pune',
+        state: 'Maharashtra',
+        zipCode: '411001',
+        experience: '4 Years',
+        skills: [
+          'Heavy Vehicle Driving',
+          'Long Distance Routes',
+          'Safety Protocols',
+        ],
+        licenseNumber: 'DL-1420110012345',
+        description:
+          'Experienced professional driver with over 4 years in the transportation industry. Specialized in heavy vehicle operations and long-distance routes. Committed to safety, punctuality, and excellent service. Hold a valid commercial driving license and have a clean driving record.',
+        avatar: '/profile.png',
+        createdAt: '2024-02-01T10:00:00Z',
+        membershipTier: 'Gold Member',
+        rating: 4.7,
+        jobsCompleted: 128,
+        availableToday: true,
+        kycProgress: 80,
+        kycDocuments: {
+          aadharCard: 'verified',
+          panCard: 'pending',
+          drivingLicense: 'missing',
+          bankAccount: 'pending',
+          profilePhoto: 'verified',
+        },
+        preferences: {
+          language: 'English',
+          darkTheme: false,
+          smsNotifications: true,
+          emailNotifications: false,
+          whatsappNotifications: true,
+        },
+      };
+
+      setProfile(mockProfile);
+      setEditedProfile(mockProfile);
+      setAvatarPreview(mockProfile.avatar || null);
+      setDarkTheme(mockProfile.preferences?.darkTheme || false);
+      setSmsNotifications(mockProfile.preferences?.smsNotifications || false);
+      setEmailNotifications(
+        mockProfile.preferences?.emailNotifications || false
+      );
+      setWhatsappNotifications(
+        mockProfile.preferences?.whatsappNotifications || false
+      );
+      setLanguage(mockProfile.preferences?.language || 'English');
+    };
+
+    fetchProfile();
   }, []);
 
   const handleEditToggle = () => {

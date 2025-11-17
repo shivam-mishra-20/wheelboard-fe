@@ -1,7 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -54,17 +64,16 @@ interface ScheduleTripModalProps {
   open: boolean;
   onClose: () => void;
   onTripScheduled: () => void;
-  vehicles: Vehicle[];
-  drivers: Driver[];
 }
 
 export default function ScheduleTripModal({
   open,
   onClose,
   onTripScheduled,
-  vehicles,
-  drivers,
 }: ScheduleTripModalProps) {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [formData, setFormData] = useState<ScheduleTripFormData>({
     vehicleId: '',
@@ -74,6 +83,54 @@ export default function ScheduleTripModal({
     pickupDate: '',
     pickupTime: '',
   });
+
+  // Fetch vehicles and drivers when modal opens
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!open) return;
+
+      try {
+        setIsLoadingData(true);
+        const user = api.getCurrentUser();
+        if (!user) return;
+
+        const [vehiclesResponse, driversResponse] = await Promise.all([
+          wheelboardApi.transport.getVehiclesByUser(user.id),
+          wheelboardApi.transport.getDriversByUser(user.id),
+        ]);
+
+        const vehiclesData = (vehiclesResponse.data as any[]) || [];
+        const driversData = (driversResponse.data as any[]) || [];
+
+        const mappedVehicles: Vehicle[] = vehiclesData.map((v: any) => ({
+          id: v.vehicleId,
+          name:
+            v.vehicleName ||
+            v.vehicleModel ||
+            v.vehicleType ||
+            'Unknown Vehicle',
+          registrationNumber: v.vehicleNumber || v.registrationNumber || 'N/A',
+        }));
+
+        const mappedDrivers: Driver[] = driversData.map((d: any) => ({
+          id: d.driverId,
+          name: d.fullName || d.driverName || 'Unknown Driver',
+          licenseNumber: d.licenseNumber,
+          phoneNumber: d.contactNumber || d.phoneNumber,
+          status: d.status,
+        }));
+
+        setVehicles(mappedVehicles);
+        setDrivers(mappedDrivers);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchData();
+  }, [open]);
 
   const handleInputChange = (
     field: keyof ScheduleTripFormData,
@@ -172,11 +229,21 @@ export default function ScheduleTripModal({
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      {vehicles.map((vehicle) => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.name} - {vehicle.registrationNumber}
-                        </SelectItem>
-                      ))}
+                      {isLoadingData ? (
+                        <div className="py-2 text-center text-sm text-gray-500">
+                          Loading vehicles...
+                        </div>
+                      ) : vehicles.length === 0 ? (
+                        <div className="py-2 text-center text-sm text-gray-500">
+                          No vehicles available
+                        </div>
+                      ) : (
+                        vehicles.map((vehicle) => (
+                          <SelectItem key={vehicle.id} value={vehicle.id}>
+                            {vehicle.name} - {vehicle.registrationNumber}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -205,18 +272,22 @@ export default function ScheduleTripModal({
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      {availableDrivers.length > 0 ? (
-                        availableDrivers.map((driver) => (
+                      {isLoadingData ? (
+                        <div className="py-2 text-center text-sm text-gray-500">
+                          Loading drivers...
+                        </div>
+                      ) : drivers.length === 0 ? (
+                        <div className="py-2 text-center text-sm text-gray-500">
+                          No drivers available
+                        </div>
+                      ) : (
+                        drivers.map((driver) => (
                           <SelectItem key={driver.id} value={driver.id}>
                             {driver.name}
                             {driver.licenseNumber &&
                               ` - ${driver.licenseNumber}`}
                           </SelectItem>
                         ))
-                      ) : (
-                        <div className="px-4 py-2 text-sm text-gray-500">
-                          No available drivers
-                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -276,19 +347,41 @@ export default function ScheduleTripModal({
                   >
                     Pick up a Date
                   </Label>
-                  <div className="relative">
-                    <Calendar className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-500" />
-                    <Input
-                      id="pickupDate"
-                      type="date"
-                      placeholder="Choose a date"
-                      value={formData.pickupDate}
-                      onChange={(e) =>
-                        handleInputChange('pickupDate', e.target.value)
-                      }
-                      className="h-12 border-gray-300 bg-gray-50 pr-10 focus:border-primary-500 focus:ring-primary-500"
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          'flex h-12 w-full items-center justify-between rounded-lg border border-gray-300 bg-gray-50 px-3 text-left text-sm font-normal hover:bg-gray-100 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500',
+                          !formData.pickupDate && 'text-gray-500'
+                        )}
+                      >
+                        <span>
+                          {formData.pickupDate
+                            ? format(new Date(formData.pickupDate), 'PPP')
+                            : 'Choose a date'}
+                        </span>
+                        <Calendar className="h-5 w-5 text-primary-500" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={
+                          formData.pickupDate
+                            ? new Date(formData.pickupDate)
+                            : undefined
+                        }
+                        onSelect={(date) =>
+                          handleInputChange(
+                            'pickupDate',
+                            date ? format(date, 'yyyy-MM-dd') : ''
+                          )
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Pick Time */}

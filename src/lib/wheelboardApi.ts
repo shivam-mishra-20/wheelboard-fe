@@ -162,6 +162,25 @@ export const userApi = {
     });
   },
 
+  // POST /api/User/update-professional-profile
+  updateProfessionalProfile: async (data: {
+    UserId: string;
+    FullName: string;
+    FathersName: string;
+    YearsOfExperience: number;
+    BirthDate: string;
+    State: string;
+    City: string;
+    DriverImage?: File;
+  }) => {
+    const formData = buildFormData(data);
+    return apiRequest('/api/User/update-professional-profile', {
+      method: 'POST',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   // POST /api/User/company_signup
   companySignup: async (data: {
     companyName: string;
@@ -339,11 +358,7 @@ export const jobApi = {
   },
 
   // POST /api/Job/apply-job
-  applyJob: async (data: {
-    JobId: string;
-    UserId: string;
-    ApplicationText: string;
-  }) => {
+  applyJob: async (data: { jobId: string; userId: string }) => {
     return apiRequest('/api/Job/apply-job', {
       method: 'POST',
       data,
@@ -613,9 +628,9 @@ export const postApi = {
     });
   },
 
-  // GET all posts (assuming this endpoint exists or use getPostsByUser for current user)
+  // GET /api/Post/get-all-post - Get all posts
   getAllPosts: async () => {
-    return apiRequest('/api/Post', {
+    return apiRequest('/api/Post/get-all-post', {
       method: 'GET',
     });
   },
@@ -727,6 +742,68 @@ export const tripApi = {
   // GET /api/Trip/get-trip-bids/{tripId}
   getTripBids: async (tripId: string) => {
     return apiRequest(`/api/Trip/get-trip-bids/${tripId}`, {
+      method: 'GET',
+    });
+  },
+
+  // GET /api/Trip/unassign-trip-list - Get all unassigned trips (for professionals to bid on)
+  getUnassignedTrips: async () => {
+    return apiRequest('/api/Trip/unassign-trip-list', {
+      method: 'GET',
+    });
+  },
+
+  // GET /api/Trip/unassigned-trip-details/{tripId} - Get details of an unassigned trip
+  getUnassignedTripDetails: async (tripId: string) => {
+    return apiRequest(`/api/Trip/unassigned-trip-details/${tripId}`, {
+      method: 'GET',
+    });
+  },
+
+  // GET /api/Trip/assign-trip-list/{userId} - Get assigned trips for a professional
+  getAssignedTrips: async (userId: string) => {
+    return apiRequest(`/api/Trip/assign-trip-list/${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Trip/submit-bid - Submit a bid for a trip
+  submitBid: async (data: {
+    createdBy: string;
+    partnerId?: number;
+    tripId: string;
+    userId: string;
+    bidAmount: number;
+    bidDescription: string;
+  }) => {
+    return apiRequest('/api/Trip/submit-bid', {
+      method: 'POST',
+      data,
+    });
+  },
+
+  // POST /api/Trip/save-calendar-events - Save calendar event
+  saveCalendarEvent: async (data: {
+    eventId?: string;
+    createdBy: string;
+    partnerId?: number;
+    userId: string;
+    eventName: string;
+    note: string;
+    startTime: string;
+    endTime: string;
+    category: string;
+    isActive: boolean;
+  }) => {
+    return apiRequest('/api/Trip/save-calendar-events', {
+      method: 'POST',
+      data,
+    });
+  },
+
+  // GET /api/Trip/get-events-by-userId/{userId} - Get calendar events for user
+  getCalendarEvents: async (userId: string) => {
+    return apiRequest(`/api/Trip/get-events-by-userId/${userId}`, {
       method: 'GET',
     });
   },

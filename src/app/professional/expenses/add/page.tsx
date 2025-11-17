@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import Headers from '@/components/Header';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
 interface ExpenseFormData {
   purpose: string;
@@ -22,6 +23,7 @@ interface ExpenseFormData {
   description: string;
   tripId: string;
   receipt: File | null;
+  expensePurposeId: number;
 }
 
 export default function AddExpensePage() {
@@ -34,25 +36,72 @@ export default function AddExpensePage() {
     description: '',
     tripId: '',
     receipt: null,
+    expensePurposeId: 0,
   });
   const [isDragging, setIsDragging] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState<string>('');
+  const [expensePurposes, setExpensePurposes] = useState<any[]>([]);
+  const [trips, setTrips] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = [
-    { id: 'fuel', name: 'Fuel', icon: '⛽' },
-    { id: 'food', name: 'Food', icon: '🍔' },
-    { id: 'maintenance', name: 'Vehicle Repair', icon: '🔧' },
-    { id: 'toll', name: 'Toll', icon: '🛣️' },
-    { id: 'challan', name: 'Challan', icon: '🚨' },
-    { id: 'parking', name: 'Parking', icon: '🅿️' },
-    { id: 'other', name: 'Others', icon: '📦' },
-  ];
+  // Fetch expense purposes and trips from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('🔍 Fetching expense data...');
+        setLoading(true);
 
-  const recentTrips = [
-    { id: 'TRP-1029', name: 'Delhi to Mumbai', date: '2024-10-19' },
-    { id: 'TRP-1028', name: 'Bangalore to Chennai', date: '2024-10-17' },
-    { id: 'TRP-1027', name: 'Pune to Hyderabad', date: '2024-10-15' },
-  ];
+        // Get current user
+        const currentUser = localStorage.getItem('currentUser');
+        const userId = currentUser
+          ? JSON.parse(currentUser).id
+          : '48e36413-ba01-4850-8aae-8c8d05206dc7';
+
+        // Fetch expense purposes
+        const purposesResponse = await wheelboardApi.trip.getExpensePurposes();
+        const purposes = Array.isArray(purposesResponse)
+          ? purposesResponse
+          : purposesResponse.data || [];
+
+        // Map API expense purposes with icons
+        const mappedPurposes = purposes.map((purpose: any) => {
+          const iconMap: Record<string, string> = {
+            Fuel: '⛽',
+            Food: '🍔',
+            Challan: '🚨',
+            Enroute: '🛣️',
+            Advance: '💰',
+            Salary: '💵',
+            Other: '📦',
+          };
+          return {
+            id: purpose.expensePurposeId,
+            name: purpose.purposeName,
+            icon: iconMap[purpose.purposeName] || '📦',
+          };
+        });
+
+        setExpensePurposes(mappedPurposes);
+        console.log('✅ Expense purposes loaded:', mappedPurposes.length);
+
+        // Fetch assigned trips for user
+        const tripsResponse = await wheelboardApi.trip.getAssignedTrips(userId);
+        const tripsData = Array.isArray(tripsResponse)
+          ? tripsResponse
+          : tripsResponse.data || [];
+
+        setTrips(tripsData);
+        console.log('✅ Trips loaded:', tripsData.length);
+      } catch (error) {
+        console.error('❌ Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -108,15 +157,53 @@ export default function AddExpensePage() {
     setReceiptPreview('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log('Expense Data:', formData);
-    router.push('/professional/expenses');
+
+    if (!formData.expensePurposeId || !formData.amount) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      console.log('💾 Submitting expense...');
+
+      // Get current user
+      const currentUser = localStorage.getItem('currentUser');
+      const userId = currentUser
+        ? JSON.parse(currentUser).id
+        : '48e36413-ba01-4850-8aae-8c8d05206dc7';
+
+      // Prepare expense data
+      const expenseData = {
+        CreatedBy: userId,
+        ExpensePurposeId: formData.expensePurposeId,
+        Amount: parseFloat(formData.amount),
+        ExpenseDate: new Date(formData.date).toISOString(),
+        Description: formData.description || '',
+        TripId: formData.tripId || '00000000-0000-0000-0000-000000000000',
+        ...(formData.receipt && { ReceiptFile: formData.receipt }),
+      };
+
+      console.log('📦 Expense data:', expenseData);
+
+      // Call API
+      const response = await wheelboardApi.trip.saveExpense(expenseData);
+      console.log('✅ Expense saved:', response);
+
+      alert('Expense saved successfully!');
+      router.push('/professional/expenses');
+    } catch (error) {
+      console.error('❌ Error saving expense:', error);
+      alert('Failed to save expense. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid =
-    formData.purpose && formData.category && formData.amount && formData.date;
+    formData.expensePurposeId > 0 && formData.amount && formData.date;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-8">
@@ -155,10 +242,13 @@ export default function AddExpensePage() {
                 value={formData.purpose}
                 onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20 lg:rounded-xl lg:text-base"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20 disabled:opacity-50 lg:rounded-xl lg:text-base"
               >
-                <option value="">Select expense purpose...</option>
-                {categories.map((cat) => (
+                <option value="">
+                  {loading ? 'Loading...' : 'Select expense purpose...'}
+                </option>
+                {expensePurposes.map((cat) => (
                   <option key={cat.id} value={cat.name}>
                     {cat.icon} {cat.name}
                   </option>
@@ -175,27 +265,34 @@ export default function AddExpensePage() {
                   <span className="text-pink-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          category: cat.id,
-                          purpose: cat.name,
-                        }))
-                      }
-                      className={`flex items-center gap-2 rounded-lg border-2 p-3 text-left text-sm transition-all lg:text-base ${
-                        formData.category === cat.id
-                          ? 'border-pink-500 bg-pink-50 text-pink-700'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-pink-300'
-                      }`}
-                    >
-                      <span className="text-xl">{cat.icon}</span>
-                      <span className="font-medium">{cat.name}</span>
-                    </button>
-                  ))}
+                  {loading ? (
+                    <div className="col-span-2 py-8 text-center text-sm text-gray-500">
+                      Loading categories...
+                    </div>
+                  ) : (
+                    expensePurposes.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            category: cat.name.toLowerCase(),
+                            purpose: cat.name,
+                            expensePurposeId: cat.id,
+                          }))
+                        }
+                        className={`flex items-center gap-2 rounded-lg border-2 p-3 text-left text-sm transition-all lg:text-base ${
+                          formData.expensePurposeId === cat.id
+                            ? 'border-pink-500 bg-pink-50 text-pink-700'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-pink-300'
+                        }`}
+                      >
+                        <span className="text-xl">{cat.icon}</span>
+                        <span className="font-medium">{cat.name}</span>
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -271,12 +368,19 @@ export default function AddExpensePage() {
                 name="tripId"
                 value={formData.tripId}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20 lg:rounded-xl lg:text-base"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition-all focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20 disabled:opacity-50 lg:rounded-xl lg:text-base"
               >
-                <option value="">Select a trip...</option>
-                {recentTrips.map((trip) => (
-                  <option key={trip.id} value={trip.id}>
-                    {trip.name} - {trip.id} ({trip.date})
+                <option value="">
+                  {loading ? 'Loading trips...' : 'Select a trip (optional)...'}
+                </option>
+                {trips.map((trip) => (
+                  <option
+                    key={trip.tripId || trip.id}
+                    value={trip.tripId || trip.id}
+                  >
+                    {trip.from || 'Trip'} to {trip.to || 'Destination'} -{' '}
+                    {trip.tripId || trip.id}
                   </option>
                 ))}
               </select>
@@ -373,11 +477,20 @@ export default function AddExpensePage() {
               </button>
               <button
                 type="submit"
-                disabled={!isFormValid}
+                disabled={!isFormValid || isSubmitting || loading}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#f36969] py-3 font-semibold text-white shadow-lg shadow-pink-500/30 transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 lg:py-4"
               >
-                <Save className="h-5 w-5" />
-                Save Expense
+                {isSubmitting ? (
+                  <>
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-5 w-5" />
+                    Save Expense
+                  </>
+                )}
               </button>
             </div>
           </div>

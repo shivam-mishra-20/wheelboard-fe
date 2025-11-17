@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -23,7 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import Headers from '@/components/Header';
-import { companyHomeData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 import type { DetailedJob } from '@/lib/mockApi';
 
 type JobFilter = 'all' | 'Active' | 'Paused' | 'Closed';
@@ -41,8 +41,8 @@ export default function ProfessionalJobsPage() {
     useState<JobTypeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [savedJobs, setSavedJobs] = useState<string[]>(['job-1']); // Mock saved jobs
-  const [appliedJobs, setAppliedJobs] = useState<string[]>(['job-2']); // Mock applied jobs
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
   const [selectedJob, setSelectedJob] = useState<DetailedJob | null>(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [applicationData, setApplicationData] = useState({
@@ -50,8 +50,76 @@ export default function ProfessionalJobsPage() {
     experience: '',
     expectedSalary: '',
   });
+  const [allJobs, setAllJobs] = useState<DetailedJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  const allJobs = companyHomeData.allJobs;
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true);
+
+        // Get current user
+        const user = wheelboardApi.getCurrentUser?.() || {
+          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
+        };
+        setCurrentUser(user);
+
+        // Fetch open jobs
+        const openJobsResponse = await wheelboardApi.job.getOpenJobList();
+        console.log('💼 Open Jobs Response:', openJobsResponse);
+
+        const jobsData: any[] = Array.isArray(openJobsResponse)
+          ? openJobsResponse
+          : openJobsResponse.data || [];
+
+        // Fetch applied jobs for current user
+        const appliedJobsResponse = await wheelboardApi.job.getAppliedJobs(
+          user.id
+        );
+        console.log('✅ Applied Jobs Response:', appliedJobsResponse);
+        const appliedJobsData: any[] = Array.isArray(appliedJobsResponse)
+          ? appliedJobsResponse
+          : appliedJobsResponse.data || [];
+        const appliedJobIds = appliedJobsData.map(
+          (job: any) => job.jobId || job.id
+        );
+        setAppliedJobs(appliedJobIds);
+
+        // Map API data to DetailedJob format
+        const mappedJobs: DetailedJob[] = jobsData.map((apiJob: any) => ({
+          id: apiJob.jobId || apiJob.id,
+          title: apiJob.role || apiJob.title || 'Job Position',
+          department: apiJob.department || 'General',
+          location: apiJob.city || apiJob.location || 'Not specified',
+          type: (apiJob.jobType || 'Full-time') as DetailedJob['type'],
+          salary: apiJob.salary || 'Competitive',
+          description: apiJob.description || '',
+          requirements: apiJob.requirements || [],
+          benefits: apiJob.benefits || [],
+          image: apiJob.imageUrls?.[0] || '/tires.png',
+          createdAt: apiJob.createdAt || new Date().toISOString(),
+          status: (apiJob.status || 'Active') as 'Active' | 'Paused' | 'Closed',
+          views: apiJob.views || 0,
+          applications: apiJob.applications || [],
+          urgent: apiJob.urgent || false,
+        }));
+
+        setAllJobs(mappedJobs);
+        console.log('✅ Mapped Jobs:', mappedJobs);
+      } catch (error) {
+        console.error('❌ Error fetching jobs:', error);
+        setError('Failed to load jobs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -121,12 +189,27 @@ export default function ProfessionalJobsPage() {
     setIsApplyModalOpen(true);
   };
 
-  const handleSubmitApplication = () => {
-    if (
-      selectedJob &&
-      applicationData.coverLetter &&
-      applicationData.experience
-    ) {
+  const handleSubmitApplication = async () => {
+    if (!selectedJob || !currentUser) {
+      setError('Please log in to apply for jobs');
+      return;
+    }
+
+    if (!applicationData.coverLetter || !applicationData.experience) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Call API to apply for job
+      await wheelboardApi.job.applyJob({
+        jobId: selectedJob.id,
+        userId: currentUser.id,
+      });
+
+      // Update local state
       setAppliedJobs((prev) => [...prev, selectedJob.id]);
       setIsApplyModalOpen(false);
       setApplicationData({
@@ -135,7 +218,12 @@ export default function ProfessionalJobsPage() {
         expectedSalary: '',
       });
       setSelectedJob(null);
-      // In a real app, this would make an API call
+      console.log('✅ Application submitted successfully');
+    } catch (error) {
+      console.error('❌ Error applying for job:', error);
+      setError('Failed to submit application');
+    } finally {
+      setIsLoading(false);
     }
   };
 

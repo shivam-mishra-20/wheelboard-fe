@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
@@ -19,7 +19,7 @@ import {
   Filter,
 } from 'lucide-react';
 import Headers from '@/components/Header';
-import { companyHomeData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
 type TripFilter = 'all' | 'Completed' | 'In-Process' | 'Upcoming' | 'Assigned';
 type ChartView = 'trips' | 'earnings' | 'distance';
@@ -30,9 +30,79 @@ export default function ProfessionalTripsPage() {
   const [chartView, setChartView] = useState<ChartView>('trips');
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [professionalTrips, setProfessionalTrips] = useState<any[]>([]);
+  const [unassignedTrips, setUnassignedTrips] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showBidModal, setShowBidModal] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<any>(null);
+  const [bidAmount, setBidAmount] = useState('');
+  const [bidDescription, setBidDescription] = useState('');
 
-  // Mock professional data (in real app, this would come from API based on logged-in user)
-  const professionalTrips = companyHomeData.allTrips;
+  // Fetch trips from API
+  useEffect(() => {
+    const fetchTrips = async () => {
+      try {
+        setIsLoading(true);
+
+        // Get current user
+        const user = wheelboardApi.getCurrentUser?.() || {
+          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
+        };
+        setCurrentUser(user);
+
+        // Fetch assigned trips for professional
+        const assignedResponse = await wheelboardApi.trip.getAssignedTrips(
+          user.id
+        );
+        console.log('🚚 Assigned Trips Response:', assignedResponse);
+        const assignedData: any[] = Array.isArray(assignedResponse)
+          ? assignedResponse
+          : assignedResponse.data || [];
+
+        // Fetch unassigned trips (available for bidding)
+        const unassignedResponse =
+          await wheelboardApi.trip.getUnassignedTrips();
+        console.log('📦 Unassigned Trips Response:', unassignedResponse);
+        const unassignedData: any[] = Array.isArray(unassignedResponse)
+          ? unassignedResponse
+          : unassignedResponse.data || [];
+
+        // Map assigned trips
+        const mappedAssignedTrips = assignedData.map((trip: any) => ({
+          id: trip.tripId || trip.id,
+          pickup: trip.pickupLocation || 'Pickup Location',
+          delivery: trip.deliveryLocation || 'Delivery Location',
+          distance: trip.distance || '0 km',
+          status: trip.tripStatus || 'Upcoming',
+          isAssigned: true,
+          driver: {
+            name: trip.driverName || user.name || 'You',
+            rating: trip.rating || 4.5,
+          },
+          vehicle: {
+            number: trip.vehicleNumber || 'N/A',
+            type: trip.vehicleType || 'Truck',
+          },
+          createdAt: trip.createdAt || new Date().toISOString(),
+          scheduledDate: trip.pickupDate || new Date().toISOString(),
+        }));
+
+        setProfessionalTrips(mappedAssignedTrips);
+        setUnassignedTrips(unassignedData);
+        console.log('✅ Trips loaded successfully');
+      } catch (error) {
+        console.error('❌ Error fetching trips:', error);
+        setError('Failed to load trips');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTrips();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate stats
   const stats = useMemo(() => {

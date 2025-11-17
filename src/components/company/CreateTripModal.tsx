@@ -1,13 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,15 +54,17 @@ interface CreateTripModalProps {
   open: boolean;
   onClose: () => void;
   onTripCreated: () => void;
-  vehicles: Array<{ id: string; name: string; registrationNumber: string }>;
 }
 
 export default function CreateTripModal({
   open,
   onClose,
   onTripCreated,
-  vehicles,
 }: CreateTripModalProps) {
+  const [vehicles, setVehicles] = useState<
+    Array<{ id: string; name: string; registrationNumber: string }>
+  >([]);
+  const [isLoadingVehicles, setIsLoadingVehicles] = useState(false);
   const [step, setStep] = useState<'form' | 'confirmation'>('form');
   const [formData, setFormData] = useState<TripFormData>({
     vehicleId: '',
@@ -63,6 +75,42 @@ export default function CreateTripModal({
     specialInstructions: '',
     payRange: '',
   });
+
+  // Fetch vehicles when modal opens
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      if (!open) return;
+
+      try {
+        setIsLoadingVehicles(true);
+        const user = api.getCurrentUser();
+        if (!user) return;
+
+        const response = await wheelboardApi.transport.getVehiclesByUser(
+          user.id
+        );
+        const vehiclesData = (response.data as any[]) || [];
+
+        const mappedVehicles = vehiclesData.map((v: any) => ({
+          id: v.vehicleId,
+          name:
+            v.vehicleName ||
+            v.vehicleModel ||
+            v.vehicleType ||
+            'Unknown Vehicle',
+          registrationNumber: v.vehicleNumber || v.registrationNumber || 'N/A',
+        }));
+
+        setVehicles(mappedVehicles);
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      } finally {
+        setIsLoadingVehicles(false);
+      }
+    };
+
+    fetchVehicles();
+  }, [open]);
 
   const handleInputChange = (field: keyof TripFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -159,11 +207,21 @@ export default function CreateTripModal({
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      {vehicles.map((vehicle) => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.name} - {vehicle.registrationNumber}
-                        </SelectItem>
-                      ))}
+                      {isLoadingVehicles ? (
+                        <div className="py-2 text-center text-sm text-gray-500">
+                          Loading vehicles...
+                        </div>
+                      ) : vehicles.length === 0 ? (
+                        <div className="py-2 text-center text-sm text-gray-500">
+                          No vehicles available
+                        </div>
+                      ) : (
+                        vehicles.map((vehicle) => (
+                          <SelectItem key={vehicle.id} value={vehicle.id}>
+                            {vehicle.name} - {vehicle.registrationNumber}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -222,19 +280,41 @@ export default function CreateTripModal({
                   >
                     Pick up a Date
                   </Label>
-                  <div className="relative">
-                    <Calendar className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-500" />
-                    <Input
-                      id="pickupDate"
-                      type="date"
-                      placeholder="Choose a date"
-                      value={formData.pickupDate}
-                      onChange={(e) =>
-                        handleInputChange('pickupDate', e.target.value)
-                      }
-                      className="h-12 border-gray-300 bg-gray-50 pr-10 focus:border-primary-500 focus:ring-primary-500"
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          'flex h-12 w-full items-center justify-between rounded-lg border border-gray-300 bg-gray-50 px-3 text-left text-sm font-normal hover:bg-gray-100 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500',
+                          !formData.pickupDate && 'text-gray-500'
+                        )}
+                      >
+                        <span>
+                          {formData.pickupDate
+                            ? format(new Date(formData.pickupDate), 'PPP')
+                            : 'Choose a date'}
+                        </span>
+                        <Calendar className="h-5 w-5 text-primary-500" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={
+                          formData.pickupDate
+                            ? new Date(formData.pickupDate)
+                            : undefined
+                        }
+                        onSelect={(date) =>
+                          handleInputChange(
+                            'pickupDate',
+                            date ? format(date, 'yyyy-MM-dd') : ''
+                          )
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Pick Time */}

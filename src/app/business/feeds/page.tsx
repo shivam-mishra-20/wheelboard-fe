@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -16,7 +16,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeedCard from '@/components/company/FeedCard';
 import CreatePostModal from '@/components/company/CreatePostModal';
-import { communityFeeds, mockAPI } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 import type { FeedPost, CategoryType } from '@/lib/mockApi';
 
 const container = {
@@ -30,47 +30,156 @@ const container = {
 };
 
 export default function BusinessFeedsPage() {
-  const [feeds, setFeeds] = useState<FeedPost[]>(communityFeeds);
-  const session = mockAPI.getCurrentSession();
-  const currentUserId = session?.user?.id || null;
+  const [feeds, setFeeds] = useState<FeedPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const handlePostCreated = (
-    content: string,
-    category: CategoryType,
-    image?: string
-  ) => {
-    const newPost: FeedPost = {
-      id: `feed-${Date.now()}`,
-      author: {
-        name: 'Business Account',
-        id: currentUserId || `user-${Date.now()}`,
-        avatar: 'profile.png',
-        initials: 'BA',
-        userType: 'business',
-        company: 'Business Account',
-      },
-      content,
-      image,
-      timestamp: new Date().toISOString(),
-      timeAgo: 'Just now',
-      likes: 0,
-      shares: 0,
-      comments: [],
-      isLiked: false,
-      category,
+
+  // Fetch feeds from API
+  useEffect(() => {
+    const fetchFeeds = async () => {
+      try {
+        setIsLoading(true);
+
+        // Get current user
+        const user = wheelboardApi.getCurrentUser?.() || {
+          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
+        };
+        setCurrentUser(user);
+
+        // Fetch posts for this business user
+        const response = await wheelboardApi.post.getPostsByUser(user.id);
+        console.log('📰 Business Posts Response:', response);
+
+        // Handle response
+        const postsData: any[] = Array.isArray(response)
+          ? response
+          : response.data || [];
+
+        // Map API data to FeedPost format
+        const mappedPosts: FeedPost[] = postsData.map((apiPost: any) => ({
+          id: apiPost.postId || apiPost.id,
+          author: {
+            name: user.name || 'Business Account',
+            id: user.id,
+            avatar: user.avatar || 'profile.png',
+            initials: (user.name || 'BA').substring(0, 2).toUpperCase(),
+            userType: 'business',
+            company: user.companyName || 'Business Account',
+          },
+          content: apiPost.content || '',
+          image: apiPost.imageUrls?.[0]
+            ? encodeURI(apiPost.imageUrls[0])
+            : undefined,
+          timestamp: apiPost.createdAt || new Date().toISOString(),
+          timeAgo: getTimeAgo(apiPost.createdAt || new Date().toISOString()),
+          likes: apiPost.likes || 0,
+          shares: apiPost.shares || 0,
+          comments: apiPost.comments || [],
+          isLiked: false,
+          category: (apiPost.category || 'General') as CategoryType,
+        }));
+
+        setFeeds(mappedPosts);
+        console.log('✅ Mapped Posts:', mappedPosts);
+      } catch (error) {
+        console.error('❌ Error fetching feeds:', error);
+        setError('Failed to load feeds');
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setFeeds([newPost, ...feeds]);
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 5000);
+    fetchFeeds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getTimeAgo = (timestamp: string) => {
+    const seconds = Math.floor(
+      (new Date().getTime() - new Date(timestamp).getTime()) / 1000
+    );
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   };
 
-  const handleDelete = (postId: string) => {
-    setFeeds((prev) => prev.filter((f) => f.id !== postId));
+  const handlePostCreated = async (
+    content: string,
+    category: CategoryType,
+    imageFile?: File
+  ) => {
+    if (!currentUser) {
+      setError('Please log in to create posts');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Call API to create post
+      const response = await wheelboardApi.post.addPost({
+        UserId: currentUser.id,
+        Content: content,
+        Category: category,
+        CreatedBy: currentUser.name || 'Business Account',
+        Images: imageFile ? [imageFile] : undefined,
+      });
+
+      // Create new post for immediate UI update
+      const newPost: FeedPost = {
+        id: response.data?.postId || `feed-${Date.now()}`,
+        author: {
+          name: currentUser.name || 'Business Account',
+          id: currentUser.id,
+          avatar: currentUser.avatar || 'profile.png',
+          initials: (currentUser.name || 'BA').substring(0, 2).toUpperCase(),
+          userType: 'business',
+          company: currentUser.companyName || 'Business Account',
+        },
+        content,
+        image: imageFile ? URL.createObjectURL(imageFile) : undefined,
+        timestamp: new Date().toISOString(),
+        timeAgo: 'Just now',
+        likes: 0,
+        shares: 0,
+        comments: [],
+        isLiked: false,
+        category,
+      };
+
+      setFeeds([newPost, ...feeds]);
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 5000);
+      console.log('✅ Post created successfully');
+    } catch (error) {
+      console.error('❌ Error creating post:', error);
+      setError('Failed to create post');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    try {
+      // Call API to delete post
+      await wheelboardApi.post.deletePost(postId);
+
+      // Update local state
+      setFeeds((prev) => prev.filter((f) => f.id !== postId));
+      console.log('✅ Post deleted successfully');
+    } catch (error) {
+      console.error('❌ Error deleting post:', error);
+      setError('Failed to delete post');
+    }
   };
 
   const handleDeleteComment = (postId: string, commentId: string) => {

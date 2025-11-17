@@ -18,8 +18,8 @@ import Header from '../../../components/Header';
 import LoginSimulator from '../../../components/LoginSimulator';
 import Footer from '../../../components/Footer';
 import { BusinessProtected } from '../../../components/ProtectedRoute';
-import { businessServiceListings } from '@/lib/mockApi';
 import AddServiceModal from '../../../components/AddServiceModal';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
 // Import the shared ServiceData type
 import type { ServiceData } from '@/types/ServiceData';
@@ -37,30 +37,83 @@ function BusinessListingsInner() {
   const [selectedService, setSelectedService] = useState<ServiceData | null>(
     null
   );
-  const [services, setServices] = useState<ServiceData[]>(
-    businessServiceListings.myServices.map((service) => ({
-      ...service,
-      status: service.status === 'Published' ? 'Published' : 'Draft', // fallback to 'Draft' if status is not recognized
-      pricing: service.pricing
-        ? {
-            amount:
-              service.pricing.amount !== undefined
-                ? String(service.pricing.amount)
-                : undefined,
-            currency: service.pricing.currency,
-            details: service.pricing.details,
-            type:
-              service.pricing.type === 'fixed'
-                ? 'Fixed'
-                : service.pricing.type === 'hourly'
-                  ? 'Hourly'
-                  : service.pricing.type === 'quote'
-                    ? 'On Request'
-                    : undefined,
+  const [services, setServices] = useState<ServiceData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Fetch services from API
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setIsLoading(true);
+
+        // Get current user
+        const user = wheelboardApi.getCurrentUser?.() || {
+          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
+        };
+        setCurrentUser(user);
+
+        // Fetch services for this business user
+        const response = await wheelboardApi.service.getServiceList(user.id);
+        console.log('📦 Business Services Response:', response);
+
+        // Handle response - could be direct array or wrapped in data
+        const servicesData: any[] = Array.isArray(response)
+          ? response
+          : response.data || [];
+
+        // Map API data to ServiceData format
+        const mappedServices: ServiceData[] = servicesData.map(
+          (apiService: any, index: number) => {
+            const serviceName =
+              apiService.serviceName ||
+              apiService.ServiceName ||
+              `Service ${index + 1}`;
+
+            return {
+              id:
+                apiService.serviceId ||
+                apiService.id ||
+                `service-${Date.now()}-${index}`,
+              title: serviceName,
+              category:
+                apiService.serviceCategory || apiService.category || 'General',
+              categoryColor: apiService.categoryColor || '#f36969',
+              description:
+                apiService.description ||
+                'Professional service for your business',
+              status: (apiService.availability === 'Available' ||
+              apiService.status === 'Active'
+                ? 'Published'
+                : 'Draft') as 'Published' | 'Draft',
+              pricing: {
+                type: 'Fixed' as const,
+                amount: apiService.priceRange || apiService.price || '0',
+                currency: 'INR',
+              },
+              location: apiService.location || 'India',
+              contactNumber: apiService.contactNumber || user.phoneNumber || '',
+              email: apiService.email || user.email || '',
+              updatedAt: apiService.updatedAt || new Date().toISOString(),
+              images: apiService.imageUrls || [],
+            };
           }
-        : undefined,
-    })) as ServiceData[]
-  );
+        );
+
+        setServices(mappedServices);
+        console.log('✅ Mapped Services:', mappedServices);
+      } catch (error) {
+        console.error('❌ Error fetching services:', error);
+        setError('Failed to load services');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle edit from URL parameter
   useEffect(() => {
@@ -86,9 +139,19 @@ function BusinessListingsInner() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this service?')) {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+
+    try {
+      // Call API to delete service
+      await wheelboardApi.service.deleteServiceAssignment(id);
+
+      // Update local state
       setServices((prev) => prev.filter((s) => s.id !== id));
+      console.log('✅ Service deleted successfully');
+    } catch (error) {
+      console.error('❌ Error deleting service:', error);
+      alert('Failed to delete service. Please try again.');
     }
   };
 
@@ -102,31 +165,87 @@ function BusinessListingsInner() {
     setShowAddModal(true);
   };
 
-  const handleSubmitService = (serviceData: ServiceData) => {
-    // Ensure status is strictly "Published" or "Draft"
-    const normalizedStatus: 'Published' | 'Draft' =
-      serviceData.status === 'Published' ? 'Published' : 'Draft';
-    const normalizedServiceData: ServiceData = {
-      ...serviceData,
-      status: normalizedStatus,
-    };
-
-    if (selectedService) {
-      // Update existing service
-      setServices((prev) =>
-        prev.map((s) =>
-          s.id === normalizedServiceData.id ? normalizedServiceData : s
-        )
-      );
-    } else {
-      // Add new service
-      setServices((prev) => [...prev, normalizedServiceData]);
+  const handleSubmitService = async (serviceData: ServiceData) => {
+    if (!currentUser) {
+      alert('Please log in to manage services');
+      return;
     }
-    setShowAddModal(false);
-    setSelectedService(null);
-    // Clear edit parameter from URL if present
-    if (editId) {
-      router.push('/business/listings');
+
+    try {
+      setIsLoading(true);
+
+      // Ensure status is strictly "Published" or "Draft"
+      const normalizedStatus: 'Published' | 'Draft' =
+        serviceData.status === 'Published' ? 'Published' : 'Draft';
+
+      if (selectedService) {
+        // Update existing service
+        await wheelboardApi.service.updateService({
+          ServiceId: selectedService.id,
+          UserId: currentUser.id,
+          ServiceName: serviceData.title,
+          ServiceCategory: serviceData.category,
+          Description: serviceData.description,
+          PriceRange: serviceData.pricing?.amount || '0',
+          Location: serviceData.location || '',
+          Availability:
+            normalizedStatus === 'Published' ? 'Available' : 'Unavailable',
+          ContactNumber: serviceData.contactNumber || '',
+          Email: serviceData.email || '',
+          ServiceImage: serviceData.images?.[0] as File | undefined,
+        });
+
+        // Update local state
+        setServices((prev) =>
+          prev.map((s) =>
+            s.id === selectedService.id
+              ? {
+                  ...serviceData,
+                  status: normalizedStatus,
+                  id: selectedService.id,
+                }
+              : s
+          )
+        );
+        console.log('✅ Service updated successfully');
+      } else {
+        // Add new service
+        const response = await wheelboardApi.service.addService({
+          UserId: currentUser.id,
+          ServiceName: serviceData.title,
+          ServiceCategory: serviceData.category,
+          Description: serviceData.description,
+          PriceRange: serviceData.pricing?.amount || '0',
+          Location: serviceData.location || '',
+          Availability:
+            normalizedStatus === 'Published' ? 'Available' : 'Unavailable',
+          ContactNumber: serviceData.contactNumber || '',
+          Email: serviceData.email || '',
+          ServiceImage: serviceData.images?.[0] as File | undefined,
+        });
+
+        // Add to local state with generated ID
+        const newService = {
+          ...serviceData,
+          id: response.data?.serviceId || `service-${Date.now()}`,
+          status: normalizedStatus,
+        };
+        setServices((prev) => [...prev, newService]);
+        console.log('✅ Service added successfully');
+      }
+
+      setShowAddModal(false);
+      setSelectedService(null);
+
+      // Clear edit parameter from URL if present
+      if (editId) {
+        router.push('/business/listings');
+      }
+    } catch (error) {
+      console.error('❌ Error saving service:', error);
+      alert('Failed to save service. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -198,94 +317,124 @@ function BusinessListingsInner() {
             </div>
           </div>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="py-12 text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#f36969] border-t-transparent"></div>
+              <p className="mt-4 text-sm text-gray-500">Loading services...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && !error && filteredServices.length === 0 && (
+            <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 py-12 text-center">
+              <p className="text-sm text-gray-500">
+                {searchQuery || filterStatus !== 'all'
+                  ? 'No services found matching your filters'
+                  : 'No services yet. Create your first service!'}
+              </p>
+            </div>
+          )}
+
           {/* Services Grid */}
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredServices.map((service) => (
-              <motion.div
-                key={service.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                onClick={() => handleCardClick(service.id)}
-                className="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:scale-[1.02] hover:shadow-md"
-              >
-                <div className="p-5">
-                  {/* Title and Status */}
-                  <div className="mb-3 flex items-start justify-between">
-                    <h3 className="flex-1 text-lg font-bold text-gray-900">
-                      {service.title}
-                    </h3>
-                    {service.status === 'Published' ? (
-                      <span className="flex items-center gap-1 rounded-lg bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-                        <CheckCircle className="h-3 w-3" />
-                        Published
+            {!isLoading &&
+              filteredServices.map((service) => (
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => handleCardClick(service.id)}
+                  className="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:scale-[1.02] hover:shadow-md"
+                >
+                  <div className="p-5">
+                    {/* Title and Status */}
+                    <div className="mb-3 flex items-start justify-between">
+                      <h3 className="flex-1 text-lg font-bold text-gray-900">
+                        {service.title}
+                      </h3>
+                      {service.status === 'Published' ? (
+                        <span className="flex items-center gap-1 rounded-lg bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
+                          <CheckCircle className="h-3 w-3" />
+                          Published
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                          <Clock className="h-3 w-3" />
+                          Draft
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Category Badge */}
+                    <div className="mb-3">
+                      <span
+                        className="inline-block rounded-lg px-3 py-1 text-xs font-semibold"
+                        style={{
+                          backgroundColor: service.categoryColor,
+                          color: '#374151',
+                        }}
+                      >
+                        {service.category}
                       </span>
-                    ) : (
-                      <span className="flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                        <Clock className="h-3 w-3" />
-                        Draft
+                    </div>
+
+                    {/* Description */}
+                    <p className="mb-4 line-clamp-2 text-sm text-gray-600">
+                      {service.description}
+                    </p>
+
+                    {/* Updated Info */}
+                    <div className="mb-4 flex items-center gap-1 text-xs text-gray-500">
+                      <Calendar className="h-3 w-3" />
+                      <span>
+                        Updated{' '}
+                        {new Date(service.updatedAt).toLocaleDateString(
+                          'en-US',
+                          {
+                            month: 'short',
+                            day: 'numeric',
+                          }
+                        )}
                       </span>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Category Badge */}
-                  <div className="mb-3">
-                    <span
-                      className="inline-block rounded-lg px-3 py-1 text-xs font-semibold"
-                      style={{
-                        backgroundColor: service.categoryColor,
-                        color: '#374151',
-                      }}
-                    >
-                      {service.category}
-                    </span>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(service);
+                        }}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-500 bg-white px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Edit
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(service.id);
+                        }}
+                        className="flex items-center justify-center rounded-lg border border-red-200 bg-white p-2 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </motion.button>
+                    </div>
                   </div>
-
-                  {/* Description */}
-                  <p className="mb-4 line-clamp-2 text-sm text-gray-600">
-                    {service.description}
-                  </p>
-
-                  {/* Updated Info */}
-                  <div className="mb-4 flex items-center gap-1 text-xs text-gray-500">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      Updated{' '}
-                      {new Date(service.updatedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(service);
-                      }}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-500 bg-white px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                      Edit
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(service.id);
-                      }}
-                      className="flex items-center justify-center rounded-lg border border-red-200 bg-white p-2 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4 text-red-600" />
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
           </div>
 
           {/* Add Service Button (Fixed Bottom Right) */}

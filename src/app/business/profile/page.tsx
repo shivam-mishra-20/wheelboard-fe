@@ -52,36 +52,65 @@ const ProfilePage = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Load profile data
+  // Load profile data from API
   useEffect(() => {
-    // Mock profile data - in production, fetch from API
-    const mockProfile: BusinessProfile = {
-      id: '1',
-      email: 'contact@techcorp.com',
-      companyName: 'TechCorp Solutions',
-      phoneNumber: '+91 98765 43210',
-      whatsappNumber: '+91 98765 43210',
-      businessCategory: 'Automobile Services',
-      userType: 'business',
-      businessName: 'TechCorp Solutions',
-      businessAddress:
-        '123 Business Park, Tech District Sector 15, Electronic City',
-      city: 'Pune',
-      state: 'Karnataka',
-      zipCode: '560100',
-      gstNumber: 'GST: 29AABCT1332L1Z',
-      servicesOffered: ['Tyre Services', 'Vehicle Services'],
-      businessType: ['Dealer', 'Manufacturer'],
-      description:
-        'TechCorp Solutions is a leading provider of automotive services and solutions. We specialize in comprehensive tyre services, vehicle maintenance, and advanced automotive technologies. With over 15 years of experience, our team of certified professionals is committed to delivering exceptional quality and customer satisfaction. Our state-of-the-art facilities ensure that every vehicle receives the highest standard of care across Karnataka.',
-      logo: '/profile.png',
-      website: 'www.techcorp.com',
-      createdAt: '2024-01-15T10:00:00Z',
+    const fetchProfile = async () => {
+      try {
+        // Get current user ID from auth context
+        const currentUser = localStorage.getItem('currentUser');
+        const userId = currentUser
+          ? JSON.parse(currentUser).id
+          : '48e36413-ba01-4850-8aae-8c8d05206dc7';
+
+        // Fetch user profile from API
+        const response = await fetch(
+          `https://wheelboardapi.addonshareware.com/api/User/user-profile/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('👤 Profile Response:', data);
+
+          const apiProfile: BusinessProfile = {
+            id: data.userId || userId,
+            email: data.email || '',
+            companyName:
+              data.companyName || data.businessName || 'Business Account',
+            phoneNumber: data.phoneNumber || data.mobileNo || '',
+            whatsappNumber: data.whatsappNumber || data.phoneNumber || '',
+            businessCategory: data.businessCategory || 'General',
+            userType: data.userType || 'business',
+            businessName: data.businessName || data.companyName || '',
+            businessAddress: data.businessAddress || '',
+            city: data.city || '',
+            state: data.state || '',
+            zipCode: data.zipCode || '',
+            gstNumber: data.gstNumber || '',
+            servicesOffered: data.servicesOffered || [],
+            businessType: data.businessType || [],
+            description: data.description || '',
+            logo: data.businessLogo || data.logo || '/profile.png',
+            website: data.website || '',
+            createdAt: data.createdAt || new Date().toISOString(),
+          };
+
+          setProfile(apiProfile);
+          setEditedProfile(apiProfile);
+          setLogoPreview(apiProfile.logo || null);
+        } else {
+          console.error('Failed to fetch profile');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching profile:', error);
+      }
     };
 
-    setProfile(mockProfile);
-    setEditedProfile(mockProfile);
-    setLogoPreview(mockProfile.logo || null);
+    fetchProfile();
   }, []);
 
   const handleEditToggle = () => {
