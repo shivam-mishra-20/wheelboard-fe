@@ -8,7 +8,6 @@ import LoginSimulator from '@/components/LoginSimulator';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import { Vehicle } from '@/types/fleet';
 import { wheelboardApi } from '@/lib/wheelboardApi';
-import { api } from '@/lib/apiAdapter';
 import VehicleInfoCard from '@/components/company/VehicleInfoCard';
 import VehicleMetricsCard from '@/components/company/VehicleMetricsCard';
 import VehicleRecentTripsCard from '@/components/company/VehicleRecentTripsCard';
@@ -24,22 +23,16 @@ export default function VehicleDetailsPage({
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch vehicle data from API
+  // Fetch vehicle data from API using direct vehicle-details endpoint
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
-        const user = api.getCurrentUser();
-        if (!user) return;
+        // Use the direct vehicle-details API endpoint
+        const response = await wheelboardApi.transport.getVehicleDetails(id);
 
-        const response = await wheelboardApi.transport.getVehiclesByUser(
-          user.id
-        );
-        const vehiclesData = (response.data as any[]) || [];
+        if (response.success && response.data) {
+          const apiVehicle = response.data as any;
 
-        // Find the specific vehicle
-        const apiVehicle = vehiclesData.find((v: any) => v.vehicleId === id);
-
-        if (apiVehicle) {
           // Map API response to Vehicle interface
           const mappedVehicle: Vehicle = {
             id: apiVehicle.vehicleId,

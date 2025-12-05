@@ -4,7 +4,8 @@ export type ExpenseCategory =
   | 'challan'
   | 'food'
   | 'salary'
-  | 'enroute';
+  | 'enroute'
+  | 'other';
 
 export interface Expense {
   id: string;
@@ -110,6 +111,10 @@ export const categoryConfig = {
   enroute: {
     color: '#a78bfa',
     label: 'Enroute',
+  },
+  other: {
+    color: '#94a3b8',
+    label: 'Other',
   },
 };
 

@@ -6,11 +6,29 @@
     "version": "v1"
   },
   "paths": {
+    "/api/Dashboard/GetDashboard": {
+      "get": {
+        "tags": ["Dashboard"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Job/add-job": {
       "post": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -93,10 +111,8 @@
       }
     },
     "/api/Job/update-job": {
-      "put": {
-        "tags": [
-          "JobApi"
-        ],
+      "post": {
+        "tags": ["JobApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -187,9 +203,7 @@
     },
     "/api/Job/job-list/{userId}": {
       "get": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "parameters": [
           {
             "name": "userId",
@@ -208,11 +222,9 @@
         }
       }
     },
-    "/api/Job/{jobId}/user/{userId}": {
-      "delete": {
-        "tags": [
-          "JobApi"
-        ],
+    "/api/Job/{jobId}/user/{userId}/delete": {
+      "post": {
+        "tags": ["JobApi"],
         "parameters": [
           {
             "name": "jobId",
@@ -242,9 +254,7 @@
     },
     "/api/Job/get-applications/{jobId}": {
       "get": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "parameters": [
           {
             "name": "jobId",
@@ -265,9 +275,7 @@
     },
     "/api/Job/update-job-status": {
       "post": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -296,9 +304,7 @@
     },
     "/api/MasterData/getAllServices": {
       "get": {
-        "tags": [
-          "MasterDataApi"
-        ],
+        "tags": ["MasterDataApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -308,8 +314,46 @@
     },
     "/api/MasterData/getAllBusinessType": {
       "get": {
-        "tags": [
-          "MasterDataApi"
+        "tags": ["MasterDataApi"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/NotificationsApi/notifications": {
+      "get": {
+        "tags": ["NotificationsApi"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/NotificationsApi/notification/read": {
+      "post": {
+        "tags": ["NotificationsApi"],
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -320,9 +364,7 @@
     },
     "/api/Post/add": {
       "post": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -388,9 +430,7 @@
     },
     "/api/Post/user/{userId}": {
       "get": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "userId",
@@ -409,11 +449,19 @@
         }
       }
     },
+    "/api/Post/get-all-post": {
+      "get": {
+        "tags": ["PostApi"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Post/approve/{postId}": {
-      "put": {
-        "tags": [
-          "PostApi"
-        ],
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -433,10 +481,8 @@
       }
     },
     "/api/Post/reject/{postId}": {
-      "put": {
-        "tags": [
-          "PostApi"
-        ],
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -455,11 +501,9 @@
         }
       }
     },
-    "/api/Post/{postId}": {
-      "delete": {
-        "tags": [
-          "PostApi"
-        ],
+    "/api/Post/{postId}/delete": {
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -470,18 +514,6 @@
               "format": "uuid"
             }
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Service/service-list": {
-      "get": {
-        "tags": [
-          "ServiceApi"
         ],
         "responses": {
           "200": {
@@ -492,9 +524,7 @@
     },
     "/api/Service/details/{serviceId}": {
       "get": {
-        "tags": [
-          "ServiceApi"
-        ],
+        "tags": ["ServiceApi"],
         "parameters": [
           {
             "name": "serviceId",
@@ -513,11 +543,19 @@
         }
       }
     },
+    "/api/Service/service-list": {
+      "get": {
+        "tags": ["ServiceApi"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Service/assign-service": {
       "post": {
-        "tags": [
-          "ServiceApi"
-        ],
+        "tags": ["ServiceApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -546,9 +584,7 @@
     },
     "/api/Service/assign-service/{userId}": {
       "get": {
-        "tags": [
-          "ServiceApi"
-        ],
+        "tags": ["ServiceApi"],
         "parameters": [
           {
             "name": "userId",
@@ -567,11 +603,9 @@
         }
       }
     },
-    "/api/Service/{assignmentId}": {
-      "delete": {
-        "tags": [
-          "ServiceApi"
-        ],
+    "/api/Service/{assignmentId}/delete": {
+      "post": {
+        "tags": ["ServiceApi"],
         "parameters": [
           {
             "name": "assignmentId",
@@ -590,11 +624,38 @@
         }
       }
     },
+    "/api/Service/update-viewcount": {
+      "post": {
+        "tags": ["ServiceApi"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceViewModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceViewModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceViewModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Transport/add-vehicle": {
       "post": {
-        "tags": [
-          "TransportApi"
-        ],
+        "tags": ["TransportApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -677,9 +738,7 @@
     },
     "/api/Transport/update-vehicle": {
       "post": {
-        "tags": [
-          "TransportApi"
-        ],
+        "tags": ["TransportApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -769,9 +828,7 @@
     },
     "/api/Transport/vehicle/{userId}": {
       "get": {
-        "tags": [
-          "TransportApi"
-        ],
+        "tags": ["TransportApi"],
         "parameters": [
           {
             "name": "userId",
@@ -790,11 +847,30 @@
         }
       }
     },
-    "/api/Transport/{vehicleId}": {
-      "delete": {
-        "tags": [
-          "TransportApi"
+    "/api/Transport/vehicle-details/{vehicleId}": {
+      "get": {
+        "tags": ["TransportApi"],
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/{vehicleId}/delete": {
+      "post": {
+        "tags": ["TransportApi"],
         "parameters": [
           {
             "name": "vehicleId",
@@ -823,9 +899,7 @@
     },
     "/api/Transport/add-driver": {
       "post": {
-        "tags": [
-          "TransportApi"
-        ],
+        "tags": ["TransportApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -905,9 +979,7 @@
     },
     "/api/Transport/drivers/{userId}": {
       "get": {
-        "tags": [
-          "TransportApi"
-        ],
+        "tags": ["TransportApi"],
         "parameters": [
           {
             "name": "userId",
@@ -926,11 +998,30 @@
         }
       }
     },
+    "/api/Transport/drivers-details/{driverId}": {
+      "get": {
+        "tags": ["TransportApi"],
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Transport/update-driver": {
       "post": {
-        "tags": [
-          "TransportApi"
-        ],
+        "tags": ["TransportApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -1015,11 +1106,9 @@
         }
       }
     },
-    "/api/Transport/driver/{driverId}": {
-      "delete": {
-        "tags": [
-          "TransportApi"
-        ],
+    "/api/Transport/driver/{driverId}/delete": {
+      "post": {
+        "tags": ["TransportApi"],
         "parameters": [
           {
             "name": "driverId",
@@ -1046,11 +1135,51 @@
         }
       }
     },
+    "/api/Transport/professional-list/{userId}": {
+      "get": {
+        "tags": ["TransportApi"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Transport/professional-details/{driverId}": {
+      "get": {
+        "tags": ["TransportApi"],
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Trip/trip_expense_save": {
       "post": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -1134,9 +1263,7 @@
     },
     "/api/Trip/trip_expense_purposes": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -1146,9 +1273,7 @@
     },
     "/api/Trip/add-trip": {
       "post": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -1196,6 +1321,9 @@
                   },
                   "TripStatus": {
                     "type": "string"
+                  },
+                  "VehicleNo": {
+                    "type": "string"
                   }
                 }
               },
@@ -1235,6 +1363,9 @@
                 },
                 "TripStatus": {
                   "style": "form"
+                },
+                "VehicleNo": {
+                  "style": "form"
                 }
               }
             }
@@ -1249,9 +1380,7 @@
     },
     "/api/Trip/trip-list/{userId}": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "parameters": [
           {
             "name": "userId",
@@ -1272,9 +1401,7 @@
     },
     "/api/Trip/get-trip-bids/{tripId}": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "parameters": [
           {
             "name": "tripId",
@@ -1293,11 +1420,148 @@
         }
       }
     },
+    "/api/Trip/assign-trip/{tripId}": {
+      "get": {
+        "tags": ["TripApi"],
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/create-order": {
+      "post": {
+        "tags": ["TripApi"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRazorpayOrderModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRazorpayOrderModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRazorpayOrderModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/verify-payment": {
+      "post": {
+        "tags": ["TripApi"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripPaymentModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripPaymentModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripPaymentModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/razorpay-webhook": {
+      "post": {
+        "tags": ["TripApi"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/confirmation/{tripId}": {
+      "get": {
+        "tags": ["TripApi"],
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/cancel": {
+      "post": {
+        "tags": ["TripApi"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripCancelModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripCancelModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripCancelModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/User/company_signup": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1326,9 +1590,7 @@
     },
     "/api/User/complete-transport": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -1358,6 +1620,9 @@
                   "CompanyLogo": {
                     "type": "string",
                     "format": "binary"
+                  },
+                  "Email": {
+                    "type": "string"
                   }
                 }
               },
@@ -1382,6 +1647,83 @@
                 },
                 "CompanyLogo": {
                   "style": "form"
+                },
+                "Email": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/update-transport-profile": {
+      "post": {
+        "tags": ["UserApi"],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "CompanyName": {
+                    "type": "string"
+                  },
+                  "FullName": {
+                    "type": "string"
+                  },
+                  "Email": {
+                    "type": "string"
+                  },
+                  "Location": {
+                    "type": "string"
+                  },
+                  "FleetSize": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "GSTNumber": {
+                    "type": "string"
+                  },
+                  "CompanyLogo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "UserId": {
+                  "style": "form"
+                },
+                "CompanyName": {
+                  "style": "form"
+                },
+                "FullName": {
+                  "style": "form"
+                },
+                "Email": {
+                  "style": "form"
+                },
+                "Location": {
+                  "style": "form"
+                },
+                "FleetSize": {
+                  "style": "form"
+                },
+                "GSTNumber": {
+                  "style": "form"
+                },
+                "CompanyLogo": {
+                  "style": "form"
                 }
               }
             }
@@ -1396,9 +1738,7 @@
     },
     "/api/User/login": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1427,9 +1767,7 @@
     },
     "/api/User/user-profile/{userId}": {
       "get": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "parameters": [
           {
             "name": "userId",
@@ -1450,9 +1788,7 @@
     },
     "/api/User/save-referral": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1481,9 +1817,7 @@
     },
     "/api/User/GetReferralsByUserId/{userId}": {
       "get": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "parameters": [
           {
             "name": "userId",
@@ -1504,9 +1838,7 @@
     },
     "/api/VehicleApi/GetVehicleDetails": {
       "post": {
-        "tags": [
-          "VehicleApi"
-        ],
+        "tags": ["VehicleApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1535,9 +1867,7 @@
     },
     "/api/VehicleApi/GetLicenceDetails": {
       "post": {
-        "tags": [
-          "VehicleApi"
-        ],
+        "tags": ["VehicleApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1589,6 +1919,16 @@
           "businessCategory": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateRazorpayOrderModel": {
+        "type": "object",
+        "properties": {
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -1705,6 +2045,76 @@
         },
         "additionalProperties": false
       },
+      "ServiceViewModel": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TripCancelModel": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TripPaymentModel": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bidId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "platformFee": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "signature": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdateApplicationStatusRequest": {
         "type": "object",
         "properties": {
@@ -1745,7 +2155,7 @@
   },
   "security": [
     {
-      "Bearer": [ ]
+      "Bearer": []
     }
   ]
 }

@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   Clock,
   MoreVertical,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
@@ -34,7 +36,26 @@ import {
   type Expense,
   type ExpenseCategory,
 } from '@/lib/expensesApi';
-import { companyHomeData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+
+// Expense purpose from API
+interface ExpensePurpose {
+  expensePurposeId: number;
+  purposeName: string;
+}
+
+// API Expense interface matching swagger request body
+interface TripExpense {
+  expenseId?: string;
+  createdBy: string;
+  expensePurposeId: number;
+  amount: number;
+  expenseDate: string;
+  description: string;
+  tripId: string;
+  receiptPath: string;
+}
 
 // Hide scrollbar but keep scrolling: used by AddExpenseModal scroll container
 const hideScrollbarStyles = `
@@ -129,12 +150,24 @@ function DonutChart({ data, total }: DonutChartProps) {
 interface AddExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (expense: Omit<Expense, 'id'>) => void;
+  onAdd: (
+    expense: Omit<Expense, 'id'>,
+    tripExpenseData?: TripExpense,
+    receiptFile?: File
+  ) => void;
+  trips: Array<{ id: string; title: string; from: string; to: string }>;
+  expensePurposes: ExpensePurpose[];
 }
 
-function AddExpenseModal({ isOpen, onClose, onAdd }: AddExpenseModalProps) {
+function AddExpenseModal({
+  isOpen,
+  onClose,
+  onAdd,
+  trips,
+  expensePurposes,
+}: AddExpenseModalProps) {
   const [formData, setFormData] = useState({
-    category: 'fuel' as ExpenseCategory,
+    expensePurposeId: 2, // Default to Fuel (id: 2)
     description: '',
     amount: '',
     date: new Date().toISOString().split('T')[0],
@@ -143,21 +176,70 @@ function AddExpenseModal({ isOpen, onClose, onAdd }: AddExpenseModalProps) {
     paymentMethod: 'Cash',
     tripId: '',
   });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get category from purpose name for local storage
+  const getCategoryFromPurpose = (purposeId: number): ExpenseCategory => {
+    const purpose = expensePurposes.find(
+      (p) => p.expensePurposeId === purposeId
+    );
+    const purposeName = purpose?.purposeName?.toLowerCase() || 'other';
+    const categoryMap: Record<string, ExpenseCategory> = {
+      fuel: 'fuel',
+      advance: 'advance',
+      challan: 'challan',
+      food: 'food',
+      salary: 'salary',
+      enroute: 'enroute',
+      other: 'other',
+    };
+    return categoryMap[purposeName] || 'other';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.description && formData.amount) {
-      onAdd({
-        category: formData.category,
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        date: formData.date,
-        status: formData.status,
-        vehicle: formData.vehicle || undefined,
-        paymentMethod: formData.paymentMethod,
-      });
+    if (
+      formData.description &&
+      formData.amount &&
+      formData.tripId &&
+      receiptFile
+    ) {
+      setIsSaving(true);
+
+      const user = api.getCurrentUser();
+      const category = getCategoryFromPurpose(formData.expensePurposeId);
+
+      // Prepare trip expense data (trip and receipt are required)
+      const tripExpenseData: TripExpense | undefined = user
+        ? {
+            createdBy: user.id,
+            expensePurposeId: formData.expensePurposeId,
+            amount: parseFloat(formData.amount),
+            expenseDate: new Date(formData.date).toISOString(),
+            description: formData.description,
+            tripId: formData.tripId,
+            receiptPath: receiptFile.name, // API requires receiptPath string
+          }
+        : undefined;
+
+      onAdd(
+        {
+          category,
+          description: formData.description,
+          amount: parseFloat(formData.amount),
+          date: formData.date,
+          status: formData.status,
+          vehicle: formData.vehicle || undefined,
+          paymentMethod: formData.paymentMethod,
+          tripId: formData.tripId || undefined,
+        },
+        tripExpenseData,
+        receiptFile
+      );
+
       setFormData({
-        category: 'fuel',
+        expensePurposeId: 2,
         description: '',
         amount: '',
         date: new Date().toISOString().split('T')[0],
@@ -166,6 +248,8 @@ function AddExpenseModal({ isOpen, onClose, onAdd }: AddExpenseModalProps) {
         paymentMethod: 'Cash',
         tripId: '',
       });
+      setReceiptFile(null);
+      setIsSaving(false);
       onClose();
     }
   };
@@ -187,43 +271,94 @@ function AddExpenseModal({ isOpen, onClose, onAdd }: AddExpenseModalProps) {
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Category
+                Expense Purpose *
               </label>
               <select
-                value={formData.category}
+                value={formData.expensePurposeId}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    category: e.target.value as ExpenseCategory,
+                    expensePurposeId: parseInt(e.target.value),
                   })
                 }
                 className="w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20"
               >
-                {Object.entries(categoryConfig).map(([key, config]) => (
-                  <option key={key} value={key}>
-                    {config.label}
+                {expensePurposes.map((purpose) => (
+                  <option
+                    key={purpose.expensePurposeId}
+                    value={purpose.expensePurposeId}
+                  >
+                    {purpose.purposeName}
                   </option>
                 ))}
               </select>
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Trip (optional)
+                Trip *
               </label>
               <select
                 value={formData.tripId}
                 onChange={(e) =>
                   setFormData({ ...formData, tripId: e.target.value })
                 }
+                required
                 className="w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20"
               >
-                <option value="">-- None --</option>
-                {companyHomeData.allTrips.map((t) => (
+                <option value="">-- Select Trip --</option>
+                {trips.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.title} — {t.from} → {t.to}
                   </option>
                 ))}
               </select>
+              {!formData.tripId && (
+                <p className="mt-1 text-xs text-amber-600">
+                  ⚠ Trip is required to save expense
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Upload Receipt *
+              </label>
+              <div className="flex items-center gap-2">
+                <label
+                  className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-3 transition-colors ${receiptFile ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50 hover:border-[#f36969] hover:bg-[#f36969]/5'}`}
+                >
+                  <Upload
+                    className={`h-5 w-5 ${receiptFile ? 'text-green-600' : 'text-gray-500'}`}
+                  />
+                  <span
+                    className={`text-sm ${receiptFile ? 'font-medium text-green-700' : 'text-gray-600'}`}
+                  >
+                    {receiptFile ? receiptFile.name : 'Choose file (required)'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) =>
+                      setReceiptFile(e.target.files?.[0] || null)
+                    }
+                    className="hidden"
+                    required
+                  />
+                </label>
+                {receiptFile && (
+                  <button
+                    type="button"
+                    onClick={() => setReceiptFile(null)}
+                    className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {!receiptFile && (
+                <p className="mt-1 text-xs text-amber-600">
+                  ⚠ Receipt is required to save expense
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -331,15 +466,24 @@ function AddExpenseModal({ isOpen, onClose, onAdd }: AddExpenseModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-xl border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                disabled={isSaving}
+                className="flex-1 rounded-xl border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 rounded-xl bg-gradient-to-r from-[#f36969] to-[#e85555] py-3 font-semibold text-white transition-all hover:shadow-lg"
+                disabled={isSaving}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#e85555] py-3 font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50"
               >
-                Add Expense
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Add Expense'
+                )}
               </button>
             </div>
           </form>
@@ -395,6 +539,13 @@ const newCategoryConfig = {
     border: 'border-purple-200',
     label: 'Enroute',
   },
+  other: {
+    icon: MoreVertical,
+    color: 'text-gray-600',
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
+    label: 'Other',
+  },
 };
 
 const statusColors = {
@@ -431,9 +582,15 @@ export default function ExpensesPage() {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [dateRange, setDateRange] = useState('month');
+  const [trips, setTrips] = useState<
+    Array<{ id: string; title: string; from: string; to: string }>
+  >([]);
+  const [expensePurposes, setExpensePurposes] = useState<ExpensePurpose[]>([]);
 
   useEffect(() => {
     loadExpenses();
+    loadTrips();
+    loadExpensePurposes();
   }, []);
 
   const loadExpenses = async () => {
@@ -447,9 +604,75 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleAddExpense = async (expenseData: Omit<Expense, 'id'>) => {
+  const loadTrips = async () => {
     try {
+      const user = api.getCurrentUser();
+      if (user?.id) {
+        const response = await wheelboardApi.trip.getTripsByUser(user.id);
+        if (response.success && response.data) {
+          const tripsData = (response.data as any[]).map((t: any) => ({
+            id: t.tripId || t.id,
+            title: t.tripCode || `Trip ${t.tripId?.slice(0, 8)}`,
+            from: t.pickupLocation || 'Unknown',
+            to: t.deliveryLocation || 'Unknown',
+          }));
+          setTrips(tripsData);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load trips:', error);
+      setTrips([]);
+    }
+  };
+
+  const loadExpensePurposes = async () => {
+    try {
+      const response = await wheelboardApi.trip.getExpensePurposes();
+      if (response.success && response.data) {
+        // API returns: { expensePurposeId, purposeName }
+        setExpensePurposes(response.data as ExpensePurpose[]);
+      } else {
+        console.error('Failed to load expense purposes: No data returned');
+        setExpensePurposes([]);
+      }
+    } catch (error) {
+      console.error('Failed to load expense purposes:', error);
+      setExpensePurposes([]);
+    }
+  };
+
+  const handleAddExpense = async (
+    expenseData: Omit<Expense, 'id'>,
+    tripExpenseData?: TripExpense,
+    receiptFile?: File
+  ) => {
+    try {
+      // Save to local storage for offline/local tracking
       await addExpense(expenseData);
+
+      // Save to Trip Expense API (trip and receipt are required)
+      if (tripExpenseData && receiptFile) {
+        const user = api.getCurrentUser();
+        if (user?.id) {
+          const apiResponse = await wheelboardApi.trip.saveExpense({
+            CreatedBy: user.id,
+            ExpensePurposeId: tripExpenseData.expensePurposeId,
+            Amount: tripExpenseData.amount,
+            ExpenseDate: tripExpenseData.expenseDate,
+            Description: tripExpenseData.description,
+            TripId: tripExpenseData.tripId,
+            ReceiptPath: tripExpenseData.receiptPath,
+            ReceiptFile: receiptFile,
+          });
+
+          if (apiResponse.success) {
+            console.log('✅ Expense saved to Trip API:', apiResponse.data);
+          } else {
+            console.warn('⚠️ Failed to save to Trip API:', apiResponse.error);
+          }
+        }
+      }
+
       await loadExpenses();
     } catch (error) {
       console.error('Failed to add expense:', error);
@@ -970,6 +1193,8 @@ export default function ExpensesPage() {
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onAdd={handleAddExpense}
+          trips={trips}
+          expensePurposes={expensePurposes}
         />
       </div>
     </CompanyProtected>

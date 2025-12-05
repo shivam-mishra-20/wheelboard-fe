@@ -464,6 +464,27 @@ export const serviceApi = {
       }
     );
   },
+
+  // POST /api/Service/update-viewcount
+  updateViewCount: async (data: { serviceId: string; userId: string }) => {
+    return apiRequest('/api/Service/update-viewcount', {
+      method: 'POST',
+      data,
+    });
+  },
+};
+
+// ============================================
+// DASHBOARD API
+// ============================================
+
+export const dashboardApi = {
+  // GET /api/Dashboard/GetDashboard?userId={userId}
+  getDashboard: async (userId: string) => {
+    return apiRequest(`/api/Dashboard/GetDashboard?userId=${userId}`, {
+      method: 'GET',
+    });
+  },
 };
 
 // ============================================
@@ -602,6 +623,13 @@ export const transportApi = {
   // GET /api/Transport/vehicle/{userId}
   getVehiclesByUser: async (userId: string) => {
     return apiRequest(`/api/Transport/vehicle/${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // GET /api/Transport/vehicle-details/{vehicleId}
+  getVehicleDetails: async (vehicleId: string) => {
+    return apiRequest(`/api/Transport/vehicle-details/${vehicleId}`, {
       method: 'GET',
     });
   },
@@ -786,7 +814,7 @@ export const tripApi = {
     ExpenseDate: string;
     Description: string;
     TripId: string;
-    ReceiptPath?: string;
+    ReceiptPath: string;
     ReceiptFile?: File;
   }) => {
     const formData = buildFormData(data);
@@ -1061,6 +1089,7 @@ export const wheelboardApi = {
   trip: tripApi,
   vehicle: vehicleApi,
   notification: notificationApi,
+  dashboard: dashboardApi,
 };
 
 export default wheelboardApi;

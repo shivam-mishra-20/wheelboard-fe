@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Img from 'next/image';
@@ -23,19 +23,268 @@ import {
   Plus,
   Timer,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginSimulator from '@/components/LoginSimulator';
 import { companyDashboardData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+
+// Dashboard data interface
+interface DashboardData {
+  stats: {
+    activeTrips: {
+      value: number;
+      scheduledToday: number;
+      inMaintenance: number;
+    };
+    monthlyExpenses: { value: number; highestSpending: string };
+    tripEfficiency: { value: string; unit: string };
+    vehiclesOnRent: { value: number };
+  };
+  vehicleAvailability: { available: number; onTrip: number; onRent: number };
+  topRated: {
+    drivers: Array<{
+      id: string;
+      name: string;
+      role: string;
+      location: string;
+      avatar: string;
+      rating: number;
+    }>;
+    technicians: Array<{
+      id: string;
+      name: string;
+      role: string;
+      location: string;
+      avatar: string;
+      rating: number;
+    }>;
+    helpers: Array<{
+      id: string;
+      name: string;
+      role: string;
+      location: string;
+      avatar: string;
+      rating: number;
+    }>;
+  };
+  jobsPosted: Array<{
+    id: string;
+    title: string;
+    applicants: number;
+    likes: number;
+  }>;
+  expenseOverview: {
+    total: string | number;
+    categories: Array<{ category: string; amount: number; color: string }>;
+  };
+  recentTransactions: Array<{
+    id: string;
+    type: string;
+    date: string;
+    description: string;
+    amount: number;
+  }>;
+  assignedServices: Array<{
+    id: string;
+    title: string;
+    status: string;
+    description: string;
+    updatedAt: string;
+    backgroundColor: string;
+  }>;
+  tripCompletionTrend: Array<{ day: string; trips: number }>;
+  upcomingTrips: Array<{
+    id: string;
+    title: string;
+    time: string;
+    route: string;
+    driver: string;
+  }>;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     'Drivers' | 'Technicians' | 'Helpers'
   >('Drivers');
+  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch dashboard data from API
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setIsLoading(true);
+        const user = api.getCurrentUser();
+
+        if (!user?.id) {
+          // Use mock data if no user
+          setDashboardData(companyDashboardData as unknown as DashboardData);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await wheelboardApi.dashboard.getDashboard(user.id);
+
+        if (response.success && response.data) {
+          // Map API response to our expected format
+          const apiData = response.data as any;
+
+          // Transform topProfessionals to topRated format (group by type)
+          const drivers: DashboardData['topRated']['drivers'] = [];
+          const technicians: DashboardData['topRated']['technicians'] = [];
+          const helpers: DashboardData['topRated']['helpers'] = [];
+
+          if (apiData.topProfessionals) {
+            apiData.topProfessionals.forEach((p: any, idx: number) => {
+              const professional = {
+                id: `prof-${idx}`,
+                name: p.fullName || 'Unknown',
+                role: p.professionalType || 'Professional',
+                location: p.city || 'Unknown',
+                avatar:
+                  p.driverImagePath?.replace(/\\/g, '/') || '/profile-pic.png',
+                rating: 4.5, // Default rating if not provided
+              };
+              const type = (p.professionalType || '').toLowerCase();
+              if (type === 'technician') {
+                technicians.push(professional);
+              } else if (type === 'helper') {
+                helpers.push(professional);
+              } else {
+                drivers.push(professional);
+              }
+            });
+          }
+
+          // Transform jobList to jobsPosted format
+          const jobsPosted =
+            apiData.jobList?.map((j: any) => ({
+              id: j.jobId,
+              title: `${j.role} - ${j.jobType}`,
+              applicants: j.applicants || 0,
+              likes: j.likeCount || 0,
+            })) || companyDashboardData.jobsPosted;
+
+          // Transform assignedServices
+          const assignedServices =
+            apiData.assignedServices?.map((s: any) => ({
+              id: s.serviceId,
+              title: s.serviceTitle,
+              status: 'Active',
+              description: s.category || 'Service',
+              updatedAt: s.dateModified,
+              backgroundColor: '#fff4f4',
+            })) || companyDashboardData.assignedServices;
+
+          // Transform upcomingTrips
+          const upcomingTrips =
+            apiData.upcomingTrips?.map((t: any) => ({
+              id: t.tripId,
+              title: t.tripCode,
+              time: t.pickupTime
+                ? new Date(`1970-01-01T${t.pickupTime}`).toLocaleTimeString(
+                    'en-US',
+                    { hour: 'numeric', minute: '2-digit', hour12: true }
+                  )
+                : '',
+              route: `${t.pickupLocation} → ${t.deliveryLocation}`,
+              driver: t.driverName || 'Unassigned',
+            })) || companyDashboardData.upcomingTrips;
+
+          // Transform API data to match our interface
+          const transformedData: DashboardData = {
+            stats: {
+              activeTrips: {
+                value:
+                  apiData.tripSummary?.totalTrips ??
+                  companyDashboardData.stats.activeTrips.value,
+                scheduledToday:
+                  apiData.tripSummary?.scheduledToday ??
+                  companyDashboardData.stats.activeTrips.scheduledToday,
+                inMaintenance:
+                  apiData.activeVehicles?.inMaintenance ??
+                  companyDashboardData.stats.activeTrips.inMaintenance,
+              },
+              monthlyExpenses: {
+                value:
+                  apiData.monthlyExpenses?.totalExpenses ??
+                  companyDashboardData.stats.monthlyExpenses.value,
+                highestSpending: apiData.monthlyExpenses?.highestFuelAmount
+                  ? `Fuel: ₹${apiData.monthlyExpenses.highestFuelAmount}`
+                  : companyDashboardData.stats.monthlyExpenses.highestSpending,
+              },
+              tripEfficiency: {
+                value:
+                  apiData.tripEfficiency ??
+                  companyDashboardData.stats.tripEfficiency.value,
+                unit: companyDashboardData.stats.tripEfficiency.unit,
+              },
+              vehiclesOnRent: {
+                value:
+                  apiData.vehiclesOnLease ??
+                  companyDashboardData.stats.vehiclesOnRent.value,
+              },
+            },
+            vehicleAvailability:
+              apiData.vehicleAvailability ??
+              companyDashboardData.vehicleAvailability,
+            topRated: {
+              drivers:
+                drivers.length > 0
+                  ? drivers
+                  : companyDashboardData.topRated.drivers,
+              technicians:
+                technicians.length > 0
+                  ? technicians
+                  : companyDashboardData.topRated.technicians,
+              helpers:
+                helpers.length > 0
+                  ? helpers
+                  : companyDashboardData.topRated.helpers,
+            },
+            jobsPosted,
+            expenseOverview: companyDashboardData.expenseOverview, // API doesn't provide this breakdown
+            recentTransactions:
+              apiData.recentTransactions?.length > 0
+                ? apiData.recentTransactions
+                : companyDashboardData.recentTransactions,
+            assignedServices,
+            tripCompletionTrend:
+              apiData.tripCompletionTrend?.length > 0
+                ? apiData.tripCompletionTrend
+                : companyDashboardData.tripCompletionTrend,
+            upcomingTrips,
+          };
+
+          setDashboardData(transformedData);
+        } else {
+          // Fallback to mock data if API fails
+          console.warn('Dashboard API returned no data, using mock data');
+          setDashboardData(companyDashboardData as unknown as DashboardData);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard:', err);
+        setError('Failed to load dashboard data');
+        // Use mock data as fallback
+        setDashboardData(companyDashboardData as unknown as DashboardData);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  // Use fetched data or fallback
   const {
     stats,
     vehicleAvailability,
@@ -46,7 +295,7 @@ export default function DashboardPage() {
     assignedServices,
     tripCompletionTrend,
     upcomingTrips,
-  } = companyDashboardData;
+  } = dashboardData || companyDashboardData;
 
   const getTopRatedData = () => {
     if (activeTab === 'Drivers') return topRated.drivers;
@@ -56,6 +305,20 @@ export default function DashboardPage() {
 
   const maxTrips = Math.max(...tripCompletionTrend.map((d) => d.trips));
 
+  if (isLoading) {
+    return (
+      <CompanyProtected>
+        <Header />
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-pink-50 via-white to-red-50 pt-16">
+          <div className="text-center">
+            <Loader2 className="mx-auto h-12 w-12 animate-spin text-[#f36969]" />
+            <p className="mt-4 text-sm text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </CompanyProtected>
+    );
+  }
+
   return (
     <CompanyProtected>
       <Header />
@@ -63,6 +326,13 @@ export default function DashboardPage() {
 
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-red-50 pt-16 font-poppins">
         <main className="mx-auto max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+              {error} - Showing cached data
+            </div>
+          )}
+
           {/* Header */}
           <div className="mb-6">
             <motion.button
