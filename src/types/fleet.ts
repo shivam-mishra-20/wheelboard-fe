@@ -22,20 +22,20 @@ export interface ApiDriver {
   driverId: string;
   userId: string;
   fullName: string;
-  driverName?: string; // Alternative field name
   contactNumber: string;
   vehicleType: string;
   vehicleNumber: string;
   description: string;
-  status: string;
+  isDeclarationAccepted: boolean;
+  driverImagePath?: string; // Updated to match actual API response
+  // Optional fields that might be returned
+  status?: string;
   licenseNumber?: string;
   email?: string;
-  driverImageUrl?: string;
-  isDeclarationAccepted: boolean;
-  createdAt: string;
-  modifiedAt: string;
-  createdBy: string;
-  modifiedBy: string;
+  createdAt?: string;
+  modifiedAt?: string;
+  createdBy?: string;
+  modifiedBy?: string;
 }
 
 // Vehicle Trip Interface
@@ -121,6 +121,12 @@ export interface Driver {
   emergencyContact?: string;
   vehicleType?: string;
   description?: string;
+  performance?: {
+    timelyDelivery: number;
+    tripEfficiency: number;
+    safety: number;
+  };
+  reviews?: any[];
 }
 
 // Form Data Types
@@ -156,10 +162,13 @@ export interface DriverFormData {
 
 // Vehicle and Driver Category Options
 export const VEHICLE_CATEGORIES = [
+  'LMV',
+  'HMV',
   'Trucks',
   'Vans',
   'Buses',
   'Trailers',
+  'Shipment',
   'Construction Equipment',
   'Mining Equipment',
   'Others',

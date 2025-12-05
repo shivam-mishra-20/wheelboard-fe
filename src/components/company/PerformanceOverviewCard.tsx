@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Clock, Zap, Shield } from 'lucide-react';
-import { Driver } from '@/lib/mockApi';
+import { Driver } from '@/types/fleet';
 
 interface PerformanceOverviewCardProps {
   driver: Driver;

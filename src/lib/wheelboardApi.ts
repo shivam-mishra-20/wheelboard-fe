@@ -18,10 +18,19 @@ const axiosInstance = axios.create({
 
 // Add request interceptor to include auth token
 axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+  // Only access localStorage in browser environment
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('[Axios Interceptor] Request:', {
+    url: config.url,
+    method: config.method,
+    baseURL: config.baseURL,
+    hasToken: !!token,
+    headers: config.headers,
+  });
   return config;
 });
 
@@ -58,10 +67,23 @@ async function apiRequest<T = unknown>(
 
     console.log(`[API Response] ${response.status}:`, response.data);
 
+    // Check if response.data is an array (direct data) or has a data property
+    const isDirectArray = Array.isArray(response.data);
+    const hasDataProperty = response.data && 'data' in response.data;
+
+    console.log('[API Response Analysis]', {
+      isDirectArray,
+      hasDataProperty,
+      responseType: typeof response.data,
+      responseKeys: response.data ? Object.keys(response.data) : [],
+    });
+
     return {
       success: true,
       message: response.data?.message || 'Success',
-      data: response.data?.data || (response.data as T),
+      data: isDirectArray
+        ? (response.data as T)
+        : response.data?.data || (response.data as T),
     };
   } catch (error: unknown) {
     console.error('[API Error]', error);
@@ -113,10 +135,20 @@ const buildFormData = (
       // Handle array of files
       value.forEach((item: File | Blob | string | number) => {
         if (item instanceof File || item instanceof Blob) {
-          formData.append(key, item);
+          formData.append(
+            key,
+            item,
+            item instanceof File ? item.name : undefined
+          );
         }
       });
-    } else if (value instanceof File || value instanceof Blob) {
+    } else if (value instanceof File) {
+      // Explicitly pass the filename for File objects
+      console.log(
+        `[buildFormData] Appending File '${key}': ${value.name} (${value.type}, ${value.size} bytes)`
+      );
+      formData.append(key, value, value.name);
+    } else if (value instanceof Blob) {
       formData.append(key, value);
     } else if (typeof value === 'object') {
       formData.append(key, JSON.stringify(value));
@@ -200,6 +232,7 @@ export const userApi = {
     UserId: string;
     FirstName: string;
     LastName: string;
+    Email: string;
     Address: string;
     FleetSize: number;
     GSTNumber: string;
@@ -262,6 +295,11 @@ export const userApi = {
 
   // GET /api/User/user-profile/{userId}
   getUserProfile: async (userId: string) => {
+    console.log('[getUserProfile] Called with userId:', userId);
+    console.log(
+      '[getUserProfile] Full URL will be:',
+      `/api/User/user-profile/${userId}`
+    );
     return apiRequest(`/api/User/user-profile/${userId}`, {
       method: 'GET',
     });
@@ -281,109 +319,29 @@ export const userApi = {
     });
   },
 
-  // DELETE /api/User/DeleteSlider/{id}
+  // GET /api/User/DeleteSlider/{id}
   deleteSlider: async (id: number) => {
     return apiRequest(`/api/User/DeleteSlider/${id}`, {
       method: 'DELETE',
     });
   },
-};
 
-// ============================================
-// JOB API
-// ============================================
-
-export const jobApi = {
-  // POST /api/Job/add-job
-  addJob: async (data: {
+  // POST /api/User/update-transport-profile
+  updateTransportProfile: async (data: {
     UserId: string;
-    Role: string; // Job title/position
-    City: string; // Location
-    Description: string; // Job description
-    JobType: string; // Full-time, Part-time, Contract
-    JobDuration: string; // e.g., "6 months", "Permanent"
-    Images: File[]; // Job images
-  }) => {
-    const formData = buildFormData(data);
-    return apiRequest('/api/Job/add-job', {
-      method: 'POST',
-      data: formData,
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
-
-  // PUT /api/Job/update-job
-  updateJob: async (data: {
-    JobId: string;
-    UserId: string;
-    Role: string;
-    JobDuration: string;
-    Openings: number;
-    Salary: string;
-    JobDescription: string;
-    Experience: string;
-    Qualifications: string;
-    Location: string;
     CompanyName: string;
+    FullName: string;
+    Email: string;
+    Location: string;
+    FleetSize: number;
+    GSTNumber: string;
     CompanyLogo?: File;
-    JobCategory: string;
   }) => {
     const formData = buildFormData(data);
-    return apiRequest('/api/Job/update-job', {
-      method: 'PUT',
+    return apiRequest('/api/User/update-transport-profile', {
+      method: 'POST',
       data: formData,
       headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
-
-  // GET /api/Job/job-list/{userId}
-  getJobListByUser: async (userId: string) => {
-    return apiRequest(`/api/Job/job-list/${userId}`, {
-      method: 'GET',
-    });
-  },
-
-  // GET /api/Job/open-job-list
-  getOpenJobList: async () => {
-    return apiRequest('/api/Job/open-job-list', {
-      method: 'GET',
-    });
-  },
-
-  // GET /api/Job/{jobId}/user/{userId}
-  getJobDetails: async (jobId: string, userId: string) => {
-    return apiRequest(`/api/Job/${jobId}/user/${userId}`, {
-      method: 'GET',
-    });
-  },
-
-  // POST /api/Job/apply-job
-  applyJob: async (data: { jobId: string; userId: string }) => {
-    return apiRequest('/api/Job/apply-job', {
-      method: 'POST',
-      data,
-    });
-  },
-
-  // GET /api/Job/get-applications/{jobId}
-  getApplications: async (jobId: string) => {
-    return apiRequest(`/api/Job/get-applications/${jobId}`, {
-      method: 'GET',
-    });
-  },
-
-  // GET /api/Job/applied-jobs/{userId}
-  getAppliedJobs: async (userId: string) => {
-    return apiRequest(`/api/Job/applied-jobs/${userId}`, {
-      method: 'GET',
-    });
-  },
-
-  // PUT /api/Job/update-job-status
-  updateJobStatus: async (data: { ApplicationId: string; Status: string }) => {
-    return apiRequest('/api/Job/update-job-status', {
-      method: 'PUT',
-      data,
     });
   },
 };
@@ -396,16 +354,20 @@ export const serviceApi = {
   // POST /api/Service/add-service
   addService: async (data: {
     UserId: string;
-    ServiceName: string;
-    ServiceCategory: string;
-    Description: string;
-    PriceRange: string;
-    Location: string;
-    Availability: string;
+    ServiceTitle: string;
     ContactNumber: string;
-    Email: string;
-    ServiceImage?: File;
-    Documents?: File[];
+    WhatsappNumber: string;
+    Description: string;
+    IsFlatPrice: boolean;
+    Price: number;
+    City: string;
+    FullAddress: string;
+    IsVisible: boolean;
+    BusinessFrom: string; // date-span format
+    BusinessTo: string; // date-span format
+    DaysOpen: string;
+    CreatedBy: string;
+    Images?: File[];
   }) => {
     const formData = buildFormData(data);
     return apiRequest('/api/Service/add-service', {
@@ -419,16 +381,20 @@ export const serviceApi = {
   updateService: async (data: {
     ServiceId: string;
     UserId: string;
-    ServiceName: string;
-    ServiceCategory: string;
-    Description: string;
-    PriceRange: string;
-    Location: string;
-    Availability: string;
+    ServiceTitle: string;
     ContactNumber: string;
-    Email: string;
-    ServiceImage?: File;
-    Documents?: File[];
+    WhatsappNumber: string;
+    Description: string;
+    IsFlatPrice: boolean;
+    Price: number;
+    City: string;
+    FullAddress: string;
+    IsVisible: boolean;
+    BusinessFrom: string;
+    BusinessTo: string;
+    DaysOpen: string;
+    ModifiedBy: string;
+    NewImages?: File[];
   }) => {
     const formData = buildFormData(data);
     return apiRequest('/api/Service/update-service', {
@@ -445,10 +411,33 @@ export const serviceApi = {
     });
   },
 
-  // GET /api/Service/{serviceId}/user/{userId}
-  getServiceDetails: async (serviceId: string, userId: string) => {
-    return apiRequest(`/api/Service/${serviceId}/user/${userId}`, {
+  // GET /api/Service/service-list - Get all services (no userId)
+  getAllServiceList: async () => {
+    return apiRequest('/api/Service/service-list', {
       method: 'GET',
+    });
+  },
+
+  // GET /api/Service/details/{serviceId}
+  getServiceDetails: async (serviceId: string) => {
+    return apiRequest(`/api/Service/details/${serviceId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Service/assign-service
+  assignService: async (data: {
+    serviceId: string;
+    assignedToUserId: string;
+    vehicleNumber?: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    description?: string;
+    status?: string;
+  }) => {
+    return apiRequest('/api/Service/assign-service', {
+      method: 'POST',
+      data,
     });
   },
 
@@ -459,23 +448,107 @@ export const serviceApi = {
     });
   },
 
-  // POST /api/Service/assign-service
-  assignService: async (data: {
-    ServiceId: string;
-    UserId: string;
-    AssignedDate: string;
-    Notes: string;
-  }) => {
-    return apiRequest('/api/Service/assign-service', {
+  // POST /api/Service/{assignmentId}/delete
+  deleteServiceAssignment: async (assignmentId: string) => {
+    return apiRequest(`/api/Service/${assignmentId}/delete`, {
       method: 'POST',
-      data,
     });
   },
 
-  // DELETE /api/Service/{assignmentId}
-  deleteServiceAssignment: async (assignmentId: string) => {
-    return apiRequest(`/api/Service/${assignmentId}`, {
-      method: 'DELETE',
+  // DELETE /api/Service/{serviceId}/user/{userId}
+  deleteService: async (serviceId: string, userId: string) => {
+    return apiRequest(
+      `/api/Service/${serviceId}/user/${userId}?jobId=${serviceId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+  },
+};
+
+// ============================================
+// JOB API
+// ============================================
+
+export const jobApi = {
+  // POST /api/Job/add-job
+  addJob: async (data: {
+    UserId: string;
+    Role: string;
+    JobDuration: string;
+    Openings: number;
+    Salary: number;
+    City: string;
+    JobType: string;
+    Description: string;
+    Images?: File[];
+  }) => {
+    const formData = buildFormData(data);
+    return apiRequest('/api/Job/add-job', {
+      method: 'POST',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  // POST /api/Job/update-job (API uses POST, not PUT)
+  updateJob: async (data: {
+    JobId: string;
+    Role: string;
+    JobDuration: string;
+    Openings: number;
+    Salary: number;
+    City: string;
+    JobType: string;
+    Description: string;
+    UserId: string;
+    NewImages?: File[];
+  }) => {
+    const formData = buildFormData(data);
+    return apiRequest('/api/Job/update-job', {
+      method: 'POST',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  // GET /api/Job/job-list/{userId}
+  getJobList: async (userId: string) => {
+    return apiRequest(`/api/Job/job-list/${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // Alias for backward compatibility
+  getJobListByUser: async (userId: string) => {
+    return apiRequest(`/api/Job/job-list/${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Job/{jobId}/user/{userId}/delete
+  deleteJob: async (jobId: string, userId: string) => {
+    return apiRequest(`/api/Job/${jobId}/user/${userId}/delete`, {
+      method: 'POST',
+    });
+  },
+
+  // GET /api/Job/get-applications/{jobId}
+  getJobApplications: async (jobId: string) => {
+    return apiRequest(`/api/Job/get-applications/${jobId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Job/update-job-status
+  updateJobStatus: async (data: {
+    applicationId: string;
+    status: string;
+    modifiedUserId: string;
+  }) => {
+    return apiRequest('/api/Job/update-job-status', {
+      method: 'POST',
+      data,
     });
   },
 };
@@ -533,10 +606,11 @@ export const transportApi = {
     });
   },
 
-  // DELETE /api/Transport/{vehicleId}
+  // POST /api/Transport/{vehicleId}/delete
   deleteVehicle: async (vehicleId: string, modifiedBy: string) => {
-    return apiRequest(`/api/Transport/${vehicleId}?modifiedBy=${modifiedBy}`, {
-      method: 'DELETE',
+    return apiRequest(`/api/Transport/${vehicleId}/delete`, {
+      method: 'POST',
+      data: { modifiedBy },
     });
   },
 
@@ -588,14 +662,35 @@ export const transportApi = {
     });
   },
 
-  // DELETE /api/Transport/driver/{driverId}
+  // GET /api/Transport/drivers-details/{driverId}
+  getDriverDetails: async (driverId: string) => {
+    return apiRequest(`/api/Transport/drivers-details/${driverId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Transport/driver/{driverId}/delete (API uses POST, not DELETE)
   deleteDriver: async (driverId: string, modifiedBy: string) => {
     return apiRequest(
-      `/api/Transport/driver/${driverId}?modifiedBy=${modifiedBy}`,
+      `/api/Transport/driver/${driverId}/delete?modifiedBy=${modifiedBy}`,
       {
-        method: 'DELETE',
+        method: 'POST',
       }
     );
+  },
+
+  // GET /api/Transport/professional-list/{userId}
+  getProfessionalList: async (userId: string) => {
+    return apiRequest(`/api/Transport/professional-list/${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // GET /api/Transport/professional-details/{driverId}
+  getProfessionalDetails: async (driverId: string) => {
+    return apiRequest(`/api/Transport/professional-details/${driverId}`, {
+      method: 'GET',
+    });
   },
 };
 
@@ -635,24 +730,24 @@ export const postApi = {
     });
   },
 
-  // PUT /api/Post/approve/{postId}
+  // POST /api/Post/approve/{postId}
   approvePost: async (postId: string) => {
     return apiRequest(`/api/Post/approve/${postId}`, {
-      method: 'PUT',
+      method: 'POST',
     });
   },
 
-  // PUT /api/Post/reject/{postId}
+  // POST /api/Post/reject/{postId}
   rejectPost: async (postId: string) => {
     return apiRequest(`/api/Post/reject/${postId}`, {
-      method: 'PUT',
+      method: 'POST',
     });
   },
 
-  // DELETE /api/Post/{postId}
+  // POST /api/Post/{postId}/delete
   deletePost: async (postId: string) => {
-    return apiRequest(`/api/Post/${postId}`, {
-      method: 'DELETE',
+    return apiRequest(`/api/Post/${postId}/delete`, {
+      method: 'POST',
     });
   },
 };
@@ -746,6 +841,62 @@ export const tripApi = {
     });
   },
 
+  // GET /api/Trip/assign-trip/{tripId}
+  assignTrip: async (tripId: string) => {
+    return apiRequest(`/api/Trip/assign-trip/${tripId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Trip/create-order - Create Razorpay payment order
+  createPaymentOrder: async (data: { totalAmount: number }) => {
+    return apiRequest('/api/Trip/create-order', {
+      method: 'POST',
+      data,
+    });
+  },
+
+  // POST /api/Trip/verify-payment - Verify Razorpay payment
+  verifyPayment: async (data: {
+    tripId: string;
+    bidId: string;
+    userId: string;
+    amount: number;
+    platformFee: number;
+    totalAmount: number;
+    orderId: string;
+    paymentId: string;
+    signature: string;
+  }) => {
+    return apiRequest('/api/Trip/verify-payment', {
+      method: 'POST',
+      data,
+    });
+  },
+
+  // POST /api/Trip/razorpay-webhook - Razorpay webhook handler
+  razorpayWebhook: async (data: any) => {
+    return apiRequest('/api/Trip/razorpay-webhook', {
+      method: 'POST',
+      data,
+    });
+  },
+
+  // GET /api/Trip/confirmation/{tripId}
+  getTripConfirmation: async (tripId: string) => {
+    return apiRequest(`/api/Trip/confirmation/${tripId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Trip/cancel
+  cancelTrip: async (data: { tripId: string; userId: string }) => {
+    return apiRequest('/api/Trip/cancel', {
+      method: 'POST',
+      data,
+    });
+  },
+
   // GET /api/Trip/unassign-trip-list - Get all unassigned trips (for professionals to bid on)
   getUnassignedTrips: async () => {
     return apiRequest('/api/Trip/unassign-trip-list', {
@@ -810,24 +961,89 @@ export const tripApi = {
 };
 
 // ============================================
+// NOTIFICATIONS API
+// ============================================
+
+export const notificationApi = {
+  // GET /api/NotificationsApi/notifications
+  getNotifications: async (userId: string) => {
+    return apiRequest(`/api/NotificationsApi/notifications?userId=${userId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/NotificationsApi/notification/read
+  markNotificationAsRead: async (notificationId: string) => {
+    return apiRequest(
+      `/api/NotificationsApi/notification/read?notificationId=${notificationId}`,
+      {
+        method: 'POST',
+      }
+    );
+  },
+};
+
+// ============================================
 // VEHICLE API
 // ============================================
 
 export const vehicleApi = {
   // POST /api/VehicleApi/GetVehicleDetails
+  // Response format: { code: 200, result: { data: { ...vehicleDetails } } }
   getVehicleDetails: async (vehicleNumber: string) => {
-    return apiRequest('/api/VehicleApi/GetVehicleDetails', {
-      method: 'POST',
-      data: { vehicleNumber },
-    });
+    const response = await apiRequest<any>(
+      '/api/VehicleApi/GetVehicleDetails',
+      {
+        method: 'POST',
+        data: { vehicleNumber },
+      }
+    );
+
+    // Handle nested result.data structure from this specific API
+    if (response.success && response.data) {
+      const rawData = response.data;
+      // If the response has result.data structure, extract the actual vehicle data
+      if (rawData.result?.data) {
+        return {
+          ...response,
+          data: rawData.result.data,
+        };
+      }
+      // If the response directly has data property
+      if (rawData.data) {
+        return {
+          ...response,
+          data: rawData.data,
+        };
+      }
+    }
+    return response;
   },
 
   // POST /api/VehicleApi/GetLicenceDetails
+  // Response format: { code: 200, result: { dlNumber, detailsOfDrivingLicence: {...}, ... } }
   getLicenseDetails: async (licenseNumber: string, dob: string) => {
-    return apiRequest('/api/VehicleApi/GetLicenceDetails', {
-      method: 'POST',
-      data: { number: licenseNumber, dob },
-    });
+    const response = await apiRequest<any>(
+      '/api/VehicleApi/GetLicenceDetails',
+      {
+        method: 'POST',
+        data: { number: licenseNumber, dob },
+      }
+    );
+
+    // Handle nested result structure from this specific API
+    // The actual license data is in response.data.result (not result.data)
+    if (response.success && response.data) {
+      const rawData = response.data;
+      // If the response has result structure (license data is in result directly)
+      if (rawData.result) {
+        return {
+          ...response,
+          data: rawData.result,
+        };
+      }
+    }
+    return response;
   },
 };
 
@@ -844,6 +1060,7 @@ export const wheelboardApi = {
   masterData: masterDataApi,
   trip: tripApi,
   vehicle: vehicleApi,
+  notification: notificationApi,
 };
 
 export default wheelboardApi;

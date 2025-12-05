@@ -84,40 +84,61 @@ export default function CompanyFleetPage() {
     const fetchDrivers = async () => {
       try {
         const user = api.getCurrentUser();
-        if (!user) return;
+        if (!user) {
+          console.log('[Drivers] No user found, skipping fetch');
+          setIsLoadingDrivers(false);
+          return;
+        }
 
+        console.log('[Drivers] Fetching drivers for user:', user.id);
         const response = await wheelboardApi.transport.getDriversByUser(
           user.id
         );
-        const driversData = (response.data as any[]) || [];
+
+        console.log('[Drivers] API Response:', response);
+
+        // API returns direct array in response.data
+        const driversData: any[] = Array.isArray(response.data)
+          ? response.data
+          : [];
+
+        console.log('[Drivers] Parsed drivers data:', driversData);
 
         // Map API response to Driver interface
-        const mappedDrivers: Driver[] = driversData.map((apiDriver) => ({
-          id: apiDriver.driverId,
-          name: apiDriver.fullName || apiDriver.driverName,
-          phone: apiDriver.contactNumber,
-          phoneNumber: apiDriver.contactNumber,
-          email: apiDriver.email || 'N/A',
-          licenseNumber: apiDriver.licenseNumber,
-          experience: 'N/A',
-          status: (apiDriver.status as 'Available' | 'On Trip') || 'Available',
-          vehicle: apiDriver.vehicleNumber || 'Unassigned',
-          image: apiDriver.driverImageUrl || '/profile-pic.png',
-          rating: 0,
-          totalTrips: 0,
-          location: 'N/A',
-          joinedDate: apiDriver.createdAt || 'Recently joined',
-          performance: {
-            timelyDelivery: 0,
-            tripEfficiency: 0,
-            safety: 0,
-          },
-          reviews: [],
-        }));
+        // API Response fields: driverId, userId, fullName, contactNumber, vehicleType, vehicleNumber, description, isDeclarationAccepted, driverImagePath
+        const mappedDrivers: Driver[] = driversData.map((apiDriver) => {
+          console.log('[Drivers] Mapping driver:', apiDriver);
+          return {
+            id: apiDriver.driverId,
+            name: apiDriver.fullName || 'N/A',
+            phone: apiDriver.contactNumber,
+            phoneNumber: apiDriver.contactNumber,
+            email: apiDriver.email || 'N/A',
+            licenseNumber: apiDriver.vehicleNumber || 'N/A',
+            experience: 'N/A',
+            status: 'Available',
+            vehicle: apiDriver.vehicleNumber || 'Unassigned',
+            vehicleType: apiDriver.vehicleType || 'N/A',
+            image: apiDriver.driverImagePath || '/profile-pic.png',
+            rating: 0,
+            totalTrips: 0,
+            location: 'N/A',
+            joinedDate: 'Recently joined',
+            description: apiDriver.description || '',
+            performance: {
+              timelyDelivery: 0,
+              tripEfficiency: 0,
+              safety: 0,
+            },
+            reviews: [],
+          };
+        });
 
+        console.log('[Drivers] Mapped drivers:', mappedDrivers);
         setDrivers(mappedDrivers);
-      } catch (error) {
-        console.error('Error fetching drivers:', error);
+      } catch (error: any) {
+        console.error('[Drivers] Error fetching drivers:', error);
+        console.error('[Drivers] Error details:', error.response?.data);
         setDrivers([]);
       } finally {
         setIsLoadingDrivers(false);
@@ -299,55 +320,105 @@ export default function CompanyFleetPage() {
         return;
       }
 
+      console.log('[SaveDriver] Driver data to save:', driverData);
+
+      let response;
       if (currentDriver) {
         // Update existing driver
-        await wheelboardApi.transport.updateDriver({
+        console.log('[SaveDriver] Updating driver:', currentDriver.id);
+        console.log('[SaveDriver] Image file:', driverData.imageFile);
+
+        const updateDriverPayload: any = {
           DriverId: currentDriver.id,
           FullName: driverData.name,
           ContactNumber: driverData.phoneNumber || driverData.phone,
           VehicleType: driverData.vehicleType || 'Truck',
-          VehicleNumber: driverData.currentVehicle || 'N/A',
-          Description: driverData.description || 'No description',
+          VehicleNumber:
+            driverData.licenseNumber || driverData.currentVehicle || 'N/A',
+          Description:
+            driverData.description || driverData.address || 'No description',
           IsDeclarationAccepted: true,
-          Image: driverData.image,
           ModifiedUserId: user.id,
-        });
+        };
 
+        // Only add Image if file is provided
+        if (driverData.imageFile) {
+          updateDriverPayload.Image = driverData.imageFile;
+        }
+
+        response =
+          await wheelboardApi.transport.updateDriver(updateDriverPayload);
+
+        console.log('[SaveDriver] Update response:', response);
         toast.success('Driver updated successfully!', { id: loadingToast });
       } else {
         // Add new driver
-        await wheelboardApi.transport.addDriver({
+        console.log('[SaveDriver] Adding new driver');
+        console.log('[SaveDriver] Image file:', driverData.imageFile);
+
+        if (driverData.imageFile) {
+          console.log('[SaveDriver] File details:', {
+            name: driverData.imageFile.name,
+            type: driverData.imageFile.type,
+            size: driverData.imageFile.size,
+          });
+        }
+
+        const addDriverPayload: any = {
           UserId: user.id,
           FullName: driverData.name,
           ContactNumber: driverData.phoneNumber || driverData.phone,
           VehicleType: driverData.vehicleType || 'Truck',
-          VehicleNumber: driverData.currentVehicle || 'N/A',
-          Description: driverData.description || 'No description',
+          VehicleNumber:
+            driverData.licenseNumber || driverData.currentVehicle || 'N/A',
+          Description:
+            driverData.description || driverData.address || 'No description',
           IsDeclarationAccepted: true,
-          Image: driverData.image,
-        });
+        };
 
+        // Only add Image if file is provided
+        if (driverData.imageFile) {
+          console.log('[SaveDriver] Adding Image to payload');
+          addDriverPayload.Image = driverData.imageFile;
+        } else {
+          console.log('[SaveDriver] No image file provided');
+        }
+
+        response = await wheelboardApi.transport.addDriver(addDriverPayload);
+
+        console.log('[SaveDriver] Add response:', response);
         toast.success('Driver added successfully!', { id: loadingToast });
       }
 
       // Refresh drivers list
-      const response = await wheelboardApi.transport.getDriversByUser(user.id);
-      const driversData = (response.data as any[]) || [];
+      console.log('[SaveDriver] Refreshing drivers list');
+      const listResponse = await wheelboardApi.transport.getDriversByUser(
+        user.id
+      );
+      console.log('[SaveDriver] List response:', listResponse);
+
+      // API returns direct array in response.data
+      const driversData: any[] = Array.isArray(listResponse.data)
+        ? listResponse.data
+        : [];
+
       const mappedDrivers: Driver[] = driversData.map((apiDriver) => ({
         id: apiDriver.driverId,
-        name: apiDriver.fullName || apiDriver.driverName,
+        name: apiDriver.fullName || 'N/A',
         phone: apiDriver.contactNumber,
         phoneNumber: apiDriver.contactNumber,
         email: apiDriver.email || 'N/A',
-        licenseNumber: apiDriver.licenseNumber || 'N/A',
+        licenseNumber: apiDriver.vehicleNumber || 'N/A',
         experience: 'N/A',
-        status: (apiDriver.status as 'Available' | 'On Trip') || 'Available',
+        status: 'Available',
         vehicle: apiDriver.vehicleNumber || 'Unassigned',
-        image: apiDriver.driverImageUrl || '/profile-pic.png',
+        vehicleType: apiDriver.vehicleType || 'N/A',
+        image: apiDriver.driverImagePath || '/profile-pic.png',
         rating: 0,
         totalTrips: 0,
         location: 'N/A',
-        joinedDate: apiDriver.createdAt || 'Recently joined',
+        joinedDate: 'Recently joined',
+        description: apiDriver.description || '',
         performance: {
           timelyDelivery: 0,
           tripEfficiency: 0,
@@ -355,10 +426,14 @@ export default function CompanyFleetPage() {
         },
         reviews: [],
       }));
+
+      console.log('[SaveDriver] Mapped drivers:', mappedDrivers);
       setDrivers(mappedDrivers);
       setIsDriverModalOpen(false);
     } catch (error: any) {
-      console.error('Error saving driver:', error);
+      console.error('[SaveDriver] Error saving driver:', error);
+      console.error('[SaveDriver] Error response:', error.response?.data);
+
       if (error.response?.data?.errors) {
         const errors = error.response.data.errors;
         const errorMessages = Object.entries(errors)
@@ -372,7 +447,9 @@ export default function CompanyFleetPage() {
           duration: 5000,
         });
       } else {
-        toast.error('Failed to save driver. Please try again.', {
+        const errorMsg =
+          error.response?.data?.message || error.message || 'Unknown error';
+        toast.error(`Failed to save driver: ${errorMsg}`, {
           id: loadingToast,
         });
       }

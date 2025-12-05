@@ -21,7 +21,8 @@ import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { getBidsForTrip, type TripBid } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import type { TripBid } from '@/types/api';
 
 const container = {
   hidden: { opacity: 0 },
@@ -48,12 +49,26 @@ function TripBidsInner() {
   const tripId = searchParams.get('tripId');
 
   const [bids, setBids] = useState<TripBid[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (tripId) {
-      const tripBids = getBidsForTrip(tripId);
-      setBids(tripBids);
-    }
+    const fetchBids = async () => {
+      if (tripId) {
+        try {
+          setIsLoading(true);
+          const response = await wheelboardApi.trip.getTripBids(tripId);
+          const bidsData = (response.data as any[]) || [];
+          setBids(bidsData);
+        } catch (error) {
+          console.error('Error fetching bids:', error);
+          setBids([]);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchBids();
   }, [tripId]);
 
   const handleAssignTrip = (bidId: string, bidderId: string) => {

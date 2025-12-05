@@ -36,19 +36,44 @@ export default function LoginPage() {
         // Save user session
         saveAuthUser(result.user, result.token);
 
-        // Redirect to role-specific home page
-        const role = result.user.userType;
-        const target =
-          role === 'company'
-            ? '/company/home'
-            : role === 'business'
-              ? '/business/home'
-              : '/professional/home';
+        // Check if profile is complete
+        if (!result.user.isProfileComplete) {
+          // Route to appropriate registration step 2 based on user type
+          const role = result.user.userType;
+          let target = '/register/company'; // Default to company registration
 
-        // Small delay to show success message, then navigate
-        setTimeout(() => {
-          router.push(target);
-        }, 800);
+          if (role === 'company') {
+            target = '/register/company';
+            setMessage('Please complete your profile to continue.');
+          } else if (role === 'business') {
+            target = '/register/business';
+            setMessage('Please complete your business profile to continue.');
+          } else if (role === 'professional') {
+            target = '/register/professional';
+            setMessage(
+              'Please complete your professional profile to continue.'
+            );
+          }
+
+          // Navigate to registration step 2
+          setTimeout(() => {
+            router.push(target);
+          }, 800);
+        } else {
+          // Profile is complete, redirect to role-specific home page
+          const role = result.user.userType;
+          const target =
+            role === 'company'
+              ? '/company/home'
+              : role === 'business'
+                ? '/business/home'
+                : '/professional/home';
+
+          // Small delay to show success message, then navigate
+          setTimeout(() => {
+            router.push(target);
+          }, 800);
+        }
       }
     } catch (error) {
       setMessageType('error');

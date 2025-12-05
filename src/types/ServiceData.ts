@@ -29,6 +29,8 @@ export interface ServiceData {
     hours?: string;
   };
   location?: string;
+  contactNumber?: string;
+  email?: string;
 }
 
 // Assignment/Booking related interfaces

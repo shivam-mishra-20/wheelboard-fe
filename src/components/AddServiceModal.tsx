@@ -47,8 +47,9 @@ export default function AddServiceModal({
     amount: editingService?.pricing?.amount || '',
     pricingDetails: editingService?.pricing?.details || '',
     location: editingService?.location || '',
-    phone: editingService?.contactInfo?.phone || '',
-    email: editingService?.contactInfo?.email || '',
+    phone:
+      editingService?.contactNumber || editingService?.contactInfo?.phone || '',
+    email: editingService?.email || editingService?.contactInfo?.email || '',
     selectedDays: editingService?.availability?.days || [
       'Monday',
       'Tuesday',
@@ -141,6 +142,8 @@ export default function AddServiceModal({
         hours: `${formData.startTime} - ${formData.endTime}`,
       },
       location: formData.location,
+      contactNumber: formData.phone,
+      email: formData.email,
       contactInfo: {
         phone: formData.phone,
         email: formData.email,
@@ -246,6 +249,7 @@ export default function AddServiceModal({
                         onChange={handleInputChange}
                         placeholder="+91 98765 43210"
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 pl-10 focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20"
+                        required
                       />
                     </div>
                   </div>

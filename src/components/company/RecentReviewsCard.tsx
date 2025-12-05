@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { MessageSquare, Star } from 'lucide-react';
-import { Driver } from '@/lib/mockApi';
+import { Driver } from '@/types/fleet';
 
 interface RecentReviewsCardProps {
   driver: Driver;

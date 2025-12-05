@@ -89,42 +89,53 @@ export default function CompanyJobsPage() {
       const response = await wheelboardApi.job.getJobListByUser(user.id);
       const jobsData = (response.data as any[]) || [];
 
-      // Map API response to Job format
-      const mappedJobs: Job[] = jobsData.map((apiJob: any) => ({
-        // API fields
-        jobId: apiJob.jobId,
-        userId: apiJob.userId,
-        role: apiJob.role || 'Untitled Job',
-        jobDuration: apiJob.jobDuration || 'Not specified',
-        openings: apiJob.openings || 1,
-        salary: apiJob.salary || 0,
-        city: apiJob.city || 'Unknown',
-        jobType: apiJob.jobType || 'Full-time',
-        description: apiJob.description || '',
-        imageUrls: apiJob.imageUrls || [],
-        createdAt: apiJob.createdAt || new Date().toISOString(),
-        modifiedAt: apiJob.modifiedAt,
-        status: (apiJob.status as 'Active' | 'Inactive' | 'Filled') || 'Active',
+      console.log('Raw API Response:', jobsData);
 
-        // UI compatibility fields
-        id: apiJob.jobId,
-        title: apiJob.role || 'Untitled Job',
-        location: apiJob.city || 'Unknown',
-        type:
-          (apiJob.jobType as
-            | 'Full-time'
-            | 'Part-time'
-            | 'Contract'
-            | 'Freelance') || 'Full-time',
-        department: 'Operations', // Default value
-        requirements: [], // Could be parsed from description
-        benefits: [], // Default empty
-        image: apiJob.imageUrls?.[0] || '/truck-01.jpg',
-        updatedAt: apiJob.modifiedAt,
-        urgent: false, // Default false
-        applications: [], // Will be populated when needed
-        views: 0, // Default 0
-      }));
+      // Map API response to Job format
+      const mappedJobs: Job[] = jobsData.map((apiJob: any) => {
+        // API returns imagePaths, not imageUrls
+        const imagePaths = apiJob.imagePaths || [];
+
+        const mappedJob = {
+          // API fields
+          jobId: apiJob.jobId,
+          userId: apiJob.userId || user.id,
+          role: apiJob.role || 'Untitled Job',
+          jobDuration: apiJob.jobDuration || 'Not specified',
+          openings: apiJob.openings || 1,
+          salary: apiJob.salary || 0,
+          city: apiJob.city || 'Unknown',
+          jobType: apiJob.jobType || 'Full-time',
+          description: apiJob.description || '',
+          imageUrls: imagePaths, // Map imagePaths to imageUrls
+          createdAt: apiJob.createdAt || new Date().toISOString(),
+          modifiedAt: apiJob.modifiedAt,
+          status:
+            (apiJob.status as 'Active' | 'Inactive' | 'Filled') || 'Active',
+
+          // UI compatibility fields
+          id: apiJob.jobId,
+          title: apiJob.role || 'Untitled Job',
+          location: apiJob.city || 'Unknown',
+          type:
+            (apiJob.jobType as
+              | 'Full-time'
+              | 'Part-time'
+              | 'Contract'
+              | 'Freelance') || 'Full-time',
+          department: 'Operations', // Default value
+          requirements: [], // Could be parsed from description
+          benefits: [], // Default empty
+          image: imagePaths[0] || '/truck-01.jpg', // Use imagePaths from API
+          updatedAt: apiJob.modifiedAt,
+          urgent: false, // Default false
+          applications: [], // Will be populated when needed
+          views: 0, // Default 0 (API doesn't return views for this endpoint)
+        };
+
+        console.log('Mapped Job:', mappedJob);
+        return mappedJob;
+      });
 
       setJobs(mappedJobs);
     } catch (err: any) {
@@ -145,9 +156,77 @@ export default function CompanyJobsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleViewApplications = (job: Job) => {
-    setSelectedJob(job);
-    setIsApplicationsModalOpen(true);
+  const handleViewApplications = async (job: Job) => {
+    try {
+      setSelectedJob(job);
+      setIsApplicationsModalOpen(true);
+
+      // Fetch applications from API
+      const response = await wheelboardApi.job.getJobApplications(job.jobId);
+      const applicationsData = (response.data as any[]) || [];
+
+      // Map API response to JobApplication format
+      const mappedApplications = applicationsData.map((app: any) => ({
+        id: app.applicationId || app.id,
+        applicationId: app.applicationId,
+        candidateName: app.applicantName || app.name || 'Unknown',
+        candidateEmail: app.email || '',
+        candidatePhone: app.phone || '',
+        location: app.location || '',
+        experience: app.experience || 'Not specified',
+        appliedDate: app.appliedAt || new Date().toISOString(),
+        status: (app.status || 'pending') as
+          | 'pending'
+          | 'reviewed'
+          | 'shortlisted'
+          | 'rejected',
+        coverLetter: app.coverLetter || '',
+        avatar: app.avatar || '',
+      }));
+
+      // Update the selected job with applications
+      setSelectedJob({ ...job, applications: mappedApplications });
+    } catch (error: any) {
+      console.error('Error fetching job applications:', error);
+      setToast({
+        message: error.message || 'Failed to fetch applications',
+        type: 'error',
+      });
+    }
+  };
+
+  const handleApplicationStatusUpdate = async (
+    applicationId: string,
+    newStatus: string
+  ) => {
+    try {
+      const user = api.getCurrentUser();
+      if (!user) {
+        setToast({ message: 'User not logged in', type: 'error' });
+        return;
+      }
+
+      // Call API to update status
+      await wheelboardApi.job.updateJobStatus({
+        applicationId,
+        status: newStatus,
+        modifiedUserId: user.id,
+      });
+
+      // Refresh applications for the selected job
+      if (selectedJob) {
+        await handleViewApplications(selectedJob);
+      }
+
+      setToast({ message: 'Application status updated!', type: 'success' });
+    } catch (error: any) {
+      console.error('Error updating application status:', error);
+      setToast({
+        message: error.message || 'Failed to update application status',
+        type: 'error',
+      });
+      throw error; // Re-throw to let modal handle loading state
+    }
   };
 
   const handleCreateJob = async (jobData: {
@@ -175,6 +254,8 @@ export default function CompanyJobsPage() {
         Description: jobData.description || '',
         JobType: jobData.type || 'Full-time',
         JobDuration: jobData.duration || 'Permanent',
+        Openings: parseInt(jobData.openings || '1'),
+        Salary: parseFloat(jobData.salary || '0'),
         Images: jobData.images,
       });
 
@@ -199,7 +280,7 @@ export default function CompanyJobsPage() {
     setIsCreateJobModalOpen(true);
   };
 
-  const handleSaveEditedJob = async (_jobData: {
+  const handleSaveEditedJob = async (jobData: {
     id?: string;
     jobType?: string;
     duration?: string;
@@ -210,15 +291,45 @@ export default function CompanyJobsPage() {
     description?: string;
     images?: File[];
   }) => {
-    // TODO: Implement job update API call when backend provides update endpoint
-    // For now, just close the modal
-    setToast({
-      message: 'Job update not yet implemented',
-      type: 'error',
-    });
-    setIsCreateJobModalOpen(false);
-    setIsEditMode(false);
-    setJobToEdit(null);
+    try {
+      const user = api.getCurrentUser();
+      if (!user) {
+        setToast({ message: 'User not logged in', type: 'error' });
+        return;
+      }
+
+      if (!jobData.id) {
+        setToast({ message: 'Job ID is required for update', type: 'error' });
+        return;
+      }
+
+      // Call real API
+      await wheelboardApi.job.updateJob({
+        JobId: jobData.id,
+        UserId: user.id,
+        Role: jobData.jobType || 'Updated Job',
+        City: jobData.city || 'Unknown',
+        Description: jobData.description || '',
+        JobType: jobData.type || 'Full-time',
+        JobDuration: jobData.duration || 'Permanent',
+        Openings: parseInt(jobData.openings || '1'),
+        Salary: parseFloat(jobData.salary || '0'),
+        NewImages: jobData.images,
+      });
+
+      // Refresh jobs list after successful update
+      await fetchJobs();
+      setToast({ message: 'Job updated successfully!', type: 'success' });
+      setIsCreateJobModalOpen(false);
+      setIsEditMode(false);
+      setJobToEdit(null);
+    } catch (error: any) {
+      console.error('Error updating job:', error);
+      setToast({
+        message: error.message || 'Failed to update job',
+        type: 'error',
+      });
+    }
   };
 
   const handleDeleteClick = (job: Job) => {
@@ -227,14 +338,33 @@ export default function CompanyJobsPage() {
   };
 
   const confirmDelete = async () => {
-    // TODO: Implement job delete API call when backend provides delete endpoint
-    // For now, just close the modal
-    setToast({
-      message: 'Job deletion not yet implemented',
-      type: 'error',
-    });
-    setIsDeleteModalOpen(false);
-    setJobToDelete(null);
+    try {
+      const user = api.getCurrentUser();
+      if (!user) {
+        setToast({ message: 'User not logged in', type: 'error' });
+        return;
+      }
+
+      if (!jobToDelete) {
+        setToast({ message: 'No job selected for deletion', type: 'error' });
+        return;
+      }
+
+      // Call real API
+      await wheelboardApi.job.deleteJob(jobToDelete.jobId, user.id);
+
+      // Refresh jobs list after successful deletion
+      await fetchJobs();
+      setToast({ message: 'Job deleted successfully!', type: 'success' });
+      setIsDeleteModalOpen(false);
+      setJobToDelete(null);
+    } catch (error: any) {
+      console.error('Error deleting job:', error);
+      setToast({
+        message: error.message || 'Failed to delete job',
+        type: 'error',
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -522,7 +652,9 @@ export default function CompanyJobsPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4 text-primary-500" />
-                              <span className="truncate">{job.salary}</span>
+                              <span className="truncate">
+                                ₹{job.salary.toLocaleString('en-IN')}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4 text-primary-500" />
@@ -541,6 +673,16 @@ export default function CompanyJobsPage() {
 
                           {/* Stats Bar */}
                           <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg bg-gray-50 px-4 py-2 text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <Briefcase className="h-4 w-4 text-green-500" />
+                              <span className="font-semibold text-gray-900">
+                                {job.openings}
+                              </span>
+                              <span className="text-gray-600">
+                                {job.openings === 1 ? 'Opening' : 'Openings'}
+                              </span>
+                            </div>
+                            <div className="h-4 w-px bg-gray-300"></div>
                             <div className="flex items-center gap-1.5">
                               <Users className="h-4 w-4 text-blue-500" />
                               <span className="font-semibold text-gray-900">
@@ -612,7 +754,8 @@ export default function CompanyJobsPage() {
             setSelectedJob(null);
           }}
           jobTitle={selectedJob.title}
-          applications={[]} // TODO: Convert API applications to modal format
+          applications={selectedJob.applications || []}
+          onStatusUpdate={handleApplicationStatusUpdate}
         />
       )}
 

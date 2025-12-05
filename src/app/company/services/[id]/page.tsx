@@ -11,265 +11,134 @@ import {
   Phone,
   MessageCircle,
   CheckCircle2,
-  TrendingUp,
-  Award,
   Users,
-  Calendar,
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginSimulator from '@/components/LoginSimulator';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import Img from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ServiceAssignmentModal from '@/components/ServiceAssignmentModal';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import toast from 'react-hot-toast';
 
-// This would typically come from an API or database
-const mockServiceDetails = {
-  s1: {
-    id: 's1',
-    name: 'Express Delivery Service',
-    category: 'Transport',
-    description:
-      'Fast and reliable delivery for time-sensitive shipments with real-time tracking and dedicated support. Our express delivery service ensures your cargo reaches its destination on time, every time. We handle everything from documentation to last-mile delivery with utmost care and professionalism.',
-    provider: 'QuickTransit Logistics',
-    location: 'Pan India',
-    rating: 4.8,
-    reviews: 245,
-    price: 5000,
-    priceUnit: 'per trip',
-    availability: 'On-demand',
-    timing: '24/7',
-    responseTime: '< 2 hours',
-    coverage: 'Pan India',
-    status: 'verified',
-    image: '/truck-01.jpg',
-    features: [
-      'Real-time GPS tracking',
-      'Dedicated support team',
-      'Insurance coverage included',
-      'Express delivery guarantee',
-      'Professional drivers',
-      '24/7 customer support',
-    ],
-    stats: {
-      projectsCompleted: '2,500+',
-      yearsExperience: '8',
-      successRate: '99.2%',
-      customerSatisfaction: '4.8/5',
-    },
-  },
-  s2: {
-    id: 's2',
-    name: 'Warehouse Storage',
-    category: 'Storage',
-    description:
-      'Secure storage facilities with 24/7 monitoring and climate control. Perfect for businesses needing flexible storage solutions with easy access. Our warehouse facilities are equipped with modern security systems, fire protection, and inventory management tools to keep your goods safe.',
-    provider: 'SafeStore Solutions',
-    location: 'Metro Cities',
-    rating: 4.7,
-    reviews: 189,
-    price: 15000,
-    priceUnit: 'per month',
-    availability: 'Always Available',
-    timing: '24/7 Access',
-    responseTime: '24 hours',
-    coverage: 'Metro Cities',
-    status: 'verified',
-    image: '/mining-truck.jpg',
-    features: [
-      '24/7 CCTV surveillance',
-      'Climate-controlled environment',
-      'Fire safety systems',
-      'Flexible rental terms',
-      'Easy loading/unloading access',
-      'Inventory management support',
-    ],
-    stats: {
-      projectsCompleted: '850+',
-      yearsExperience: '15',
-      successRate: '98.5%',
-      customerSatisfaction: '4.7/5',
-    },
-  },
-  s3: {
-    id: 's3',
-    name: 'Vehicle Insurance Premium',
-    category: 'Insurance',
-    description:
-      'Comprehensive coverage for your fleet with competitive premiums and hassle-free claims. Protect your business assets with our tailored insurance solutions that cover accidents, theft, third-party liability, and natural disasters. Quick claim processing and dedicated support team.',
-    provider: 'Shield Insurance Co.',
-    location: 'Nationwide',
-    rating: 4.9,
-    reviews: 312,
-    price: 25000,
-    priceUnit: 'per year',
-    availability: 'Instant Quote',
-    timing: 'Online 24/7',
-    responseTime: 'Instant',
-    coverage: 'Nationwide',
-    status: 'verified',
-    image: '/red-truck.png',
-    features: [
-      'Comprehensive coverage',
-      'Third-party liability',
-      'Theft and accident protection',
-      'Natural disaster coverage',
-      'Quick claim settlement',
-      'Dedicated claim support',
-    ],
-    stats: {
-      projectsCompleted: '5,000+',
-      yearsExperience: '20',
-      successRate: '99.5%',
-      customerSatisfaction: '4.9/5',
-    },
-  },
-  s4: {
-    id: 's4',
-    name: 'Fleet Maintenance',
-    category: 'Maintenance',
-    description:
-      'Regular servicing and emergency repairs for your entire fleet. Our certified technicians provide comprehensive maintenance services including engine diagnostics, brake systems, tire rotation, oil changes, and emergency roadside assistance. Keep your vehicles running smoothly and safely.',
-    provider: 'AutoCare Services',
-    location: 'Major Cities',
-    rating: 4.6,
-    reviews: 156,
-    price: 8000,
-    priceUnit: 'per service',
-    availability: 'Scheduled',
-    timing: 'Mon-Sat 8AM - 6PM',
-    responseTime: '< 4 hours',
-    coverage: 'Major Cities',
-    status: 'verified',
-    image: '/excavator.jpg',
-    features: [
-      'Certified mechanics',
-      'Complete diagnostic tools',
-      'Genuine spare parts',
-      'Emergency roadside assistance',
-      'Preventive maintenance plans',
-      'Service history tracking',
-    ],
-    stats: {
-      projectsCompleted: '3,200+',
-      yearsExperience: '10',
-      successRate: '97.8%',
-      customerSatisfaction: '4.6/5',
-    },
-  },
-  s5: {
-    id: 's5',
-    name: 'Overnight Cargo',
-    category: 'Transport',
-    description:
-      'Night-time deliveries for large shipments with specialized handling. Perfect for businesses that need to move goods during off-peak hours. Our overnight cargo service ensures your shipments travel efficiently while avoiding daytime traffic, with full tracking and security.',
-    provider: 'NightHaul Express',
-    location: 'Regional',
-    rating: 4.5,
-    reviews: 98,
-    price: 12000,
-    priceUnit: 'per shipment',
-    availability: 'Night Only',
-    timing: '8PM - 6AM',
-    responseTime: '< 3 hours',
-    coverage: 'Regional',
-    status: 'verified',
-    image: '/Yellow-truck.jpg',
-    features: [
-      'Specialized night-time logistics',
-      'Large cargo capacity',
-      'GPS tracking',
-      'Experienced drivers',
-      'Secure transportation',
-      'Flexible scheduling',
-    ],
-    stats: {
-      projectsCompleted: '1,800+',
-      yearsExperience: '6',
-      successRate: '96.5%',
-      customerSatisfaction: '4.5/5',
-    },
-  },
-  s6: {
-    id: 's6',
-    name: 'Cold Storage',
-    category: 'Storage',
-    description:
-      'Temperature-controlled storage for perishables with precise climate management. Ideal for food, pharmaceuticals, and other temperature-sensitive goods. Our cold storage facilities maintain consistent temperatures with backup power systems and regular monitoring.',
-    provider: 'FreshKeep Logistics',
-    location: 'Select Cities',
-    rating: 4.8,
-    reviews: 134,
-    price: 20000,
-    priceUnit: 'per month',
-    availability: 'Limited',
-    timing: '24/7 Monitoring',
-    responseTime: '12 hours',
-    coverage: 'Select Cities',
-    status: 'verified',
-    image: '/black-truck.png',
-    features: [
-      'Temperature-controlled (2-8°C)',
-      'Backup power systems',
-      '24/7 temperature monitoring',
-      'FSSAI certified',
-      'Hygiene compliance',
-      'Quick access for urgent needs',
-    ],
-    stats: {
-      projectsCompleted: '650+',
-      yearsExperience: '12',
-      successRate: '99.1%',
-      customerSatisfaction: '4.8/5',
-    },
-  },
-};
+// Service Details Interface
+interface ServiceDetails {
+  contactNumber: string;
+  whatsappNumber: string;
+  description: string;
+  pricingOption: string;
+  amount: number;
+  businessHoursFrom: string;
+  businessHoursTo: string;
+  daysOpen: string;
+  serviceId: string;
+  serviceTitle: string;
+  city: string;
+  fullAddress: string;
+  isAvailable: boolean;
+  businessName: string;
+  businessType: string;
+}
 
 export default function ServiceDetailPage() {
   const router = useRouter();
   const params = useParams();
   const serviceId = params?.id as string | undefined;
-  const service = serviceId
-    ? mockServiceDetails[serviceId as keyof typeof mockServiceDetails]
-    : undefined;
 
+  const [service, setService] = useState<ServiceDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
+
+  // Fetch service details from API
+  useEffect(() => {
+    const fetchServiceDetails = async () => {
+      if (!serviceId) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response =
+          await wheelboardApi.service.getServiceDetails(serviceId);
+
+        if (response.success && response.data) {
+          setService(response.data as ServiceDetails);
+        } else {
+          setError('Failed to load service details');
+          toast.error('Failed to load service details');
+        }
+      } catch (err) {
+        console.error('Error fetching service details:', err);
+        setError('Failed to load service details');
+        toast.error('Error loading service details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServiceDetails();
+  }, [serviceId]);
 
   const openAssignmentModal = () => setAssignmentModalOpen(true);
   const closeAssignmentModal = () => setAssignmentModalOpen(false);
 
+  const handleAssignService = async () => {
+    toast.success('Service assigned successfully!');
+    closeAssignmentModal();
+  };
+
   // Map page service shape to modal's expected Service shape
   const modalService = service
     ? {
-        id: service.id,
-        name: service.name,
-        category: service.category.toLowerCase(),
+        id: service.serviceId,
+        name: service.serviceTitle,
+        category: service.businessType.toLowerCase(),
         description: service.description,
-        provider: service.provider,
-        rating: service.rating,
-        reviews: service.reviews,
-        price: service.price,
-        status: service.status,
-        coverage: service.coverage ?? service.location,
-        response: service.responseTime ?? '',
+        provider: service.businessName,
+        rating: 4.5, // Default rating since not in API
+        reviews: 0, // Default reviews since not in API
+        price: service.amount,
+        status: service.isAvailable ? 'active' : 'inactive',
+        coverage: service.city,
+        response: '< 24 hours',
         icon: null,
+        businessHoursFrom: service.businessHoursFrom,
+        businessHoursTo: service.businessHoursTo,
+        daysOpen: service.daysOpen,
       }
     : null;
 
-  // If service not found, show error or redirect
-  if (!service) {
+  // Loading state
+  if (loading) {
     return (
       <CompanyProtected>
         <Header />
-        <div className="flex min-h-screen items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-16">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[#f36969]" />
+            <p className="text-gray-600">Loading service details...</p>
+          </div>
+        </div>
+      </CompanyProtected>
+    );
+  }
+
+  // Error or not found state
+  if (error || !service) {
+    return (
+      <CompanyProtected>
+        <Header />
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-16">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900">
-              Service not found
+              {error || 'Service not found'}
             </h1>
             <button
               onClick={() => router.back()}
-              className="mt-4 text-[#f36969] hover:underline"
+              className="mt-4 rounded-xl bg-[#f36969] px-6 py-2.5 font-semibold text-white transition-colors hover:bg-[#e85555]"
             >
               Go back
             </button>
@@ -278,6 +147,9 @@ export default function ServiceDetailPage() {
       </CompanyProtected>
     );
   }
+
+  // Default rating for display (since not in API response)
+  const displayRating = 4.5;
 
   const renderStars = (rating: number) => {
     return (
@@ -329,17 +201,17 @@ export default function ServiceDetailPage() {
                 {/* Service Image */}
                 <div className="relative h-64 w-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600">
                   <Img
-                    src={service.image}
+                    src="/truck-01.jpg"
                     width={800}
                     height={600}
-                    alt={service.name}
+                    alt={service.serviceTitle}
                     className="h-full w-full object-cover"
                   />
                   <div className="absolute right-4 top-4 rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
-                    {service.status === 'verified' && (
+                    {service.isAvailable && (
                       <div className="flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" />
-                        Verified
+                        Available
                       </div>
                     )}
                   </div>
@@ -349,22 +221,22 @@ export default function ServiceDetailPage() {
                 <div className="p-6 sm:p-8">
                   <div className="mb-4">
                     <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                      {service.category}
+                      {service.businessType}
                     </span>
                   </div>
 
                   <h1 className="mb-3 text-3xl font-bold text-gray-900 sm:text-4xl">
-                    {service.name}
+                    {service.serviceTitle}
                   </h1>
 
                   <div className="mb-6 flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
-                      {renderStars(service.rating)}
+                      {renderStars(displayRating)}
                       <span className="text-lg font-bold text-gray-900">
-                        {service.rating}
+                        {displayRating}
                       </span>
                       <span className="text-sm text-gray-500">
-                        ({service.reviews} reviews)
+                        (verified service)
                       </span>
                     </div>
                   </div>
@@ -375,9 +247,9 @@ export default function ServiceDetailPage() {
                       <Users className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Workshop</p>
+                      <p className="text-sm text-gray-600">Service Provider</p>
                       <p className="font-semibold text-gray-900">
-                        {service.provider}
+                        {service.businessName}
                       </p>
                     </div>
                   </div>
@@ -392,23 +264,57 @@ export default function ServiceDetailPage() {
                     </p>
                   </div>
 
-                  {/* Features */}
+                  {/* Service Details */}
                   <div>
                     <h2 className="mb-3 text-xl font-bold text-gray-900">
-                      What&apos;s Included
+                      Service Information
                     </h2>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {service.features.map((feature, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-2 rounded-lg bg-green-50 p-3"
-                        >
-                          <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
-                          <span className="text-sm text-gray-700">
-                            {feature}
-                          </span>
+                      <div className="flex items-start gap-2 rounded-lg bg-blue-50 p-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                        <div className="text-sm">
+                          <p className="font-semibold text-gray-900">
+                            Business Hours
+                          </p>
+                          <p className="text-gray-700">
+                            {service.businessHoursFrom} -{' '}
+                            {service.businessHoursTo}
+                          </p>
                         </div>
-                      ))}
+                      </div>
+                      <div className="flex items-start gap-2 rounded-lg bg-blue-50 p-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                        <div className="text-sm">
+                          <p className="font-semibold text-gray-900">
+                            Days Open
+                          </p>
+                          <p className="text-gray-700">{service.daysOpen}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2 rounded-lg bg-blue-50 p-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                        <div className="text-sm">
+                          <p className="font-semibold text-gray-900">Pricing</p>
+                          <p className="text-gray-700">
+                            {service.pricingOption === 'True'
+                              ? 'Fixed Price'
+                              : 'Variable'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2 rounded-lg bg-green-50 p-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
+                        <div className="text-sm">
+                          <p className="font-semibold text-gray-900">
+                            Availability
+                          </p>
+                          <p className="text-gray-700">
+                            {service.isAvailable
+                              ? 'Available Now'
+                              : 'Currently Unavailable'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -422,44 +328,35 @@ export default function ServiceDetailPage() {
                 className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
               >
                 <h2 className="mb-4 text-xl font-bold text-gray-900">
-                  Performance Metrics
+                  Service Highlights
                 </h2>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <div className="text-center">
                     <div className="mb-2 flex items-center justify-center">
-                      <TrendingUp className="h-8 w-8 text-[#f36969]" />
+                      <Star className="h-8 w-8 fill-yellow-400 text-yellow-400" />
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
-                      {service.stats.projectsCompleted}
+                      {displayRating}
                     </p>
-                    <p className="text-xs text-gray-600">Projects Done</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="mb-2 flex items-center justify-center">
-                      <Award className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {service.stats.yearsExperience}
-                    </p>
-                    <p className="text-xs text-gray-600">Years Exp.</p>
+                    <p className="text-xs text-gray-600">Rating</p>
                   </div>
                   <div className="text-center">
                     <div className="mb-2 flex items-center justify-center">
                       <CheckCircle2 className="h-8 w-8 text-green-600" />
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
-                      {service.stats.successRate}
+                      {service.isAvailable ? 'Yes' : 'No'}
                     </p>
-                    <p className="text-xs text-gray-600">Success Rate</p>
+                    <p className="text-xs text-gray-600">Available</p>
                   </div>
                   <div className="text-center">
                     <div className="mb-2 flex items-center justify-center">
-                      <Star className="h-8 w-8 fill-yellow-400 text-yellow-400" />
+                      <MapPin className="h-8 w-8 text-[#f36969]" />
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
-                      {service.stats.customerSatisfaction}
+                      {service.city}
                     </p>
-                    <p className="text-xs text-gray-600">Rating</p>
+                    <p className="text-xs text-gray-600">Location</p>
                   </div>
                 </div>
               </motion.div>
@@ -481,13 +378,15 @@ export default function ServiceDetailPage() {
 
                   {/* Price */}
                   <div className="mb-6 rounded-lg bg-gradient-to-br from-[#f36969] to-[#e85555] p-4 text-white">
-                    <p className="mb-1 text-sm opacity-90">Starting from</p>
+                    <p className="mb-1 text-sm opacity-90">Service Price</p>
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold">
-                        ₹{service.price.toLocaleString()}
+                        ₹{service.amount.toLocaleString()}
                       </span>
                       <span className="text-sm opacity-90">
-                        / {service.priceUnit}
+                        {service.pricingOption === 'True'
+                          ? '/ Fixed'
+                          : '/ Variable'}
                       </span>
                     </div>
                   </div>
@@ -501,7 +400,7 @@ export default function ServiceDetailPage() {
                           Location
                         </p>
                         <p className="text-sm text-gray-600">
-                          {service.location}
+                          {service.fullAddress}, {service.city}
                         </p>
                       </div>
                     </div>
@@ -513,31 +412,32 @@ export default function ServiceDetailPage() {
                           Working Hours
                         </p>
                         <p className="text-sm text-gray-600">
-                          Mon-Sat • {service.timing}
+                          {service.daysOpen} • {service.businessHoursFrom} -{' '}
+                          {service.businessHoursTo}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <Shield className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-600" />
+                      <Phone className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-600" />
                       <div>
                         <p className="text-sm font-semibold text-gray-900">
-                          Response Time
+                          Contact
                         </p>
                         <p className="text-sm text-gray-600">
-                          {service.responseTime}
+                          {service.contactNumber}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-600" />
+                      <MessageCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-600" />
                       <div>
                         <p className="text-sm font-semibold text-gray-900">
-                          Availability
+                          WhatsApp
                         </p>
                         <p className="text-sm text-gray-600">
-                          {service.availability}
+                          {service.whatsappNumber}
                         </p>
                       </div>
                     </div>
@@ -548,6 +448,9 @@ export default function ServiceDetailPage() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      onClick={() =>
+                        window.open(`tel:${service.contactNumber}`, '_self')
+                      }
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 px-6 py-3.5 font-semibold text-white shadow-lg transition-all hover:shadow-xl"
                     >
                       <Phone className="h-5 w-5" />
@@ -557,6 +460,12 @@ export default function ServiceDetailPage() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      onClick={() =>
+                        window.open(
+                          `https://wa.me/${service.whatsappNumber.replace(/[^0-9]/g, '')}`,
+                          '_blank'
+                        )
+                      }
                       className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-green-500 bg-white px-6 py-3.5 font-semibold text-green-600 transition-all hover:bg-green-50"
                     >
                       <MessageCircle className="h-5 w-5" />
@@ -580,11 +489,7 @@ export default function ServiceDetailPage() {
                   isOpen={assignmentModalOpen}
                   onClose={closeAssignmentModal}
                   service={modalService}
-                  onAssign={(sid) => {
-                    // TODO: wire real assign API here. sid is the assigned service id
-                    console.log('assigned', sid);
-                    closeAssignmentModal();
-                  }}
+                  onAssign={handleAssignService}
                 />
 
                 {/* Info Card */}

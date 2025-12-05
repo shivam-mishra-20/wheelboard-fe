@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, saveAuthUser } from '@/lib/apiAdapter';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 import { BusinessRegistrationStep2 } from '@/lib/mockApi';
 
 export default function BusinessRegisterPage() {
@@ -17,13 +18,14 @@ export default function BusinessRegisterPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // userId created in Step 1
+  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
 
   // Step 2 data
   const [step2Data, setStep2Data] = useState<BusinessRegistrationStep2>({
     businessName: '',
     businessAddress: '',
     city: '',
-    state: '',
     zipCode: '',
     email: '',
     phone: '',
@@ -69,7 +71,65 @@ export default function BusinessRegisterPage() {
         return;
       }
 
-      // Move to step 2
+      // Step 1 now performs company signup to obtain userId
+      const signupResponse = await wheelboardApi.user.companySignup({
+        companyName,
+        mobileNo: phoneNumber,
+        email: '', // email collected in step 2
+        password,
+        businessCategory: 'Service Provider',
+      });
+
+      if (
+        !signupResponse.success ||
+        !signupResponse.data ||
+        !(signupResponse.data as any).userId
+      ) {
+        setMessageType('error');
+        setMessage(signupResponse.message || 'Failed to create account.');
+        return;
+      }
+
+      const userId: string = (signupResponse.data as any).userId;
+      setCreatedUserId(userId);
+
+      // Optional: perform login to get auth token for protected endpoints
+      try {
+        const loginResp = await wheelboardApi.user.login({
+          mobileNo: phoneNumber,
+          password,
+        });
+        if (loginResp.success && loginResp.data) {
+          const data = loginResp.data as any;
+          const rawUserType: string =
+            data.userType?.toLowerCase?.() || 'company';
+          // Force service provider business category to be treated as 'business'
+          const mappedUserType: 'professional' | 'company' | 'business' =
+            data.businessCategory === 'Service Provider'
+              ? 'business'
+              : (rawUserType as 'professional' | 'company' | 'business');
+          // Prefer userId from login response if provided
+          if (data.userId) {
+            setCreatedUserId(data.userId);
+          }
+          saveAuthUser({
+            id: data.userId || userId,
+            email: data.email || '',
+            mobileNo: data.mobileNo || phoneNumber,
+            userType: mappedUserType,
+            companyName: companyName,
+            businessCategory: data.businessCategory || 'Service Provider',
+            createdAt: new Date().toISOString(),
+          });
+          if (data.token) {
+            localStorage.setItem('authToken', data.token);
+          }
+        }
+      } catch {
+        // login may fail if not immediately available; continue anyway
+      }
+
+      // Proceed to Step 2 and prefill UI
       setCurrentStep(2);
       setStep2Data((prev) => ({
         ...prev,
@@ -129,42 +189,76 @@ export default function BusinessRegisterPage() {
         return;
       }
 
-      // Submit complete registration using unified API
-      const result = await api.register({
-        userType: 'business',
-        companyName,
-        businessName: step2Data.businessName,
-        email: step2Data.email,
-        mobileNo: phoneNumber,
-        phoneNumber, // Backward compatibility
-        password,
-        businessCategory: 'service-provider',
+      // Resolve userId to use: prefer login/session id over signup id
+      const sessionUser = api.getCurrentUser();
+      const effectiveUserId = sessionUser?.id || createdUserId;
+      if (!effectiveUserId) {
+        setMessageType('error');
+        setMessage('Account not found. Please complete Step 1 again.');
+        return;
+      }
+
+      // Prepare payload for complete-service-provider
+      const whatsApp =
+        (step2Data as unknown as Record<string, string>).whatsApp || '';
+      const response = await wheelboardApi.user.completeServiceProvider({
+        UserId: effectiveUserId,
+        BusinessName: step2Data.businessName || companyName,
+        GSTNumber: step2Data.gstNumber || '',
+        BusinessType: (step2Data.businessType || []).join(', '),
+        ServicesOffered: (step2Data.servicesOffered || []).join(', '),
+        BusinessAddress: step2Data.businessAddress,
+        City: step2Data.city,
+        PhoneNumber: step2Data.phone || phoneNumber,
+        Email: step2Data.email,
+        WhatsAppNumber: whatsApp,
+        BusinessLogo: step2Data.logo,
+        Description: step2Data.description,
       });
 
-      setMessageType(result.success ? 'success' : 'error');
-      setMessage(result.message);
+      setMessageType(response.success ? 'success' : 'error');
+      setMessage(response.message);
 
-      if (result.success) {
-        // Save user session if returned
-        if (result.user) {
-          saveAuthUser(result.user, result.token);
-        }
-
-        // Redirect to the appropriate home for the new account
-        setTimeout(() => {
-          if (result.user) {
-            const redirectMap: Record<string, string> = {
-              company: '/company/home',
-              business: '/business/home',
-              professional: '/professional/home',
-            };
-            const target =
-              redirectMap[result.user.userType] || '/business/home';
-            router.replace(target);
+      if (response.success) {
+        // Fetch updated profile to determine correct redirect and update stored user
+        try {
+          const profile =
+            await wheelboardApi.user.getUserProfile(effectiveUserId);
+          if (profile.success && profile.data) {
+            const p: any = profile.data;
+            const mappedUserType: 'professional' | 'company' | 'business' =
+              p.businessCategory === 'Service Provider'
+                ? 'business'
+                : ((p.userType?.toLowerCase?.() || 'company') as
+                    | 'professional'
+                    | 'company'
+                    | 'business');
+            saveAuthUser({
+              id: p.userId || effectiveUserId,
+              email: p.email || '',
+              mobileNo: p.mobileNo || phoneNumber,
+              userType: mappedUserType,
+              companyName: p.companyName || companyName,
+              businessCategory: p.businessCategory || 'Service Provider',
+              createdAt: new Date().toISOString(),
+            });
+            setTimeout(() => {
+              router.replace(
+                mappedUserType === 'business'
+                  ? '/business/home'
+                  : '/company/home'
+              );
+            }, 1000);
           } else {
-            router.replace('/login');
+            setTimeout(() => {
+              router.replace('/business/home');
+            }, 1000);
           }
-        }, 1500);
+        } catch {
+          setTimeout(() => {
+            router.replace('/business/home');
+          }, 1000);
+        }
       }
     } catch (error) {
       setMessageType('error');

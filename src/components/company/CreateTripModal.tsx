@@ -135,25 +135,62 @@ export default function CreateTripModal({
     setStep('form');
   };
 
-  const handlePostTrip = () => {
-    // Here you would make an API call to create the trip
-    console.log('Creating trip:', formData);
+  const handlePostTrip = async () => {
+    try {
+      const user = api.getCurrentUser();
+      if (!user) {
+        alert('Please log in to create a trip');
+        return;
+      }
 
-    // Call the success callback
-    onTripCreated();
+      // Call the add-trip API
+      console.log('Creating trip with data:', {
+        UserId: user.id,
+        VehicleId: formData.vehicleId,
+        DriverId: '',
+        PickupLocation: formData.pickupLocation,
+        DeliveryLocation: formData.deliveryLocation,
+        PickupDate: formData.pickupDate,
+        PickupTime: formData.pickupTime,
+        SpecialInstructions: formData.specialInstructions,
+        PayRange: formData.payRange,
+        TripStatus: 'Upcoming',
+      });
 
-    // Reset form and close modal
-    setFormData({
-      vehicleId: '',
-      pickupLocation: '',
-      deliveryLocation: '',
-      pickupDate: '',
-      pickupTime: '',
-      specialInstructions: '',
-      payRange: '',
-    });
-    setStep('form');
-    onClose();
+      const response = await wheelboardApi.trip.addTrip({
+        UserId: user.id,
+        VehicleId: formData.vehicleId,
+        DriverId: '', // Will be assigned later via bidding
+        PickupLocation: formData.pickupLocation,
+        DeliveryLocation: formData.deliveryLocation,
+        PickupDate: formData.pickupDate,
+        PickupTime: formData.pickupTime,
+        SpecialInstructions: formData.specialInstructions,
+        PayRange: formData.payRange,
+        TripStatus: 'Upcoming', // Changed from 'Pending' to 'Upcoming'
+      });
+
+      console.log('Trip created successfully:', response);
+
+      // Call the success callback
+      onTripCreated();
+
+      // Reset form and close modal
+      setFormData({
+        vehicleId: '',
+        pickupLocation: '',
+        deliveryLocation: '',
+        pickupDate: '',
+        pickupTime: '',
+        specialInstructions: '',
+        payRange: '',
+      });
+      setStep('form');
+      onClose();
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      alert('Failed to create trip. Please try again.');
+    }
   };
 
   const handleClose = () => {

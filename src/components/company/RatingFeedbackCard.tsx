@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Star, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Driver } from '@/lib/mockApi';
+import { Driver } from '@/types/fleet';
 
 interface RatingFeedbackCardProps {
   driver: Driver;

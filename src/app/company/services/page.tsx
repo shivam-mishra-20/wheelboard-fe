@@ -17,6 +17,7 @@ import {
   Settings,
   TrendingUp,
   Eye,
+  Calendar,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import Header from '@/components/Header';
@@ -25,6 +26,8 @@ import LoginSimulator from '@/components/LoginSimulator';
 import ServiceEnquiryModal from '@/components/ServiceEnquiryModal';
 import ServiceAssignmentModal from '@/components/ServiceAssignmentModal';
 import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+import toast from 'react-hot-toast';
 
 // UI Service interface (separate from API)
 interface Service {
@@ -168,11 +171,23 @@ const categoryConfig = {
   },
 };
 
+// Assignment interface for tracking
+interface Assignment {
+  assignmentId: string;
+  serviceId: string;
+  assignedToUserId: string;
+  vehicleNumber: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  description: string;
+  status: string;
+}
+
 export default function ServicesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [assignedServices, setAssignedServices] = useState<string[]>([]);
+  const [assignedServices, setAssignedServices] = useState<Assignment[]>([]);
   const [serviceEnquiryModalOpen, setServiceEnquiryModalOpen] = useState(false);
   const [serviceAssignmentModalOpen, setServiceAssignmentModalOpen] =
     useState(false);
@@ -190,59 +205,69 @@ export default function ServicesPage() {
         setIsLoading(true);
 
         // Get current user
-        const user = wheelboardApi.getCurrentUser?.() || {
+        const user = api.getCurrentUser() || {
           id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
         };
         setCurrentUser(user);
+        console.log('👤 Current User:', user);
 
-        // Fetch all available services from master data
+        // Fetch all available services
         const servicesResponse =
-          await wheelboardApi.masterData.getAllServices();
+          await wheelboardApi.service.getAllServiceList();
         console.log('🔍 Services API Response:', servicesResponse);
 
-        // API returns flat array directly: [{id, serviceName}, ...]
+        // Extract data from response
         const servicesData: any[] = Array.isArray(servicesResponse)
           ? servicesResponse
-          : [];
+          : Array.isArray(servicesResponse?.data)
+            ? servicesResponse.data
+            : [];
         console.log('📦 Parsed Services Data:', servicesData);
 
         // Fetch assigned services for current user
-        let assignedServiceIds: string[] = [];
         try {
+          console.log('🔄 Fetching assigned services for user:', user.id);
           const assignedResponse =
             await wheelboardApi.service.getAssignedServices(user.id);
-          console.log('✅ Assigned Services Response:', assignedResponse);
-          // API returns flat array directly or empty array
-          const assignedData: any[] = Array.isArray(assignedResponse)
+          console.log('✅ Assigned Services Raw Response:', assignedResponse);
+
+          // API returns flat array directly or nested in data property
+          const assignedData: Assignment[] = Array.isArray(assignedResponse)
             ? assignedResponse
-            : [];
-          assignedServiceIds = assignedData.map(
-            (a: any) => a.serviceId || a.id
-          );
-          setAssignedServices(assignedServiceIds);
-          console.log('📌 Assigned Service IDs:', assignedServiceIds);
+            : Array.isArray(assignedResponse?.data)
+              ? assignedResponse.data
+              : [];
+
+          console.log('📌 Assigned Services Parsed:', assignedData);
+          console.log('📊 Number of assigned services:', assignedData.length);
+          setAssignedServices(assignedData);
         } catch (err) {
-          console.log('No assigned services yet:', err);
+          console.error('❌ Error fetching assigned services:', err);
+          setAssignedServices([]);
         }
 
         // Map API services to UI format
-        // API only returns: {id: string, serviceName: string}
+        // API returns: {serviceId, serviceTitle, city, fullAddress, isAvailable, businessName, businessType}
         const mappedServices: Service[] = servicesData.map(
-          (apiService: any, index: number) => {
-            const serviceName =
-              apiService.serviceName ||
-              apiService.name ||
-              `Service ${index + 1}`;
+          (apiService: any) => {
+            const serviceName = apiService.serviceTitle || 'Untitled Service';
             const lowerName = serviceName.toLowerCase();
 
-            // Icon mapping based on service name
+            // Icon mapping based on service name and business type
             const getIcon = () => {
-              if (lowerName.includes('tyre') || lowerName.includes('tire'))
+              const lowerType = (apiService.businessType || '').toLowerCase();
+
+              if (
+                lowerName.includes('tyre') ||
+                lowerName.includes('tire') ||
+                lowerType.includes('dealer')
+              )
                 return Settings;
               if (
                 lowerName.includes('vehicle') ||
                 lowerName.includes('maintenance') ||
-                lowerName.includes('repair')
+                lowerName.includes('repair') ||
+                lowerType.includes('manufacturer')
               )
                 return Settings;
               if (
@@ -287,33 +312,34 @@ export default function ServicesPage() {
               return 'maintenance';
             };
 
-            // Description based on service name
+            // Description based on service info
             const getDescription = () => {
+              if (apiService.businessName && apiService.businessType) {
+                return `${apiService.businessType} service provided by ${apiService.businessName}`;
+              }
               if (lowerName.includes('tyre'))
                 return 'Professional tyre services including replacement, repair, and maintenance';
-              if (lowerName.includes('retreader'))
-                return 'Expert tyre retreading services for cost-effective solutions';
-              if (lowerName.includes('vehicle'))
-                return 'Comprehensive vehicle maintenance and repair services';
               return 'Professional service for your business needs';
             };
 
             return {
-              // API fields (only id and serviceName)
-              serviceId: apiService.id,
+              // API fields
+              serviceId: apiService.serviceId,
               serviceName: serviceName,
 
               // UI fields (required for display)
-              id: apiService.id,
+              id: apiService.serviceId,
               name: serviceName,
               category: getCategory(),
               description: getDescription(),
-              provider: 'WheelBoard Services',
+              provider: apiService.businessName || 'WheelBoard Services',
               rating: 4.5 + Math.random() * 0.4,
-              reviews: Math.floor(150 + Math.random() * 200),
+              reviews: Math.floor(50 + Math.random() * 150),
               price: Math.floor(3000 + Math.random() * 12000),
-              status: 'active' as const,
-              coverage: 'Pan India',
+              status: apiService.isAvailable
+                ? ('active' as const)
+                : ('inactive' as const),
+              coverage: apiService.city || 'Pan India',
               response: '< 24 hours',
               icon: getIcon(),
             };
@@ -342,7 +368,6 @@ export default function ServicesPage() {
     };
 
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [selectedServiceForAssignment, setSelectedServiceForAssignment] =
     useState<Service | null>(null);
@@ -351,37 +376,82 @@ export default function ServicesPage() {
     try {
       if (!currentUser) {
         setError('Please log in to assign services');
+        toast.error('Please log in to assign services');
         return;
       }
 
       // Call API to assign service
-      await wheelboardApi.service.assignService({
-        ServiceId: serviceId,
-        UserId: currentUser.id,
-        AssignedDate: assignmentData?.scheduledDate || new Date().toISOString(),
-        Notes: assignmentData?.description || 'Service assigned',
+      const response = await wheelboardApi.service.assignService({
+        serviceId: serviceId,
+        assignedToUserId: currentUser.id,
+        scheduledDate:
+          assignmentData?.scheduledDate ||
+          `${new Date().toISOString().split('T')[0]}T00:00:00.000Z`,
+        scheduledTime: assignmentData?.scheduledTime || '09:00',
+        description: assignmentData?.description || 'Service assigned',
+        vehicleNumber: assignmentData?.vehicleNumber || '',
+        status: assignmentData?.status || 'pending',
       });
 
-      // Update local state
-      setAssignedServices((prev) => {
-        if (prev.includes(serviceId)) return prev;
-        return [...prev, serviceId];
-      });
+      console.log('Assignment response:', response);
+
+      // Refresh assigned services from API to get the latest data with proper assignmentId
+      try {
+        const assignedResponse =
+          await wheelboardApi.service.getAssignedServices(currentUser.id);
+        const assignedData: Assignment[] = Array.isArray(assignedResponse)
+          ? assignedResponse
+          : [];
+        setAssignedServices(assignedData);
+        toast.success('Service assigned successfully!');
+      } catch (err) {
+        console.error('Error refreshing assigned services:', err);
+        // Fallback: add to local state if refresh fails
+        const newAssignment: Assignment = {
+          assignmentId: response.serviceId || serviceId,
+          serviceId: serviceId,
+          assignedToUserId: currentUser.id,
+          vehicleNumber: assignmentData?.vehicleNumber || '',
+          scheduledDate:
+            assignmentData?.scheduledDate ||
+            new Date().toISOString().split('T')[0],
+          scheduledTime: assignmentData?.scheduledTime || '09:00',
+          description: assignmentData?.description || 'Service assigned',
+          status: assignmentData?.status || 'pending',
+        };
+
+        setAssignedServices((prev) => {
+          if (prev.some((a) => a.serviceId === serviceId)) return prev;
+          return [...prev, newAssignment];
+        });
+        toast.success('Service assigned successfully!');
+      }
     } catch (error) {
       console.error('Error assigning service:', error);
+      toast.error('Failed to assign service');
       setError('Failed to assign service');
     }
   };
 
   const handleUnassign = async (assignmentId: string) => {
+    // Confirmation dialog
+    const confirmed = window.confirm(
+      'Are you sure you want to remove this service assignment?'
+    );
+    if (!confirmed) return;
+
     try {
       // Call API to delete service assignment
       await wheelboardApi.service.deleteServiceAssignment(assignmentId);
+      toast.success('Service unassigned successfully');
 
       // Update local state
-      setAssignedServices((prev) => prev.filter((i) => i !== assignmentId));
+      setAssignedServices((prev) =>
+        prev.filter((a) => a.assignmentId !== assignmentId)
+      );
     } catch (error) {
       console.error('Error unassigning service:', error);
+      toast.error('Failed to unassign service');
       setError('Failed to unassign service');
     }
   };
@@ -401,6 +471,14 @@ export default function ServicesPage() {
       service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       service.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       service.provider.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Handle 'assigned' filter - show only services that are assigned
+    if (filterCategory === 'assigned') {
+      const isAssigned = assignedServices.some(
+        (assignment) => assignment.serviceId === service.id
+      );
+      return matchesSearch && isAssigned;
+    }
 
     const matchesCategory =
       filterCategory === 'all' || service.category === filterCategory;
@@ -569,41 +647,131 @@ export default function ServicesPage() {
           </div>
 
           {/* Assigned Services List */}
-          {assignedServices.length > 0 && (
-            <div className="mb-8 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 text-lg font-bold">Assigned Services</h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {assignedServices.map((sid) => {
-                  const svc = services.find((s) => s.id === sid);
-                  if (!svc) return null;
-                  return (
-                    <div
-                      key={sid}
-                      className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 bg-gray-50 p-3"
-                    >
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {svc.name}
+          {assignedServices.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mb-8 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-sm"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-indigo-100 p-2">
+                    <CheckCircle2 className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      My Assigned Services
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {assignedServices.length} service
+                      {assignedServices.length !== 1 ? 's' : ''} currently
+                      assigned
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {assignedServices.map((assignment) => {
+                  const svc = services.find(
+                    (s) => s.id === assignment.serviceId
+                  );
+                  if (!svc)
+                    return (
+                      <div
+                        key={assignment.assignmentId}
+                        className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                      >
+                        <p className="text-sm text-gray-500">
+                          Service details not available
                         </p>
-                        <p className="text-xs text-gray-600">{svc.provider}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
                         <button
                           onClick={() =>
-                            setAssignedServices((prev) =>
-                              prev.filter((i) => i !== sid)
-                            )
+                            handleUnassign(assignment.assignmentId)
                           }
-                          className="rounded-lg border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 hover:border-[#f36969] hover:bg-[#f36969]/5 hover:text-[#f36969]"
+                          className="mt-1 rounded-lg border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 transition-colors hover:border-[#f36969] hover:bg-[#f36969]/5 hover:text-[#f36969]"
                         >
-                          Unassign
+                          Remove
                         </button>
                       </div>
-                    </div>
+                    );
+                  return (
+                    <motion.div
+                      key={assignment.assignmentId}
+                      whileHover={{ scale: 1.02 }}
+                      className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">
+                            {svc.name}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {svc.provider}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                          {assignment.status}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <Calendar className="h-3.5 w-3.5 text-indigo-600" />
+                          <span>
+                            {new Date(
+                              assignment.scheduledDate
+                            ).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </span>
+                          <Clock className="ml-2 h-3.5 w-3.5 text-indigo-600" />
+                          <span>{assignment.scheduledTime}</span>
+                        </div>
+                        {assignment.vehicleNumber && (
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <Truck className="h-3.5 w-3.5 text-indigo-600" />
+                            <span className="font-mono">
+                              {assignment.vehicleNumber}
+                            </span>
+                          </div>
+                        )}
+                        {assignment.description && (
+                          <p className="line-clamp-2 text-xs text-gray-500">
+                            {assignment.description}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleUnassign(assignment.assignmentId)}
+                        className="mt-auto rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-all hover:border-red-300 hover:bg-red-50"
+                      >
+                        Remove Assignment
+                      </button>
+                    </motion.div>
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mb-8 rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm"
+            >
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                <CheckCircle2 className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                No Assigned Services
+              </h3>
+              <p className="mb-4 text-sm text-gray-600">
+                You haven&apos;t assigned any services yet. Browse available
+                services below and assign them to your fleet.
+              </p>
+            </motion.div>
           )}
 
           {/* Category Filter Pills */}
@@ -619,6 +787,21 @@ export default function ServicesPage() {
               }`}
             >
               All Services
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setFilterCategory('assigned')}
+              className={`rounded-xl px-5 py-2.5 font-semibold transition-all ${
+                filterCategory === 'assigned'
+                  ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
+                  : 'border border-indigo-200 bg-indigo-50 text-indigo-600 hover:shadow-sm'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Assigned ({assignedServices.length})</span>
+              </div>
             </motion.button>
             {Object.entries(categoryConfig).map(([key, config]) => (
               <motion.button
@@ -762,18 +945,27 @@ export default function ServicesPage() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() =>
-                          assignedServices.includes(service.id)
-                            ? handleUnassign(service.id)
-                            : handleOpenAssignmentModal(service)
-                        }
+                        onClick={() => {
+                          const assignment = assignedServices.find(
+                            (a) => a.serviceId === service.id
+                          );
+                          if (assignment) {
+                            handleUnassign(assignment.assignmentId);
+                          } else {
+                            handleOpenAssignmentModal(service);
+                          }
+                        }}
                         className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-md ${
-                          assignedServices.includes(service.id)
+                          assignedServices.some(
+                            (a) => a.serviceId === service.id
+                          )
                             ? 'bg-green-600'
                             : 'bg-gradient-to-r from-[#f36969] to-[#e85555]'
                         }`}
                       >
-                        {assignedServices.includes(service.id) ? (
+                        {assignedServices.some(
+                          (a) => a.serviceId === service.id
+                        ) ? (
                           <>
                             <CheckCircle2 className="h-4 w-4" />
                             Assigned

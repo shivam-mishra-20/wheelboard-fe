@@ -145,6 +145,42 @@ export interface TripBid {
   createdAt: string;
 }
 
+export interface CreateRazorpayOrderModel {
+  totalAmount: number;
+}
+
+export interface TripPaymentModel {
+  tripId: string;
+  bidId: string;
+  userId: string;
+  amount: number;
+  platformFee: number;
+  totalAmount: number;
+  orderId: string;
+  paymentId: string;
+  signature: string;
+}
+
+export interface TripCancelModel {
+  tripId: string;
+  userId: string;
+  reason?: string;
+}
+
+export interface TripConfirmation {
+  tripId: string;
+  tripCode: string;
+  status: string;
+  pickupLocation: string;
+  deliveryLocation: string;
+  pickupDate: string;
+  pickupTime: string;
+  driverName: string;
+  vehicleName: string;
+  payRange: string;
+  confirmedAt: string;
+}
+
 // ============================================
 // POST API TYPES
 // ============================================

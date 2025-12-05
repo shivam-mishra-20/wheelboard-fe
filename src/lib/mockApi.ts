@@ -127,7 +127,7 @@ const getMockUsers = (): User[] => {
       email: 'demo@business.com',
       companyName: 'Demo Business',
       phoneNumber: '+1234567894',
-      businessCategory: 'service-provider',
+      businessCategory: 'Service Provider',
       userType: 'business',
       createdAt: '2024-01-19T13:45:00Z',
     },
@@ -582,6 +582,8 @@ export interface FeedPost {
   // Standardized category values used across the app
   // Keep values lowercase for consistency when matching/filtering
   category?: CategoryType;
+  // Post approval status from API
+  status?: 'Pending' | 'Approved' | 'Rejected';
   // Legacy fields for backward compatibility
   title?: string;
   description?: string;

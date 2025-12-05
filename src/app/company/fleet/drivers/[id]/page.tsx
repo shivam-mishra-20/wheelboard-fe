@@ -1,12 +1,13 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoginSimulator from '@/components/LoginSimulator';
 import { CompanyProtected } from '@/components/ProtectedRoute';
-import { companyFleetData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { Driver } from '@/types/fleet';
 import DriverInfoCard from '@/components/company/DriverInfoCard';
 import PerformanceOverviewCard from '@/components/company/PerformanceOverviewCard';
 import RatingFeedbackCard from '@/components/company/RatingFeedbackCard';
@@ -20,10 +21,82 @@ export default function DriverDetailsPage({
   const router = useRouter();
   const { id } = use(params);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [driver, setDriver] = useState<Driver | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const driver = companyFleetData.drivers.find((d) => d.id === id);
+  // Fetch driver details from API
+  useEffect(() => {
+    const fetchDriverDetails = async () => {
+      try {
+        setIsLoading(true);
+        console.log('[DriverDetails] Fetching driver:', id);
 
-  if (!driver) {
+        const response = await wheelboardApi.transport.getDriverDetails(id);
+        console.log('[DriverDetails] API Response:', response);
+
+        if (response.success && response.data) {
+          const apiDriver: any = response.data;
+
+          // Map API response to Driver interface
+          const mappedDriver: Driver = {
+            id: apiDriver.driverId,
+            name: apiDriver.fullName || 'N/A',
+            phone: apiDriver.contactNumber,
+            phoneNumber: apiDriver.contactNumber,
+            email: apiDriver.email || 'N/A',
+            licenseNumber: apiDriver.vehicleNumber || 'N/A',
+            experience: 'N/A',
+            status: 'Available',
+            vehicle: apiDriver.vehicleNumber || 'Unassigned',
+            vehicleType: apiDriver.vehicleType || 'N/A',
+            image: apiDriver.driverImagePath || '/profile-pic.png',
+            rating: 0,
+            totalTrips: 0,
+            location: 'N/A',
+            joinedDate: 'Recently joined',
+            description: apiDriver.description || '',
+            performance: {
+              timelyDelivery: 0,
+              tripEfficiency: 0,
+              safety: 0,
+            },
+            reviews: [],
+          };
+
+          console.log('[DriverDetails] Mapped driver:', mappedDriver);
+          setDriver(mappedDriver);
+          setError(null);
+        } else {
+          setError('Driver not found');
+        }
+      } catch (err: any) {
+        console.error('[DriverDetails] Error fetching driver:', err);
+        setError('Failed to load driver details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchDriverDetails();
+    }
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <CompanyProtected>
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[#f36969]"></div>
+            <p className="text-lg text-gray-600">Loading driver details...</p>
+          </div>
+        </div>
+      </CompanyProtected>
+    );
+  }
+
+  if (error || !driver) {
     return (
       <CompanyProtected>
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -32,7 +105,7 @@ export default function DriverDetailsPage({
               Driver Not Found
             </h1>
             <p className="mb-6 text-gray-600">
-              The driver you&apos;re looking for doesn&apos;t exist.
+              {error || "The driver you're looking for doesn't exist."}
             </p>
             <Button
               onClick={() => router.back()}
@@ -51,9 +124,27 @@ export default function DriverDetailsPage({
     // In a real app, this would update the backend
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     if (confirm(`Are you sure you want to remove ${driver.name}?`)) {
-      router.push('/company/fleet/drivers');
+      try {
+        const user = JSON.parse(
+          localStorage.getItem('wheelboard_current_user') || '{}'
+        );
+        if (!user.id) {
+          alert('Please login to delete driver');
+          return;
+        }
+
+        console.log('[DriverDetails] Deleting driver:', driver.id);
+        await wheelboardApi.transport.deleteDriver(driver.id, user.id);
+
+        console.log('[DriverDetails] Driver deleted successfully');
+        alert('Driver deleted successfully!');
+        router.push('/company/fleet');
+      } catch (error: any) {
+        console.error('[DriverDetails] Error deleting driver:', error);
+        alert('Failed to delete driver. Please try again.');
+      }
     }
   };
 

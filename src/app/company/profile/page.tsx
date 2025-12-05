@@ -20,6 +20,8 @@ import {
   Star,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 
 interface CompanyProfile {
   id: string;
@@ -52,34 +54,155 @@ const CompanyProfilePage = () => {
   );
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   useEffect(() => {
-    const mockProfile: CompanyProfile = {
-      id: '1',
-      email: 'contact@transportco.com',
-      companyName: 'Swift Transport Co.',
-      phoneNumber: '+91 98765 43210',
-      whatsappNumber: '+91 98765 43210',
-      businessCategory: 'Logistics & Transport',
-      userType: 'company',
-      businessAddress: '456 Industrial Area, Transport Hub Sector 22',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      zipCode: '400001',
-      gstNumber: 'GST: 27AABCT1332L1Z',
-      fleetSize: 45,
-      operatingRegions: ['Maharashtra', 'Gujarat', 'Karnataka'],
-      description:
-        'Swift Transport Co. is a premier logistics and transportation company with over 20 years of experience in the industry. We operate a modern fleet of 45 vehicles and provide reliable transportation solutions across multiple states. Our commitment to safety, punctuality, and customer satisfaction has made us a trusted partner for businesses nationwide.',
-      logo: '/profile.png',
-      website: 'www.swifttransport.com',
-      createdAt: '2024-01-10T10:00:00Z',
-    };
-
-    setProfile(mockProfile);
-    setEditedProfile(mockProfile);
-    setLogoPreview(mockProfile.logo || null);
+    // Check if we're in the browser before accessing localStorage
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('wheelboard_current_user');
+      const token = localStorage.getItem('authToken');
+      console.log('LocalStorage check - User:', userStr);
+      console.log('LocalStorage check - Token:', token ? 'exists' : 'missing');
+    }
+    fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const user = api.getCurrentUser();
+      const token = localStorage.getItem('authToken');
+      console.log('=== PROFILE FETCH DEBUG ===');
+      console.log('Current user from api.getCurrentUser():', user);
+      console.log('Auth token exists:', !!token);
+      console.log('User ID value:', user?.id);
+      console.log('User ID type:', typeof user?.id);
+
+      if (!user || !user.id) {
+        console.error('User not authenticated or missing ID');
+        setError('User not authenticated');
+        router.push('/login');
+        return;
+      }
+
+      console.log('Calling API: /api/User/user-profile/' + user.id);
+      const response = await wheelboardApi.user.getUserProfile(user.id);
+      console.log('Profile API response:', response);
+      console.log('Response status:', response.success);
+      console.log('Response data:', response.data);
+
+      // WORKAROUND: If profile not found, it means complete-transport didn't create the user profile
+      // This is a backend issue - complete-transport should create it automatically
+      // For now, create a basic profile from the user data we have
+      if (!response.success && response.message === 'Profile not found.') {
+        console.warn(
+          'Profile not found in database. Using data from localStorage as fallback.'
+        );
+        const fallbackProfile: CompanyProfile = {
+          id: user.id,
+          email: user.email || '',
+          companyName: user.companyName || '',
+          phoneNumber: user.mobileNo || '',
+          whatsappNumber: user.mobileNo || '',
+          businessCategory: user.businessCategory || 'Transport',
+          userType: user.userType,
+          businessAddress: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          gstNumber: '',
+          fleetSize: 0,
+          operatingRegions: [],
+          description: '',
+          logo: '/profile.png',
+          website: '',
+          rating: 0,
+          createdAt: user.createdAt || new Date().toISOString(),
+        };
+
+        setProfile(fallbackProfile);
+        setEditedProfile(fallbackProfile);
+        setLogoPreview(fallbackProfile.logo || null);
+        setError(
+          'Profile data not fully loaded. Please complete your profile to see all details.'
+        );
+        return;
+      }
+
+      if (response.success && response.data) {
+        const userData = response.data as {
+          userId?: string;
+          email?: string;
+          companyName?: string;
+          mobileNo?: string;
+          businessCategory?: string;
+          userType?: string;
+          address?: string;
+          city?: string;
+          state?: string;
+          zipCode?: string;
+          gstNumber?: string;
+          fleetSize?: number | string;
+          operatingRegions?: string[];
+          description?: string;
+          companyLogo?: string;
+          companyLogoPath?: string;
+          website?: string;
+          rating?: number;
+          createdAt?: string;
+          firstName?: string;
+          lastName?: string;
+          fullName?: string;
+        };
+        console.log('Profile data received:', userData);
+
+        // Map API response to CompanyProfile interface
+        const profileData: CompanyProfile = {
+          id: userData.userId || user.id,
+          email: userData.email || user.email || '',
+          companyName: userData.companyName || user.companyName || '',
+          phoneNumber: userData.mobileNo || user.mobileNo || '',
+          whatsappNumber: userData.mobileNo || user.mobileNo || '',
+          businessCategory:
+            userData.businessCategory || user.businessCategory || 'Transport',
+          userType: userData.userType || user.userType || 'company',
+          businessAddress: userData.address || '',
+          city: userData.city || '',
+          state: userData.state || '',
+          zipCode: userData.zipCode || '',
+          gstNumber: userData.gstNumber || '',
+          fleetSize:
+            typeof userData.fleetSize === 'string'
+              ? parseInt(userData.fleetSize) || 0
+              : userData.fleetSize || 0,
+          operatingRegions: userData.operatingRegions || [],
+          description: userData.description || '',
+          logo:
+            userData.companyLogoPath || userData.companyLogo || '/profile.png',
+          website: userData.website || '',
+          rating: userData.rating || 0,
+          createdAt: userData.createdAt || new Date().toISOString(),
+        };
+
+        setProfile(profileData);
+        setEditedProfile(profileData);
+        setLogoPreview(profileData.logo || null);
+      } else {
+        // If API returns success but no data, show error
+        setError('Profile data not found. Please complete your profile.');
+      }
+    } catch (err: any) {
+      console.error('Error fetching profile:', err);
+      setError(err.response?.data?.message || 'Failed to fetch profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -104,6 +227,7 @@ const CompanyProfilePage = () => {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setLogoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result as string);
@@ -119,11 +243,70 @@ const CompanyProfilePage = () => {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setProfile(editedProfile);
-    setIsSaving(false);
-    setIsEditing(false);
+    if (!editedProfile) return;
+
+    try {
+      setIsSaving(true);
+      setError(null);
+
+      const user = api.getCurrentUser();
+      console.log('Current user for save:', user);
+
+      if (!user || !user.id) {
+        console.error('User not authenticated or missing ID');
+        setError('User not authenticated');
+        return;
+      }
+
+      // Prepare data object for API (buildFormData will be called internally)
+      const updateData: {
+        UserId: string;
+        CompanyName: string;
+        FullName: string;
+        Email: string;
+        Location: string;
+        FleetSize: number;
+        GSTNumber: string;
+        CompanyLogo?: File;
+      } = {
+        UserId: user.id,
+        CompanyName: editedProfile.companyName || '',
+        FullName: editedProfile.companyName || '', // API expects FullName
+        Email: editedProfile.email || '',
+        Location: `${editedProfile.businessAddress || ''}, ${editedProfile.city || ''}, ${editedProfile.state || ''}`,
+        FleetSize: editedProfile.fleetSize || 0,
+        GSTNumber: editedProfile.gstNumber || '',
+      };
+
+      // Add logo file if changed
+      if (logoFile) {
+        updateData.CompanyLogo = logoFile;
+      }
+
+      console.log('Updating profile with data:', updateData);
+      const response =
+        await wheelboardApi.user.updateTransportProfile(updateData);
+      console.log('Update profile API response:', response);
+
+      if (response.success) {
+        setProfile(editedProfile);
+        setIsEditing(false);
+        setLogoFile(null);
+
+        // Refresh profile data from server
+        await fetchProfile();
+
+        alert('Profile updated successfully!');
+      } else {
+        setError('Failed to update profile');
+      }
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError(err.response?.data?.message || 'Failed to update profile');
+      alert('Error updating profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLogout = () => {
@@ -135,10 +318,47 @@ const CompanyProfilePage = () => {
     router.push('/professional/profile');
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#f36969] border-t-transparent"></div>
+          <p className="mt-4 text-sm text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-red-600">{error}</p>
+          <button
+            onClick={fetchProfile}
+            className="mt-4 rounded-xl bg-[#f36969] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-[#f36565]"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile || !editedProfile) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-600">
+            No profile data available
+          </p>
+          <button
+            onClick={fetchProfile}
+            className="mt-4 rounded-xl bg-[#f36969] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-[#f36565]"
+          >
+            Reload
+          </button>
+        </div>
       </div>
     );
   }
@@ -146,6 +366,12 @@ const CompanyProfilePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-semibold text-red-700">{error}</p>
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -225,10 +451,14 @@ const CompanyProfilePage = () => {
                     <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-white bg-white shadow-xl sm:h-32 sm:w-32">
                       <Image
                         src={logoPreview || '/profile-pic.png'}
-                        alt="Profile"
+                        alt="Company Logo"
                         width={128}
                         height={128}
                         className="h-full w-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/profile-pic.png';
+                        }}
                       />
                     </div>
                     {isEditing && (
@@ -242,15 +472,17 @@ const CompanyProfilePage = () => {
                         />
                       </label>
                     )}
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2">
-                      <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-lg">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-bold text-gray-900">
-                          {profile.rating}
-                        </span>
-                        <span className="text-xs text-gray-500">/ 5</span>
+                    {profile.rating !== undefined && profile.rating > 0 && (
+                      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2">
+                        <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-lg">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm font-bold text-gray-900">
+                            {profile.rating.toFixed(1)}
+                          </span>
+                          <span className="text-xs text-gray-500">/ 5</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -271,13 +503,28 @@ const CompanyProfilePage = () => {
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f36969]">
                         <Truck className="h-6 w-6 text-white" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-xs font-semibold text-gray-600">
                           Fleet Size
                         </p>
-                        <p className="text-xl font-bold text-gray-900">
-                          {editedProfile.fleetSize} Vehicles
-                        </p>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editedProfile.fleetSize || 0}
+                            onChange={(e) =>
+                              handleInputChange(
+                                'fleetSize',
+                                parseInt(e.target.value) || 0
+                              )
+                            }
+                            className="mt-1 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm font-bold transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                            min="0"
+                          />
+                        ) : (
+                          <p className="text-xl font-bold text-gray-900">
+                            {editedProfile.fleetSize} Vehicles
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -503,13 +750,25 @@ const CompanyProfilePage = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex items-center gap-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-4">
                   <Hash className="h-5 w-5 shrink-0 text-gray-600" />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-gray-500">
                       GST Number
                     </p>
-                    <p className="mt-1 truncate text-sm font-bold text-gray-900">
-                      {profile.gstNumber}
-                    </p>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editedProfile.gstNumber || ''}
+                        onChange={(e) =>
+                          handleInputChange('gstNumber', e.target.value)
+                        }
+                        className="mt-1 w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm font-bold transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
+                        placeholder="Enter GST Number"
+                      />
+                    ) : (
+                      <p className="mt-1 truncate text-sm font-bold text-gray-900">
+                        {profile.gstNumber || 'Not provided'}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-4">

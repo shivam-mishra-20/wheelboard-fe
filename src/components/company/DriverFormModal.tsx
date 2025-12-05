@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { Driver, VEHICLE_CATEGORIES } from '@/types/fleet';
 import {
   Dialog,
@@ -20,7 +19,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Check, Upload } from 'lucide-react';
+import { ArrowLeft, Check, Upload, Search, Loader2 } from 'lucide-react';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { message } from 'antd';
 
 interface DriverFormModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface DriverFormModalProps {
 type FormData = Partial<Driver> & {
   vehicleCategory?: string;
   vehicleCategoryDetail?: string;
+  imageFile?: File;
 };
 
 export default function DriverFormModal({
@@ -65,6 +67,126 @@ export default function DriverFormModal({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [confirmChecked, setConfirmChecked] = useState(false);
 
+  // License lookup state
+  const [searchLicenseNumber, setSearchLicenseNumber] = useState('');
+  const [searchDob, setSearchDob] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [licenseFound, setLicenseFound] = useState(false);
+
+  // Validate and parse dd/mm/yyyy date format
+  const validateDateFormat = (dateStr: string): boolean => {
+    const regex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+    if (!regex.test(dateStr)) return false;
+
+    const [day, month, year] = dateStr.split('/').map(Number);
+    const date = new Date(year, month - 1, day);
+    return (
+      date.getDate() === day &&
+      date.getMonth() === month - 1 &&
+      date.getFullYear() === year
+    );
+  };
+
+  // Function to search license details
+  const handleLicenseSearch = async () => {
+    if (!searchLicenseNumber.trim()) {
+      setSearchError('Please enter a license number');
+      return;
+    }
+    if (!searchDob) {
+      setSearchError('Please enter date of birth');
+      return;
+    }
+    if (!validateDateFormat(searchDob)) {
+      setSearchError('Date must be in dd/mm/yyyy format and valid!');
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+    setLicenseFound(false);
+
+    try {
+      // DOB is already in dd/mm/yyyy format, send as-is to API
+      const response = await wheelboardApi.vehicle.getLicenseDetails(
+        searchLicenseNumber.trim().toUpperCase(),
+        searchDob
+      );
+
+      console.log('License details response:', response);
+
+      if (response.success && response.data) {
+        const rawData = response.data as any;
+
+        console.log('Raw license data:', rawData);
+
+        // Extract data from the nested structure
+        // API returns: { dlNumber, detailsOfDrivingLicence: { name, address, photo, ... }, badgeDetails: [{ classOfVehicle: [...] }] }
+        const details = rawData.detailsOfDrivingLicence || rawData;
+        const badgeDetails = rawData.badgeDetails?.[0] || {};
+
+        // Get the complete address
+        const completeAddress =
+          details.address || details.addressList?.[0]?.completeAddress || '';
+
+        // Get vehicle class from badgeDetails
+        const vehicleClass = badgeDetails.classOfVehicle?.[0] || '';
+
+        // Format name to Title Case and remove extra spaces
+        const formatName = (name: string): string => {
+          if (!name) return '';
+          return name
+            .toLowerCase()
+            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+            .trim()
+            .split(' ')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        };
+
+        const formattedName = formatName(details.name || '');
+
+        // Auto-fill the form with fetched data
+        // NOTE: We only fill name and address from license
+        // Image should be uploaded separately by user
+        setFormData((prev) => ({
+          ...prev,
+          // Driver Name from license (formatted)
+          name: formattedName,
+          // Address/Description
+          address: completeAddress,
+          // Phone if available (not in this response, keep previous)
+          phoneNumber: prev.phoneNumber,
+          // Vehicle class/category from license (if matches our categories)
+          vehicleCategory: vehicleClass || prev.vehicleCategory,
+          // Keep the default image - don't use license photo as driver profile
+          // The license photo is just for verification, not for driver profile
+        }));
+
+        // Don't set license photo as image preview
+        // User should upload their own driver photo
+
+        setLicenseFound(true);
+        message.success(
+          'License details fetched successfully! Please upload a driver photo and fill remaining details.'
+        );
+      } else {
+        setSearchError(
+          response.message ||
+            'License not found. Please enter details manually.'
+        );
+      }
+    } catch (error: any) {
+      console.error('License search error:', error);
+      setSearchError(
+        'Failed to fetch license details. Please try again or enter manually.'
+      );
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   // Initialize form with driver data or reset
   useEffect(() => {
     if (driver && mode === 'edit') {
@@ -81,13 +203,18 @@ export default function DriverFormModal({
         image: driver.image || '/staring-man.jpg',
         joinedDate: driver.joinedDate || new Date().toISOString().split('T')[0],
         email: driver.email || '',
-        address: driver.address || '',
+        address: driver.description || driver.address || '',
         emergencyContact: driver.emergencyContact || '',
         vehicleCategory: driver.vehicleType || '',
         vehicleCategoryDetail: '',
       });
       setImagePreview(driver.image || null);
-      setConfirmChecked(false);
+      setConfirmChecked(true); // Auto-check for edit mode
+      // Reset search state
+      setSearchLicenseNumber('');
+      setSearchDob('');
+      setSearchError(null);
+      setLicenseFound(false);
     } else if (mode === 'add' || !isOpen) {
       setFormData({
         name: '',
@@ -109,6 +236,11 @@ export default function DriverFormModal({
       });
       setImagePreview(null);
       setConfirmChecked(false);
+      // Reset search state
+      setSearchLicenseNumber('');
+      setSearchDob('');
+      setSearchError(null);
+      setLicenseFound(false);
     }
     setErrors({});
   }, [driver, mode, isOpen]);
@@ -168,6 +300,7 @@ export default function DriverFormModal({
       vehicleType: formData.vehicleCategory || 'Truck',
       location: formData.location || '',
       image: formData.image || '/profile-pic.png',
+      imageFile: formData.imageFile, // Include actual File object for upload
       joinedDate: formData.joinedDate!,
       email: formData.email,
       address: formData.address,
@@ -200,10 +333,19 @@ export default function DriverFormModal({
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('[DriverForm] Selected file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+
+      // Store the actual File object for API upload
+      setFormData((prev) => ({ ...prev, imageFile: file }));
+
+      // Create preview URL for display
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        setFormData((prev) => ({ ...prev, image: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -238,6 +380,95 @@ export default function DriverFormModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+          {/* Quick License Search - Only show in Add mode */}
+          {mode === 'add' && (
+            <div className="rounded-xl border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Search className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-blue-800">
+                  Quick License Search
+                </h3>
+              </div>
+              <p className="mb-3 text-sm text-blue-700">
+                Enter license number and DOB to auto-fill driver info
+              </p>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    value={searchLicenseNumber}
+                    onChange={(e) => {
+                      setSearchLicenseNumber(e.target.value.toUpperCase());
+                      setSearchError(null);
+                    }}
+                    placeholder="License Number (e.g., DL1420110012345)"
+                    className="flex-1 border-blue-200 bg-white focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type="text"
+                      value={searchDob}
+                      onChange={(e) => {
+                        // Allow only digits and slashes, auto-format
+                        let value = e.target.value.replace(/[^\d/]/g, '');
+
+                        // Auto-add slashes
+                        if (value.length === 2 && !value.includes('/')) {
+                          value = value + '/';
+                        } else if (
+                          value.length === 5 &&
+                          value.split('/').length === 2
+                        ) {
+                          value = value + '/';
+                        }
+
+                        // Limit to 10 characters (dd/mm/yyyy)
+                        if (value.length <= 10) {
+                          setSearchDob(value);
+                          setSearchError(null);
+                        }
+                      }}
+                      placeholder="DD/MM/YYYY"
+                      maxLength={10}
+                      className="border-blue-200 bg-white focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleLicenseSearch}
+                    disabled={
+                      isSearching || !searchLicenseNumber.trim() || !searchDob
+                    }
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
+                  >
+                    {isSearching ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Search
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              {searchError && (
+                <p className="mt-2 text-sm text-red-600">{searchError}</p>
+              )}
+              {licenseFound && (
+                <p className="mt-2 flex items-center gap-1 text-sm text-blue-600">
+                  <Check className="h-4 w-4" />
+                  License details auto-filled! Please verify and complete the
+                  form.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Section Title */}
           <h3 className="text-center text-sm font-medium text-gray-500">
             Driver Details
@@ -399,11 +630,11 @@ export default function DriverFormModal({
               </Label>
               {imagePreview && (
                 <div className="relative h-16 w-16 overflow-hidden rounded-md border">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={imagePreview}
                     alt="Driver preview"
-                    fill
-                    className="object-cover"
+                    className="h-full w-full object-cover"
                   />
                 </div>
               )}

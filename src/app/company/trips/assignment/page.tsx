@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -22,7 +22,9 @@ import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { companyHomeData, type Trip } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+import type { Trip } from '@/types/api';
 
 // Mock driver data
 const getDriverById = (id: string) => {
@@ -51,6 +53,31 @@ function TripAssignmentInner() {
     'card' | 'upi' | 'netbanking'
   >('card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [trip, setTrip] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTripData = async () => {
+      if (!tripId) return;
+
+      try {
+        const user = api.getCurrentUser();
+        if (!user) return;
+
+        // Fetch trips and find the specific one
+        const response = await wheelboardApi.trip.getTripsByUser(user.id);
+        const trips = (response.data as any[]) || [];
+        const foundTrip = trips.find((t: any) => t.tripId === tripId);
+        setTrip(foundTrip);
+      } catch (error) {
+        console.error('Error fetching trip:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTripData();
+  }, [tripId]);
 
   if (!driverId || !tripId) {
     return (
@@ -79,8 +106,20 @@ function TripAssignmentInner() {
   }
 
   const driver = getDriverById(driverId);
-  const trips = companyHomeData.allTrips || [];
-  const trip = trips.find((t: Trip) => t.id === tripId);
+
+  if (isLoading) {
+    return (
+      <CompanyProtected>
+        <Header />
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 pt-16">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+            <p className="text-gray-600">Loading trip details...</p>
+          </div>
+        </div>
+      </CompanyProtected>
+    );
+  }
 
   if (!trip) {
     return (
@@ -122,11 +161,47 @@ function TripAssignmentInner() {
   };
 
   const handlePayment = async () => {
-    setIsProcessing(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    router.push(
-      `/company/trips/assignment/success?driverId=${driverId}&tripId=${tripId}&amount=${getPaymentAmount()}&paymentOption=${selectedPaymentOption}&paymentMethod=${selectedPaymentMethod}`
-    );
+    try {
+      setIsProcessing(true);
+      const user = api.getCurrentUser();
+      if (!user) {
+        alert('Please log in to continue');
+        return;
+      }
+
+      const paymentAmount = getPaymentAmount();
+
+      // Step 1: Create Razorpay order
+      const orderResponse = await wheelboardApi.trip.createPaymentOrder({
+        totalAmount: paymentAmount,
+      });
+
+      // Here you would integrate with Razorpay SDK to collect payment
+      // For now, we'll simulate the payment flow
+
+      // Step 2: After payment, verify it
+      // const verifyResponse = await wheelboardApi.trip.verifyPayment({
+      //   tripId: tripId,
+      //   bidId: '', // You'll need to pass the bid ID
+      //   userId: user.id,
+      //   amount: bidAmount,
+      //   platformFee: platformFee,
+      //   totalAmount: paymentAmount,
+      //   orderId: orderResponse.data.orderId,
+      //   paymentId: '', // From Razorpay
+      //   signature: '', // From Razorpay
+      // });
+
+      // Step 3: Navigate to success page
+      router.push(
+        `/company/trips/assignment/success?driverId=${driverId}&tripId=${tripId}&amount=${paymentAmount}&paymentOption=${selectedPaymentOption}&paymentMethod=${selectedPaymentMethod}`
+      );
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (

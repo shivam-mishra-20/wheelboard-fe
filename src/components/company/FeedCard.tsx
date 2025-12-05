@@ -18,8 +18,13 @@ import {
 } from 'lucide-react';
 import type { FeedPost } from '@/lib/mockApi';
 
+// Extended type to include status from API
+interface ExtendedFeedPost extends FeedPost {
+  status?: 'Pending' | 'Approved' | 'Rejected';
+}
+
 interface FeedCardProps {
-  post: FeedPost;
+  post: ExtendedFeedPost;
   onLike: (postId: string) => void;
   onShare: (postId: string) => void;
   onComment: (postId: string, comment: string) => void;
@@ -100,23 +105,24 @@ export default function FeedCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:shadow-xl sm:rounded-3xl"
+      className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 sm:rounded-3xl"
     >
       {/* Header */}
-      <div className="flex items-start justify-between p-3 sm:p-5">
+      <div className="p-4 sm:p-5">
+        {/* Top Row: Avatar + Name + Actions */}
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <div className="relative h-10 w-10 flex-shrink-0 sm:h-12 sm:w-12">
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600 sm:h-12 sm:w-12">
+          <div className="relative h-11 w-11 flex-shrink-0 sm:h-12 sm:w-12">
+            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600 shadow-md ring-2 ring-white sm:h-12 sm:w-12">
               {post.author.avatar ? (
                 <Image
                   src={post.author.avatar}
                   alt={post.author.name}
                   fill
-                  className="rounded-sm object-cover"
+                  className="rounded-full object-cover"
                 />
               ) : (
-                <span className="text-base font-bold text-white sm:text-lg">
+                <span className="text-sm font-bold text-white sm:text-base">
                   {post.author.initials}
                 </span>
               )}
@@ -124,155 +130,225 @@ export default function FeedCard({
           </div>
 
           {/* Author Info */}
-          <div className="flex-1">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <h3 className="text-sm font-bold text-gray-900 sm:text-base">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate text-sm font-bold text-gray-900 sm:text-base">
                 {post.author.name}
               </h3>
               {getUserTypeBadge()}
             </div>
-            {post.author.company && (
-              <p className="text-xs text-gray-600 sm:text-sm">
-                {post.author.company}
-              </p>
-            )}
-            <p className="text-xs text-gray-500">{post.timeAgo}</p>
+            <p className="mt-0.5 text-xs text-gray-500">{post.timeAgo}</p>
           </div>
-        </div>
 
-        {/* Category Badge & Menu */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {getCategoryBadge()}
-          <div className="flex items-center gap-2">
-            {currentUserId &&
-            post.author?.id &&
-            currentUserId === post.author.id ? (
-              <>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="rounded-full p-1.5 text-red-600 transition-colors hover:bg-red-50 sm:p-2"
-                  aria-label="Delete post"
+          {/* Delete/Menu Button */}
+          <div className="flex-shrink-0">
+            {onDelete ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-red-50 text-red-500 transition-all hover:bg-red-100 sm:h-10 sm:w-10"
+                aria-label="Delete post"
+              >
+                <svg
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  Delete
-                </button>
-
-                {/* Confirmation small modal */}
-                {showDeleteConfirm && (
-                  <div className="z-60 fixed inset-0 flex items-center justify-center bg-black/40">
-                    <div className="mx-4 w-full max-w-sm rounded-lg bg-white p-4 shadow-lg">
-                      <p className="mb-4 text-sm font-medium text-gray-900">
-                        Are you sure you want to delete this post?
-                      </p>
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => setShowDeleteConfirm(false)}
-                          className="rounded-lg border px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (onDelete) {
-                              onDelete(post.id);
-                            }
-                            setShowDeleteConfirm(false);
-                          }}
-                          className="rounded-lg bg-red-600 px-3 py-1 text-sm font-semibold text-white hover:bg-red-700"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </motion.button>
             ) : (
-              <button className="rounded-full p-1.5 transition-colors hover:bg-gray-100 sm:p-2">
+              <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 sm:h-10 sm:w-10">
                 <MoreHorizontal className="h-4 w-4 text-gray-500 sm:h-5 sm:w-5" />
               </button>
             )}
           </div>
         </div>
+
+        {/* Badges Row - Below author info */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {getCategoryBadge()}
+          {post.status && (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                post.status === 'Approved'
+                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                  : post.status === 'Rejected'
+                    ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
+                    : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  post.status === 'Approved'
+                    ? 'bg-emerald-500'
+                    : post.status === 'Rejected'
+                      ? 'bg-red-500'
+                      : 'animate-pulse bg-amber-500'
+                }`}
+              />
+              {post.status}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Image */}
-      {post.image && (
-        <div className="relative h-64 w-full overflow-hidden sm:h-80 lg:h-96">
-          <Image
-            src={post.image}
-            alt="Post content"
-            fill
-            className="object-cover transition-transform duration-700 hover:scale-105"
-          />
-        </div>
-      )}
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && onDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl sm:rounded-3xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-gradient-to-r from-red-500 to-rose-600 p-5 text-center sm:p-6">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm sm:h-16 sm:w-16">
+                  <svg
+                    className="h-7 w-7 text-white sm:h-8 sm:w-8"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-white sm:text-xl">
+                  Delete Post?
+                </h3>
+              </div>
+              <div className="p-5 sm:p-6">
+                <p className="mb-5 text-center text-sm text-gray-600 sm:mb-6">
+                  This action cannot be undone. Are you sure you want to
+                  permanently delete this post?
+                </p>
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-100 sm:py-3"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onDelete(post.id);
+                      setShowDeleteConfirm(false);
+                    }}
+                    className="flex-1 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition-all hover:shadow-xl hover:shadow-red-500/30 sm:py-3"
+                  >
+                    Delete
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Content (below image) */}
-      <div className="px-3 py-3 sm:px-5 sm:py-4">
-        <p className="whitespace-pre-wrap text-sm text-gray-800 sm:text-base">
+      {/* Content */}
+      <div className="px-4 pb-3 sm:px-5 sm:pb-4">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 sm:text-base">
           {post.content}
         </p>
       </div>
 
+      {/* Image */}
+      {post.image && (
+        <div className="relative aspect-video w-full overflow-hidden bg-gray-100">
+          <Image
+            src={post.image}
+            alt="Post content"
+            fill
+            className="object-cover transition-transform duration-500 hover:scale-105"
+          />
+        </div>
+      )}
+
       {/* Engagement Stats */}
-      <div className="flex items-center justify-between border-b border-t border-gray-200 px-3 py-2 sm:px-5 sm:py-3">
-        <div className="flex items-center gap-2 text-xs text-gray-600 sm:gap-4 sm:text-sm">
+      <div className="flex items-center justify-between border-t border-gray-100 px-4 py-2.5 sm:px-5 sm:py-3">
+        <div className="flex items-center gap-4 text-xs sm:gap-6 sm:text-sm">
           <button
             onClick={() => setShowComments(!showComments)}
-            className="transition-colors hover:text-primary-600"
+            className="flex items-center gap-1.5 transition-colors hover:text-primary-600"
           >
-            <span className="font-semibold">{localLikes}</span> likes
+            <Heart
+              className={`h-4 w-4 ${localLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+            />
+            <span className="font-semibold text-gray-700">{localLikes}</span>
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="transition-colors hover:text-primary-600"
+            className="flex items-center gap-1.5 transition-colors hover:text-primary-600"
           >
-            <span className="font-semibold">{post.comments.length}</span>{' '}
-            comments
+            <MessageCircle className="h-4 w-4 text-gray-400" />
+            <span className="font-semibold text-gray-700">
+              {post.comments.length}
+            </span>
           </button>
-          <span>
-            <span className="font-semibold">{post.shares}</span> shares
+          <span className="flex items-center gap-1.5">
+            <Share2 className="h-4 w-4 text-gray-400" />
+            <span className="font-semibold text-gray-700">{post.shares}</span>
           </span>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-3 gap-1.5 p-2 sm:gap-2 sm:p-3">
+      <div className="grid grid-cols-3 border-t border-gray-100">
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileTap={{ scale: 0.95 }}
           onClick={handleLike}
-          className={`flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-all sm:gap-2 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm ${
+          className={`flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors sm:py-3.5 ${
             localLiked
-              ? 'bg-red-50 text-red-600'
-              : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              ? 'text-red-500'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
           }`}
         >
-          <Heart
-            className={`h-4 w-4 sm:h-5 sm:w-5 ${localLiked ? 'fill-current' : ''}`}
-          />
-          <span className="hidden sm:inline">Like</span>
+          <Heart className={`h-5 w-5 ${localLiked ? 'fill-current' : ''}`} />
+          <span>Like</span>
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center justify-center gap-1.5 rounded-lg bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-700 transition-all hover:bg-gray-100 sm:gap-2 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+          className="flex items-center justify-center gap-2 border-x border-gray-100 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800 sm:py-3.5"
         >
-          <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-          <span className="hidden sm:inline">Comment</span>
+          <MessageCircle className="h-5 w-5" />
+          <span>Comment</span>
         </motion.button>
 
         <div className="relative">
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowShareMenu(!showShareMenu)}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-700 transition-all hover:bg-gray-100 sm:gap-2 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+            className="flex w-full items-center justify-center gap-2 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800 sm:py-3.5"
           >
-            <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="hidden sm:inline">Share</span>
+            <Share2 className="h-5 w-5" />
+            <span>Share</span>
           </motion.button>
 
           {/* Share Menu Dropdown */}

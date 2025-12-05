@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Phone, Mail, Heart, Trash2 } from 'lucide-react';
+import { Phone, Mail, Heart, Trash2, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Driver } from '@/lib/mockApi';
+import { Driver } from '@/types/fleet';
 
 interface DriverInfoCardProps {
   driver: Driver;
@@ -38,16 +38,16 @@ export default function DriverInfoCard({
             </div>
             {/* Status Badge */}
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#F36565] to-[#3B82F6] px-3 py-1 text-xs font-semibold text-white shadow-md">
-              {driver.statusBadge}
+              {driver.status}
             </div>
           </div>
 
-          {/* Driver Name & Plate */}
+          {/* Driver Name & Contact */}
           <h2 className="mb-1 text-2xl font-bold text-gray-900">
             {driver.name}
           </h2>
           <p className="text-sm font-medium text-gray-500">
-            {driver.licenseNumber}
+            {driver.phoneNumber}
           </p>
         </div>
 
@@ -71,16 +71,10 @@ export default function DriverInfoCard({
           </Button>
           <Button
             variant="outline"
-            className={`flex items-center justify-center gap-2 transition-all ${
-              driver.isFavorite
-                ? 'border-[#F36565] bg-[#F36565] text-white hover:bg-[#d54d4d]'
-                : 'border-[#F36565] text-[#F36565] hover:bg-[#F36565] hover:text-white'
-            }`}
+            className="flex items-center justify-center gap-2 border-[#F36565] text-[#F36565] transition-all hover:bg-[#F36565] hover:text-white"
             onClick={onToggleFavorite}
           >
-            <Heart
-              className={`h-4 w-4 ${driver.isFavorite ? 'fill-current' : ''}`}
-            />
+            <Heart className="h-4 w-4" />
             <span>Favorite</span>
           </Button>
           <Button
@@ -95,16 +89,27 @@ export default function DriverInfoCard({
 
         {/* Additional Info */}
         <div className="space-y-3 border-t border-gray-100 pt-6">
+          {driver.vehicleType && driver.vehicleType !== 'N/A' && (
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Vehicle Type</span>
+              <span className="flex items-center gap-1 text-sm font-semibold text-blue-600">
+                <Truck className="h-3 w-3" />
+                {driver.vehicleType}
+              </span>
+            </div>
+          )}
+          {driver.licenseNumber && driver.licenseNumber !== 'N/A' && (
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Vehicle Number</span>
+              <span className="text-sm font-semibold text-gray-900">
+                {driver.licenseNumber}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between">
-            <span className="text-sm text-gray-500">Experience</span>
+            <span className="text-sm text-gray-500">Contact Number</span>
             <span className="text-sm font-semibold text-gray-900">
-              {driver.experience}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-500">Total Trips</span>
-            <span className="text-sm font-semibold text-gray-900">
-              {driver.totalTrips.toLocaleString()}
+              {driver.phoneNumber}
             </span>
           </div>
           <div className="flex justify-between">
@@ -121,12 +126,14 @@ export default function DriverInfoCard({
               {driver.status}
             </span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-gray-500">Rating</span>
-            <span className="text-sm font-semibold text-gray-900">
-              ⭐ {driver.rating.toFixed(1)}
-            </span>
-          </div>
+          {driver.description && (
+            <div className="border-t border-gray-100 pt-2">
+              <span className="mb-1 block text-sm text-gray-500">
+                Description
+              </span>
+              <p className="text-sm text-gray-900">{driver.description}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

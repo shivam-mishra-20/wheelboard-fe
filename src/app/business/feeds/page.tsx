@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
-  TrendingUp,
-  Users,
+  //TrendingUp,
+  //Users,
   Filter,
   CheckCircle2,
   Share2,
@@ -17,6 +17,7 @@ import Footer from '@/components/Footer';
 import FeedCard from '@/components/company/FeedCard';
 import CreatePostModal from '@/components/company/CreatePostModal';
 import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 import type { FeedPost, CategoryType } from '@/lib/mockApi';
 
 const container = {
@@ -39,6 +40,8 @@ export default function BusinessFeedsPage() {
   const [showShareToast, setShowShareToast] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [showMyPostsOnly, setShowMyPostsOnly] = useState(false);
+  const currentUserId = currentUser?.id || null;
 
   // Fetch feeds from API
   useEffect(() => {
@@ -46,44 +49,70 @@ export default function BusinessFeedsPage() {
       try {
         setIsLoading(true);
 
-        // Get current user
-        const user = wheelboardApi.getCurrentUser?.() || {
-          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
-        };
+        // Get current user via unified adapter
+        const user = api.getCurrentUser();
+        if (!user) {
+          setError('Please log in to view posts');
+          setIsLoading(false);
+          return;
+        }
         setCurrentUser(user);
 
-        // Fetch posts for this business user
-        const response = await wheelboardApi.post.getPostsByUser(user.id);
-        console.log('📰 Business Posts Response:', response);
+        // Fetch ALL posts from API (show community feed)
+        const response = await wheelboardApi.post.getAllPosts();
+        console.log('📰 All Posts Response:', response);
 
         // Handle response
-        const postsData: any[] = Array.isArray(response)
-          ? response
-          : response.data || [];
+        const resp: any = response;
+        const postsData: any[] = Array.isArray(resp) ? resp : resp.data || [];
 
         // Map API data to FeedPost format
-        const mappedPosts: FeedPost[] = postsData.map((apiPost: any) => ({
-          id: apiPost.postId || apiPost.id,
-          author: {
-            name: user.name || 'Business Account',
-            id: user.id,
-            avatar: user.avatar || 'profile.png',
-            initials: (user.name || 'BA').substring(0, 2).toUpperCase(),
-            userType: 'business',
-            company: user.companyName || 'Business Account',
-          },
-          content: apiPost.content || '',
-          image: apiPost.imageUrls?.[0]
-            ? encodeURI(apiPost.imageUrls[0])
-            : undefined,
-          timestamp: apiPost.createdAt || new Date().toISOString(),
-          timeAgo: getTimeAgo(apiPost.createdAt || new Date().toISOString()),
-          likes: apiPost.likes || 0,
-          shares: apiPost.shares || 0,
-          comments: apiPost.comments || [],
-          isLiked: false,
-          category: (apiPost.category || 'General') as CategoryType,
-        }));
+        const mappedPosts: FeedPost[] = postsData.map((apiPost: any) => {
+          const authorId =
+            apiPost.userId ||
+            apiPost.userID ||
+            apiPost.createdBy ||
+            apiPost.createdById ||
+            'unknown';
+
+          const authorName =
+            apiPost.authorName ||
+            apiPost.businessName ||
+            apiPost.companyName ||
+            'Business User';
+
+          const initials = (authorName || 'BU').substring(0, 2).toUpperCase();
+
+          return {
+            id: apiPost.postId || apiPost.id,
+            author: {
+              name: authorName,
+              id: authorId,
+              avatar: apiPost.authorAvatar || '/profile.png',
+              initials,
+              userType: 'business',
+              company: apiPost.companyName || apiPost.businessName || undefined,
+            },
+            content: apiPost.content || '',
+            image: apiPost.imageUrls?.[0]
+              ? encodeURI(apiPost.imageUrls[0])
+              : undefined,
+            timestamp:
+              apiPost.dateEntered ||
+              apiPost.createdAt ||
+              new Date().toISOString(),
+            timeAgo: getTimeAgo(
+              apiPost.dateEntered ||
+                apiPost.createdAt ||
+                new Date().toISOString()
+            ),
+            likes: apiPost.likes || 0,
+            shares: apiPost.shares || 0,
+            comments: apiPost.comments || [],
+            isLiked: false,
+            category: (apiPost.category || 'general') as CategoryType,
+          } as FeedPost;
+        });
 
         setFeeds(mappedPosts);
         console.log('✅ Mapped Posts:', mappedPosts);
@@ -96,7 +125,6 @@ export default function BusinessFeedsPage() {
     };
 
     fetchFeeds();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getTimeAgo = (timestamp: string) => {
@@ -126,21 +154,22 @@ export default function BusinessFeedsPage() {
       setIsLoading(true);
 
       // Call API to create post
-      const response = await wheelboardApi.post.addPost({
+      const res: any = await wheelboardApi.post.addPost({
         UserId: currentUser.id,
         Content: content,
         Category: category,
-        CreatedBy: currentUser.name || 'Business Account',
+        CreatedBy: currentUser.id,
+        PartnerId: 0,
         Images: imageFile ? [imageFile] : undefined,
       });
 
       // Create new post for immediate UI update
       const newPost: FeedPost = {
-        id: response.data?.postId || `feed-${Date.now()}`,
+        id: res?.data?.postId || `post-${Date.now()}`,
         author: {
           name: currentUser.name || 'Business Account',
           id: currentUser.id,
-          avatar: currentUser.avatar || 'profile.png',
+          avatar: currentUser.avatar || '/profile.png',
           initials: (currentUser.name || 'BA').substring(0, 2).toUpperCase(),
           userType: 'business',
           company: currentUser.companyName || 'Business Account',
@@ -229,7 +258,7 @@ export default function BusinessFeedsPage() {
                   id: `comment-${Date.now()}`,
                   author: {
                     name: 'Business Account',
-                    avatar: 'profile.png',
+                    avatar: '/profile.png',
                     id: currentUserId || `user-${Date.now()}`,
                   },
                   content: commentText,
@@ -243,34 +272,42 @@ export default function BusinessFeedsPage() {
     );
   };
 
-  const filteredFeeds =
+  // Filter by category
+  let filteredFeeds =
     filterCategory === 'all'
       ? feeds
       : feeds.filter((feed) => feed.category === filterCategory);
 
-  const stats = [
-    {
-      icon: Users,
-      label: 'Community Members',
-      value: '12,547',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Active Discussions',
-      value: '342',
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    {
-      icon: Share2,
-      label: 'Posts This Week',
-      value: '1,234',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
-    },
-  ];
+  // Filter by "My Posts" toggle
+  if (showMyPostsOnly && currentUserId) {
+    filteredFeeds = filteredFeeds.filter(
+      (feed) => feed.author.id === currentUserId
+    );
+  }
+
+  // const stats = [
+  //   {
+  //     icon: Users,
+  //     label: 'Community Members',
+  //     value: '12,547',
+  //     color: 'text-blue-600',
+  //     bg: 'bg-blue-50',
+  //   },
+  //   {
+  //     icon: TrendingUp,
+  //     label: 'Active Discussions',
+  //     value: '342',
+  //     color: 'text-green-600',
+  //     bg: 'bg-green-50',
+  //   },
+  //   {
+  //     icon: Share2,
+  //     label: 'Posts This Week',
+  //     value: '1,234',
+  //     color: 'text-purple-600',
+  //     bg: 'bg-purple-50',
+  //   },
+  // ];
 
   return (
     <BusinessProtected>
@@ -311,7 +348,7 @@ export default function BusinessFeedsPage() {
             </div>
           </motion.div>
 
-          {/* Stats Cards */}
+          {/* Stats Cards
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -337,7 +374,7 @@ export default function BusinessFeedsPage() {
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </motion.div> */}
 
           {/* Filter Bar */}
           <motion.div
@@ -374,6 +411,23 @@ export default function BusinessFeedsPage() {
                   {category.label}
                 </motion.button>
               ))}
+
+              {/* My Posts Toggle */}
+              <div className="ml-auto flex items-center gap-2 border-l pl-4">
+                <span className="text-sm text-gray-600">My Posts Only:</span>
+                <button
+                  onClick={() => setShowMyPostsOnly(!showMyPostsOnly)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    showMyPostsOnly ? 'bg-primary-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      showMyPostsOnly ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center justify-between sm:hidden">
@@ -390,35 +444,88 @@ export default function BusinessFeedsPage() {
             </div>
 
             {mobileFiltersOpen && (
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
-                {[
-                  { value: 'all', label: 'All Posts' },
-                  { value: 'Promotions', label: 'Promotions' },
-                  { value: 'tip', label: 'Tips' },
-                  { value: 'services', label: 'Services' },
-                  { value: 'question', label: 'Questions' },
-                  { value: 'general', label: 'General' },
-                ].map((category) => (
+              <div className="mt-3 space-y-3 sm:hidden">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'all', label: 'All Posts' },
+                    { value: 'Promotions', label: 'Promotions' },
+                    { value: 'tip', label: 'Tips' },
+                    { value: 'services', label: 'Services' },
+                    { value: 'question', label: 'Questions' },
+                    { value: 'general', label: 'General' },
+                  ].map((category) => (
+                    <button
+                      key={category.value}
+                      onClick={() => {
+                        setFilterCategory(category.value);
+                        setMobileFiltersOpen(false);
+                      }}
+                      className={`w-full rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
+                        filterCategory === category.value
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
+                </div>
+                {/* My Posts Toggle - Mobile */}
+                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
+                  <span className="text-sm font-semibold text-gray-700">
+                    Show My Posts Only
+                  </span>
                   <button
-                    key={category.value}
-                    onClick={() => {
-                      setFilterCategory(category.value);
-                      setMobileFiltersOpen(false);
-                    }}
-                    className={`w-full rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
-                      filterCategory === category.value
-                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    onClick={() => setShowMyPostsOnly(!showMyPostsOnly)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      showMyPostsOnly ? 'bg-primary-600' : 'bg-gray-300'
                     }`}
                   >
-                    {category.label}
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        showMyPostsOnly ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
                   </button>
-                ))}
+                </div>
               </div>
             )}
           </motion.div>
 
           {/* Feeds Grid */}
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600"></div>
+              <p className="ml-3 text-gray-600">Loading posts...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-red-100 p-1">
+                  <svg
+                    className="h-4 w-4 text-red-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <p className="font-medium text-red-800">Error loading posts</p>
+              </div>
+              <p className="mt-1 text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
           <motion.div
             variants={container}
             initial="hidden"

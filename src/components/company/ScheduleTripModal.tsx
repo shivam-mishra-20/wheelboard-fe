@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { wheelboardApi } from '@/lib/wheelboardApi';
 import { api } from '@/lib/apiAdapter';
+
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import {
   Popover,
@@ -139,7 +140,7 @@ export default function ScheduleTripModal({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleScheduleNow = () => {
+  const handleScheduleNow = async () => {
     // Validate form
     if (
       !formData.vehicleId ||
@@ -152,7 +153,32 @@ export default function ScheduleTripModal({
       alert('Please fill in all required fields');
       return;
     }
-    setStep('success');
+
+    try {
+      const user = api.getCurrentUser();
+      if (!user) {
+        alert('Please log in to schedule a trip');
+        return;
+      }
+
+      // Call the add-trip API with driver assigned
+      await wheelboardApi.trip.addTrip({
+        UserId: user.id,
+        VehicleId: formData.vehicleId,
+        DriverId: formData.driverId, // Driver is already assigned
+        PickupLocation: formData.pickupLocation,
+        DeliveryLocation: formData.deliveryLocation,
+        PickupDate: formData.pickupDate,
+        PickupTime: formData.pickupTime,
+        PayRange: '0', // Scheduled trips might not have a pay range
+        TripStatus: 'Upcoming',
+      });
+
+      setStep('success');
+    } catch (error) {
+      console.error('Error scheduling trip:', error);
+      alert('Failed to schedule trip. Please try again.');
+    }
   };
 
   const handleDone = () => {
@@ -181,9 +207,9 @@ export default function ScheduleTripModal({
   const selectedDriver = drivers.find((d) => d.id === formData.driverId);
 
   // Filter available drivers (status is 'Available' or undefined)
-  const availableDrivers = drivers.filter(
-    (driver) => driver.status === 'Available' || !driver.status
-  );
+  // const availableDrivers = drivers.filter(
+  //   (driver) => driver.status === 'Available' || !driver.status
+  // );
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

@@ -10,6 +10,9 @@ import {
   ArrowLeft,
   FileText,
 } from 'lucide-react';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+import toast from 'react-hot-toast';
 import {
   Dialog,
   DialogContent,
@@ -33,13 +36,16 @@ interface Service {
   coverage: string;
   response: string;
   icon?: React.ComponentType<Record<string, unknown>> | null;
+  businessHoursFrom?: string;
+  businessHoursTo?: string;
+  daysOpen?: string;
 }
 
 interface ServiceAssignmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   service: Service | null;
-  onAssign: (serviceId: string) => void;
+  onAssign: (serviceId: string, assignmentData?: any) => void;
 }
 
 export default function ServiceAssignmentModal({
@@ -55,31 +61,92 @@ export default function ServiceAssignmentModal({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [generatedServiceId, setGeneratedServiceId] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get available days from daysOpen string (e.g., "Mon-Fri")
+  const getAvailableDays = () => {
+    if (!service?.daysOpen) return [];
+    const daysMap: Record<string, number> = {
+      Sun: 0,
+      Mon: 1,
+      Tue: 2,
+      Wed: 3,
+      Thu: 4,
+      Fri: 5,
+      Sat: 6,
+    };
+    const daysOpen = service.daysOpen;
+
+    // Handle ranges like "Mon-Fri"
+    if (daysOpen.includes('-')) {
+      const [start, end] = daysOpen.split('-').map((d) => d.trim());
+      const startDay = daysMap[start];
+      const endDay = daysMap[end];
+      const days = [];
+      for (let i = startDay; i <= endDay; i++) {
+        days.push(i);
+      }
+      return days;
+    }
+    return [];
+  };
+
+  // Check if a date is valid based on daysOpen
+  const isDateValid = (dateString: string) => {
+    if (!dateString || !service?.daysOpen) return true;
+    const date = new Date(dateString);
+    const dayOfWeek = date.getDay();
+    const availableDays = getAvailableDays();
+    return availableDays.length === 0 || availableDays.includes(dayOfWeek);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!service) return;
 
-    // Generate a service ID
-    const serviceId = `WBD-${new Date().getFullYear()}${(
-      new Date().getMonth() + 1
-    )
-      .toString()
-      .padStart(
-        2,
-        '0'
-      )}${new Date().getDate().toString().padStart(2, '0')}${Math.floor(
-      Math.random() * 1000
-    )
-      .toString()
-      .padStart(3, '0')}`;
+    try {
+      // Get current user
+      const user = await api.getCurrentUser();
+      const userId = user?.id || user?.userId;
 
-    setGeneratedServiceId(serviceId);
-    setIsSubmitted(true);
+      if (!userId) {
+        toast.error('User not found. Please log in.');
+        return;
+      }
 
-    // Call the parent's onAssign function
-    setTimeout(() => {
-      onAssign(service.id);
-    }, 2000);
+      // Prepare assignment data according to API spec
+      const assignmentData = {
+        serviceId: service.id,
+        assignedToUserId: userId,
+        vehicleNumber: vehicleNumber,
+        scheduledDate: `${serviceDate}T00:00:00.000Z`,
+        scheduledTime: serviceTime,
+        description: serviceDescription,
+        status: 'pending',
+      };
+
+      console.log('Submitting assignment:', assignmentData);
+
+      // Call assign service API
+      const response =
+        await wheelboardApi.service.assignService(assignmentData);
+
+      console.log('Assignment response:', response);
+
+      if (response.message === 'Service Assigned Successfully') {
+        // Use the serviceId from response or generate for display
+        setGeneratedServiceId(response.serviceId || service.id);
+
+        // Call parent onAssign callback with assignment ID
+        await onAssign(response.serviceId || service.id);
+
+        setIsSubmitted(true);
+        toast.success('Service assigned successfully!');
+      } else {
+        toast.error('Failed to assign service. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error assigning service:', error);
+      toast.error('Failed to assign service. Please try again.');
+    }
   };
 
   const handleClose = () => {
@@ -167,13 +234,26 @@ export default function ServiceAssignmentModal({
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-gray-700">
                         Service Date
+                        {service.daysOpen && (
+                          <span className="ml-2 text-xs font-normal text-gray-500">
+                            (Available: {service.daysOpen})
+                          </span>
+                        )}
                       </Label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <Input
                           type="date"
                           value={serviceDate}
-                          onChange={(e) => setServiceDate(e.target.value)}
+                          onChange={(e) => {
+                            setServiceDate(e.target.value);
+                            if (!isDateValid(e.target.value)) {
+                              toast.error(
+                                `Service is only available on ${service.daysOpen}`
+                              );
+                            }
+                          }}
+                          min={new Date().toISOString().split('T')[0]}
                           className="border-gray-300 pl-10 focus:border-[#f36969] focus:ring-[#f36969]/20"
                           required
                         />
@@ -184,6 +264,13 @@ export default function ServiceAssignmentModal({
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold text-gray-700">
                         Service Time
+                        {service.businessHoursFrom &&
+                          service.businessHoursTo && (
+                            <span className="ml-2 text-xs font-normal text-gray-500">
+                              ({service.businessHoursFrom} -{' '}
+                              {service.businessHoursTo})
+                            </span>
+                          )}
                       </Label>
                       <div className="relative">
                         <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -191,6 +278,8 @@ export default function ServiceAssignmentModal({
                           type="time"
                           value={serviceTime}
                           onChange={(e) => setServiceTime(e.target.value)}
+                          min={service.businessHoursFrom?.slice(0, 5)}
+                          max={service.businessHoursTo?.slice(0, 5)}
                           className="border-gray-300 pl-10 focus:border-[#f36969] focus:ring-[#f36969]/20"
                           required
                         />

@@ -367,63 +367,17 @@ export default function VehiclesListing({
                             viewBox="0 0 20 20"
                             fill="currentColor"
                           >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                              clipRule="evenodd"
-                            />
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                           </svg>
                           <span className="font-medium">
-                            {driver.experience} exp
+                            {driver.phoneNumber || driver.phone}
                           </span>
                         </div>
-                        <div className="flex items-center">
-                          <svg
-                            className="mr-1.5 h-4 w-4 text-yellow-500"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span className="font-medium">
-                            {driver.rating} rating
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <svg
-                            className="mr-1.5 h-4 w-4 text-gray-400"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
-                          </svg>
-                          <span>{driver.totalTrips} trips</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <svg
-                            className="mr-1.5 h-4 w-4 text-gray-400"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          <span>{driver.location}</span>
-                        </div>
-                        {driver.currentVehicle && (
+                        {driver.vehicleType && driver.vehicleType !== 'N/A' && (
                           <div className="flex items-center">
                             <svg
-                              className="mr-1.5 h-4 w-4 text-gray-400"
+                              className="mr-1.5 h-4 w-4 text-blue-500"
                               xmlns="http://www.w3.org/2000/svg"
                               viewBox="0 0 20 20"
                               fill="currentColor"
@@ -431,18 +385,37 @@ export default function VehiclesListing({
                               <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
                               <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
                             </svg>
-                            <span className="text-blue-600">
-                              {driver.currentVehicle}
+                            <span className="font-medium text-blue-600">
+                              {driver.vehicleType}
                             </span>
                           </div>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs text-gray-400">
-                        <span>License: {driver.licenseNumber}</span>
-                        <span>•</span>
-                        <span>{driver.phoneNumber}</span>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                        {driver.licenseNumber &&
+                          driver.licenseNumber !== 'N/A' && (
+                            <div className="flex items-center">
+                              <svg
+                                className="mr-1.5 h-4 w-4 text-gray-400"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                              </svg>
+                              <span>Vehicle: {driver.licenseNumber}</span>
+                            </div>
+                          )}
                       </div>
+
+                      {driver.description && driver.description !== '' && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          <span className="font-medium">Description:</span>{' '}
+                          {driver.description}
+                        </div>
+                      )}
                     </div>
                   </div>
 

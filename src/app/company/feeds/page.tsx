@@ -2,7 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Filter, CheckCircle2, Share2 } from 'lucide-react';
+import {
+  Plus,
+  Filter,
+  CheckCircle2,
+  Share2,
+  Sparkles,
+  TrendingUp,
+  Users,
+  X,
+  Trash2,
+} from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
@@ -27,12 +37,22 @@ function formatTimeAgo(dateString: string): string {
   return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
 }
 
+// Toast notification types
+type ToastType = 'success' | 'error' | 'info' | 'delete';
+
+interface Toast {
+  id: string;
+  type: ToastType;
+  title: string;
+  message: string;
+}
+
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.08,
     },
   },
 };
@@ -41,74 +61,126 @@ export default function CompanyFeedsPage() {
   const [feeds, setFeeds] = useState<FeedPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const currentUser = api.getCurrentUser();
-  const currentUserId = currentUser?.id || null;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [showShareToast, setShowShareToast] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
 
-  // Fetch posts from API - only run once on mount
+  // Get current user once and memoize
+  const currentUser = api.getCurrentUser();
+  const currentUserId = currentUser?.id || null;
+  const currentUserName = currentUser?.companyName || '';
+
+  // Toast helper function
+  const showToast = (type: ToastType, title: string, message: string) => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Fetch posts from API - refetch when viewMode changes
   useEffect(() => {
+    let isMounted = true;
+
     const fetchPosts = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        if (!currentUser) {
-          setError('Please log in to view posts');
-          setIsLoading(false);
-          return;
+        let response;
+        if (viewMode === 'my') {
+          // Get user's own posts only
+          if (!currentUserId) {
+            if (isMounted) {
+              setError('Please log in to view your posts');
+              setIsLoading(false);
+            }
+            return;
+          }
+          console.log('Fetching user posts for userId:', currentUserId);
+          response = await wheelboardApi.post.getPostsByUser(currentUserId);
+        } else {
+          // Get ALL posts from database
+          console.log('Fetching all posts');
+          response = await wheelboardApi.post.getAllPosts();
         }
 
-        // Get posts for current user
-        const response = await wheelboardApi.post.getPostsByUser(
-          currentUser.id
-        );
+        if (!isMounted) return;
+
         const posts = (response.data as any[]) || [];
 
-        // Transform API Post data to FeedPost format
-        const transformedPosts: FeedPost[] = posts.map((post: any) => ({
-          id: post.postId,
-          author: {
-            name:
-              currentUser?.name || currentUser?.companyName || 'Anonymous User',
-            avatar: '/profile.png',
-            initials: (currentUser?.name || currentUser?.companyName || 'A')
-              .substring(0, 2)
-              .toUpperCase(),
-            userType: 'company' as const,
-            id: currentUser?.id || 'unknown',
-            company: currentUser?.companyName || 'Company',
-          },
-          content: post.content,
-          image:
-            post.imageUrls && post.imageUrls.length > 0
-              ? encodeURI(post.imageUrls[0])
-              : undefined,
-          timestamp: post.dateEntered,
-          timeAgo: formatTimeAgo(post.dateEntered),
-          likes: 0, // API doesn't provide likes
-          shares: 0, // API doesn't provide shares
-          comments: [], // API doesn't provide comments
-          isLiked: false,
-          category: post.category,
-        }));
+        console.log(
+          `Raw Posts API Response (${viewMode === 'my' ? 'My Posts' : 'All Posts'}):`,
+          posts
+        );
 
-        setFeeds(transformedPosts);
+        // Transform API Post data to FeedPost format
+        const transformedPosts: FeedPost[] = posts.map((post: any) => {
+          // API returns imageUrls array
+          const imageUrls = post.imageUrls || [];
+          // For My Posts, userName is null from API, use currentUserName
+          // For All Posts, use userName from API or fallback
+          const authorName =
+            viewMode === 'my'
+              ? currentUserName
+              : post.userName || 'Community Member';
+
+          return {
+            id: post.postId,
+            author: {
+              name: authorName,
+              avatar: '/profile.png',
+              initials: authorName.substring(0, 2).toUpperCase(),
+              userType: 'company' as const,
+              id:
+                viewMode === 'my'
+                  ? currentUserId || 'unknown'
+                  : post.userId || 'unknown',
+              company: authorName,
+            },
+            content: post.content,
+            image: imageUrls.length > 0 ? imageUrls[0] : undefined,
+            timestamp: post.dateEntered || new Date().toISOString(),
+            timeAgo: formatTimeAgo(
+              post.dateEntered || new Date().toISOString()
+            ),
+            likes: post.likeCount || 0,
+            shares: 0,
+            comments: [],
+            isLiked: post.isLiked || false,
+            category: post.category,
+            status: post.status,
+          };
+        });
+
+        if (isMounted) {
+          setFeeds(transformedPosts);
+          setIsLoading(false);
+        }
       } catch (err) {
         console.error('Error fetching posts:', err);
-        setError('Failed to load posts from API.');
-        setFeeds([]);
-      } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setError('Failed to load posts from API.');
+          setFeeds([]);
+          setIsLoading(false);
+        }
       }
     };
 
     fetchPosts();
+
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount - currentUser is stable from api.getCurrentUser()
+  }, [viewMode, currentUserId]); // currentUserName is derived from currentUser, no need to add
 
   const handlePostCreated = async (
     content: string,
@@ -116,66 +188,122 @@ export default function CompanyFeedsPage() {
     imageFile?: File
   ) => {
     try {
-      if (!currentUser) {
+      if (!currentUserId) {
         setError('Please log in to create posts');
         return;
       }
 
       // Create post via API with proper field mapping
       const postData = {
-        UserId: currentUser.id,
+        UserId: currentUserId,
         Content: content,
         Category: category,
-        Images: imageFile ? [imageFile] : [], // Pass the actual image file
-        CreatedBy: currentUser.id,
+        Images: imageFile ? [imageFile] : [],
+        CreatedBy: currentUserId,
         PartnerId: 0,
       };
 
       console.log('Creating post with data:', postData);
       const response = await wheelboardApi.post.addPost(postData);
+      console.log('Create post response:', response);
 
       if (response.success) {
-        // Add new post to state
-        const newPost: FeedPost = {
-          id: `post-${Date.now()}`,
-          author: {
-            name: currentUser.name || currentUser.companyName || 'Anonymous',
-            avatar: '/profile.png',
-            initials: (currentUser.name || currentUser.companyName || 'A')
-              .substring(0, 2)
-              .toUpperCase(),
-            userType: 'company' as const,
-            id: currentUser.id,
-            company: currentUser.companyName || 'Company',
-          },
-          content: content,
-          image: imageFile ? URL.createObjectURL(imageFile) : undefined,
-          timestamp: new Date().toISOString(),
-          timeAgo: 'Just now',
-          likes: 0,
-          shares: 0,
-          comments: [],
-          isLiked: false,
-          category: category,
-        };
+        // Refetch posts based on current view mode
+        let postsResponse;
+        if (viewMode === 'my') {
+          postsResponse =
+            await wheelboardApi.post.getPostsByUser(currentUserId);
+        } else {
+          postsResponse = await wheelboardApi.post.getAllPosts();
+        }
 
-        setFeeds([newPost, ...feeds]);
-        setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 5000);
+        const posts = (postsResponse.data as any[]) || [];
+
+        // Transform API Post data to FeedPost format
+        const transformedPosts: FeedPost[] = posts.map((post: any) => {
+          const imageUrls = post.imageUrls || [];
+          // For My Posts, userName is null from API, use currentUserName
+          const authorName =
+            viewMode === 'my'
+              ? currentUserName
+              : post.userName || 'Community Member';
+
+          return {
+            id: post.postId,
+            author: {
+              name: authorName,
+              avatar: '/profile.png',
+              initials: authorName.substring(0, 2).toUpperCase(),
+              userType: 'company' as const,
+              id:
+                viewMode === 'my'
+                  ? currentUserId || 'unknown'
+                  : post.userId || 'unknown',
+              company: authorName,
+            },
+            content: post.content,
+            image: imageUrls.length > 0 ? imageUrls[0] : undefined,
+            timestamp: post.dateEntered || new Date().toISOString(),
+            timeAgo: formatTimeAgo(
+              post.dateEntered || new Date().toISOString()
+            ),
+            likes: post.likeCount || 0,
+            shares: 0,
+            comments: [],
+            isLiked: post.isLiked || false,
+            category: post.category,
+            status: post.status,
+          };
+        });
+
+        setFeeds(transformedPosts);
+        showToast('success', 'Post Created!', 'Your post is now live.');
       }
     } catch (err) {
       console.error('Error creating post:', err);
-      setError('Failed to create post');
+      showToast('error', 'Error', 'Failed to create post. Please try again.');
     }
   };
 
   const handleDelete = async (postId: string) => {
     try {
-      await wheelboardApi.post.deletePost(postId);
+      console.log('Deleting post:', postId);
+      const response = await wheelboardApi.post.deletePost(postId);
+      console.log('Delete response:', response);
+
+      // If we got here without throwing, the delete was successful
+      // Remove from UI immediately
       setFeeds((prev) => prev.filter((f) => f.id !== postId));
-    } catch (err) {
+
+      // Show success message
+      showToast(
+        'success',
+        'Post Deleted',
+        'Your post has been removed successfully.'
+      );
+    } catch (err: any) {
       console.error('Error deleting post:', err);
-      setError('Failed to delete post');
+
+      // Check if the error message indicates success (some APIs return success in error format)
+      const errorMessage = err?.message?.toLowerCase() || '';
+      if (
+        errorMessage.includes('success') ||
+        errorMessage.includes('deleted')
+      ) {
+        // It was actually successful
+        setFeeds((prev) => prev.filter((f) => f.id !== postId));
+        showToast(
+          'success',
+          'Post Deleted',
+          'Your post has been removed successfully.'
+        );
+      } else {
+        showToast(
+          'error',
+          'Error',
+          err.message || 'Failed to delete post. Please try again.'
+        );
+      }
     }
   };
 
@@ -210,8 +338,7 @@ export default function CompanyFeedsPage() {
         feed.id === postId ? { ...feed, shares: feed.shares + 1 } : feed
       )
     );
-    setShowShareToast(true);
-    setTimeout(() => setShowShareToast(false), 3000);
+    showToast('info', 'Shared!', 'Post link copied to clipboard.');
   };
 
   const handleComment = (postId: string, commentText: string) => {
@@ -227,10 +354,7 @@ export default function CompanyFeedsPage() {
                 {
                   id: `comment-${Date.now()}`,
                   author: {
-                    name:
-                      currentUser?.name ||
-                      currentUser?.companyName ||
-                      'Anonymous',
+                    name: currentUser?.name || currentUser?.companyName || '',
                     avatar: '/profile.png',
                     id: currentUserId,
                   },
@@ -258,177 +382,242 @@ export default function CompanyFeedsPage() {
       {/* Login Simulator for Testing */}
       <LoginSimulator />
 
-      <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-16 font-poppins">
         {/* Main Content */}
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          {/* Page Header */}
+        <main className="mx-auto max-w-4xl px-3 py-4 sm:px-6 sm:py-8 lg:px-8">
+          {/* Page Header - Modern Design */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="mb-2 text-3xl font-bold text-gray-900">
-                  Community Feeds
-                </h1>
-                <p className="text-gray-600">
-                  Stay connected with the fleet management community
+                <div className="mb-1 flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                    Community Feeds
+                  </h1>
+                  <Sparkles className="h-5 w-5 text-amber-500 sm:h-6 sm:w-6" />
+                </div>
+                <p className="text-sm text-gray-500 sm:text-base">
+                  Connect with fleet professionals worldwide
                 </p>
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setIsCreateModalOpen(true)}
-                className="hidden items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg sm:flex"
+                className="hidden items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/30 sm:flex"
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4" />
                 Create Post
               </motion.button>
             </div>
           </motion.div>
 
-          {/* Filter Bar */}
+          {/* View Mode Toggle - Modern Pill Design */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="mb-4 sm:mb-6"
+          >
+            <div className="inline-flex rounded-xl bg-gray-100 p-1">
+              <button
+                onClick={() => setViewMode('all')}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  viewMode === 'all'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>All Posts</span>
+              </button>
+              <button
+                onClick={() => setViewMode('my')}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  viewMode === 'my'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                <span>My Posts</span>
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Filter Bar - Compact & Modern */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mb-6 rounded-2xl bg-white p-4 shadow-md"
+            className="mb-4 sm:mb-6"
           >
-            <div className="hidden items-center gap-4 overflow-x-auto sm:flex">
-              <div className="flex items-center gap-2 text-gray-700">
-                <Filter className="h-5 w-5" />
-                <span className="whitespace-nowrap font-semibold">Filter:</span>
-              </div>
-
+            {/* Desktop Filters */}
+            <div className="hidden flex-wrap items-center gap-2 sm:flex">
               {[
-                { value: 'all', label: 'All Posts' },
-                { value: 'Promotions', label: 'Promotions' },
-                { value: 'tip', label: 'Tips' },
-                { value: 'services', label: 'Services' },
-                { value: 'question', label: 'Questions' },
-                { value: 'general', label: 'General' },
+                { value: 'all', label: 'All', icon: '🌐' },
+                { value: 'Promotions', label: 'Promotions', icon: '📢' },
+                { value: 'tip', label: 'Tips', icon: '💡' },
+                { value: 'services', label: 'Services', icon: '🔧' },
+                { value: 'question', label: 'Questions', icon: '❓' },
+                { value: 'general', label: 'General', icon: '💬' },
               ].map((category) => (
                 <motion.button
                   key={category.value}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setFilterCategory(category.value)}
-                  className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all ${
                     filterCategory === category.value
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25'
+                      : 'bg-white text-gray-600 shadow-sm hover:bg-gray-50 hover:shadow'
                   }`}
                 >
-                  {category.label}
+                  <span>{category.icon}</span>
+                  <span>{category.label}</span>
                 </motion.button>
               ))}
             </div>
 
-            {/* Mobile: show a Filters button that toggles a collapsible panel */}
+            {/* Mobile Filters */}
             <div className="flex items-center justify-between sm:hidden">
               <button
                 onClick={() => setMobileFiltersOpen((s) => !s)}
-                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-gray-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm"
               >
                 <Filter className="h-4 w-4" />
-                Filters
+                Filter
+                <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-700">
+                  {filterCategory === 'all' ? 'All' : filterCategory}
+                </span>
               </button>
               <span className="text-sm text-gray-500">
-                {filteredFeeds.length} posts
+                {filteredFeeds.length} post{filteredFeeds.length !== 1 && 's'}
               </span>
             </div>
 
-            {mobileFiltersOpen && (
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
-                {[
-                  { value: 'all', label: 'All Posts' },
-                  { value: 'Promotions', label: 'Promotions' },
-                  { value: 'tip', label: 'Tips' },
-                  { value: 'services', label: 'Services' },
-                  { value: 'question', label: 'Questions' },
-                  { value: 'general', label: 'General' },
-                ].map((category) => (
-                  <button
-                    key={category.value}
-                    onClick={() => {
-                      setFilterCategory(category.value);
-                      setMobileFiltersOpen(false);
-                    }}
-                    className={`w-full rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
-                      filterCategory === category.value
-                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Mobile Filter Dropdown */}
+            <AnimatePresence>
+              {mobileFiltersOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-3 overflow-hidden sm:hidden"
+                >
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'all', label: 'All', icon: '🌐' },
+                      { value: 'Promotions', label: 'Promos', icon: '📢' },
+                      { value: 'tip', label: 'Tips', icon: '💡' },
+                      { value: 'services', label: 'Services', icon: '🔧' },
+                      { value: 'question', label: 'Q&A', icon: '❓' },
+                      { value: 'general', label: 'General', icon: '💬' },
+                    ].map((category) => (
+                      <button
+                        key={category.value}
+                        onClick={() => {
+                          setFilterCategory(category.value);
+                          setMobileFiltersOpen(false);
+                        }}
+                        className={`flex flex-col items-center gap-1 rounded-xl p-3 text-xs font-medium transition-all ${
+                          filterCategory === category.value
+                            ? 'bg-primary-500 text-white shadow-md'
+                            : 'bg-white text-gray-600 shadow-sm'
+                        }`}
+                      >
+                        <span className="text-lg">{category.icon}</span>
+                        <span>{category.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
-          {/* Loading State */}
+          {/* Loading State - Modern Skeleton */}
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600"></div>
-              <p className="ml-3 text-gray-600">Loading posts...</p>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-red-100 p-1">
-                  <svg
-                    className="h-4 w-4 text-red-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse rounded-2xl bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gray-200" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-32 rounded bg-gray-200" />
+                      <div className="h-3 w-20 rounded bg-gray-200" />
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <div className="h-4 w-full rounded bg-gray-200" />
+                    <div className="h-4 w-3/4 rounded bg-gray-200" />
+                  </div>
+                  <div className="mt-4 h-48 rounded-xl bg-gray-200" />
                 </div>
-                <p className="font-medium text-red-800">Error loading posts</p>
-              </div>
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+              ))}
             </div>
           )}
 
-          {/* Feeds Grid */}
+          {/* Error State - Modern Design */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4"
+            >
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                <X className="h-4 w-4 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-red-800">
+                  Something went wrong
+                </p>
+                <p className="mt-0.5 text-sm text-red-600">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </motion.div>
+          )}
+
+          {/* Feeds Grid - Modern Layout */}
           {!isLoading && (
             <>
               {filteredFeeds.length === 0 ? (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="rounded-3xl bg-white p-16 text-center shadow-sm"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="rounded-2xl bg-white p-8 text-center shadow-sm sm:p-12"
                 >
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                    <Filter className="h-8 w-8 text-gray-400" />
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
+                    <Sparkles className="h-7 w-7 text-gray-400" />
                   </div>
-                  <h3 className="mb-2 text-xl font-bold text-gray-900">
-                    No Posts Found
+                  <h3 className="mb-2 text-lg font-bold text-gray-900">
+                    {viewMode === 'my' ? 'No Posts Yet' : 'No Posts Found'}
                   </h3>
-                  <p className="text-gray-600">
-                    Try adjusting your filter to see more posts, or create the
-                    first post!
+                  <p className="mx-auto max-w-sm text-sm text-gray-500">
+                    {viewMode === 'my'
+                      ? "You haven't created any posts yet. Share something with the community!"
+                      : 'Try adjusting your filter or be the first to post!'}
                   </p>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg"
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25"
                   >
-                    <Plus className="h-5 w-5" />
-                    Create Post
+                    <Plus className="h-4 w-4" />
+                    Create Your First Post
                   </motion.button>
                 </motion.div>
               ) : (
@@ -446,7 +635,7 @@ export default function CompanyFeedsPage() {
                       onShare={handleShare}
                       onComment={handleComment}
                       currentUserId={currentUserId}
-                      onDelete={handleDelete}
+                      onDelete={viewMode === 'my' ? handleDelete : undefined}
                       onDeleteComment={handleDeleteComment}
                     />
                   ))}
@@ -473,50 +662,75 @@ export default function CompanyFeedsPage() {
             onPostCreated={handlePostCreated}
           />
 
-          {/* Success Toast */}
-          <AnimatePresence>
-            {showSuccessToast && (
-              <motion.div
-                initial={{ opacity: 0, y: -30, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{
-                  opacity: 0,
-                  y: -30,
-                  scale: 0.8,
-                  transition: { duration: 0.2 },
-                }}
-                className="fixed left-1/2 top-6 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-green-600 px-6 py-4 text-white shadow-2xl"
-              >
-                <CheckCircle2 className="h-6 w-6" />
-                <div>
-                  <p className="font-semibold">Post Created Successfully!</p>
-                  <p className="text-sm text-green-100">
-                    Your post is now visible to the community.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Modern Toast Notifications */}
+          <div className="fixed right-4 top-20 z-50 flex flex-col gap-3 sm:right-6 sm:top-24">
+            <AnimatePresence mode="popLayout">
+              {toasts.map((toast) => {
+                const toastConfig = {
+                  success: {
+                    bg: 'bg-gradient-to-r from-emerald-500 to-green-600',
+                    icon: <CheckCircle2 className="h-5 w-5" />,
+                    border: 'border-emerald-400/30',
+                  },
+                  error: {
+                    bg: 'bg-gradient-to-r from-red-500 to-rose-600',
+                    icon: <X className="h-5 w-5" />,
+                    border: 'border-red-400/30',
+                  },
+                  info: {
+                    bg: 'bg-gradient-to-r from-blue-500 to-indigo-600',
+                    icon: <Share2 className="h-5 w-5" />,
+                    border: 'border-blue-400/30',
+                  },
+                  delete: {
+                    bg: 'bg-gradient-to-r from-amber-500 to-orange-600',
+                    icon: <Trash2 className="h-5 w-5" />,
+                    border: 'border-amber-400/30',
+                  },
+                };
+                const config = toastConfig[toast.type];
 
-          {/* Share Toast */}
-          <AnimatePresence>
-            {showShareToast && (
-              <motion.div
-                initial={{ opacity: 0, y: -30, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{
-                  opacity: 0,
-                  y: -30,
-                  scale: 0.8,
-                  transition: { duration: 0.2 },
-                }}
-                className="fixed left-1/2 top-6 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-blue-600 px-6 py-4 text-white shadow-2xl"
-              >
-                <Share2 className="h-6 w-6" />
-                <p className="font-semibold">Post Shared Successfully!</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                return (
+                  <motion.div
+                    key={toast.id}
+                    layout
+                    initial={{ opacity: 0, x: 100, scale: 0.9 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 100, scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className={`relative flex w-80 items-center gap-3 overflow-hidden rounded-2xl border ${config.border} bg-white p-4 shadow-2xl shadow-black/10 backdrop-blur-xl sm:w-96`}
+                  >
+                    <div
+                      className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${config.bg} text-white shadow-lg`}
+                    >
+                      {config.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-gray-900">
+                        {toast.title}
+                      </p>
+                      <p className="truncate text-sm text-gray-500">
+                        {toast.message}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeToast(toast.id)}
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    {/* Progress bar */}
+                    <motion.div
+                      initial={{ width: '100%' }}
+                      animate={{ width: '0%' }}
+                      transition={{ duration: 4, ease: 'linear' }}
+                      className={`absolute bottom-0 left-0 h-1 rounded-b-2xl ${config.bg}`}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
         </main>
 
         {/* Shared Footer */}

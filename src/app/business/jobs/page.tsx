@@ -25,7 +25,8 @@ import CreateJobModal from '@/components/company/CreateJobModal';
 import ConfirmDeleteModal from '@/components/company/ConfirmDeleteModal';
 import JobApplicationsModal from '@/components/business/JobApplicationsModal';
 import { wheelboardApi } from '@/lib/wheelboardApi';
-import type { BusinessJob } from '@/lib/mockApi';
+import { api } from '@/lib/apiAdapter';
+import type { BusinessJob } from '@/types/job';
 
 const container = {
   hidden: { opacity: 0 },
@@ -54,7 +55,7 @@ export default function BusinessJobsPage() {
     'all' | 'Active' | 'Paused' | 'Closed'
   >('all');
   const [jobs, setJobs] = useState<BusinessJob[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isCreateJobModalOpen, setIsCreateJobModalOpen] = useState(false);
@@ -77,19 +78,22 @@ export default function BusinessJobsPage() {
         setIsLoading(true);
 
         // Get current user
-        const user = wheelboardApi.getCurrentUser?.() || {
-          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
-        };
+        const user = api.getCurrentUser();
+        if (!user) {
+          setError('Please log in to view jobs');
+          setIsLoading(false);
+          return;
+        }
         setCurrentUser(user);
 
         // Fetch jobs for this business user
-        const response = await wheelboardApi.job.getJobsByUser(user.id);
+        const response = await wheelboardApi.job.getJobList(user.id);
         console.log('💼 Business Jobs Response:', response);
 
         // Handle response
         const jobsData: any[] = Array.isArray(response)
           ? response
-          : response.data || [];
+          : (response as any)?.data || [];
 
         // Map API data to BusinessJob format
         const mappedJobs: BusinessJob[] = jobsData.map((apiJob: any) => ({
@@ -120,7 +124,6 @@ export default function BusinessJobsPage() {
     };
 
     fetchJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter jobs based on search and status
@@ -159,17 +162,22 @@ export default function BusinessJobsPage() {
         Description: jobData.description,
         JobType: jobData.type,
         JobDuration: jobData.duration,
+        Openings: parseInt(jobData.openings) || 1,
+        Salary: parseFloat(jobData.salary) || 0,
         Images: jobData.images,
       });
 
+      console.log('✅ Add job response:', response);
+
       // Create new job object
+      const responseData = (response as any)?.data || response;
       const newJob: BusinessJob = {
-        id: response.data?.jobId || 'job-' + Date.now(),
+        id: responseData.jobId || 'job-' + Date.now(),
         title: jobData.jobType || 'New Job',
         department: 'Service',
         location: jobData.city || 'Unknown',
         type: (jobData.type as BusinessJob['type']) || 'Full-time',
-        salary: jobData.salary || 'Not specified',
+        salary: `₹${jobData.salary || '0'}/month`,
         description: jobData.description || '',
         requirements: [],
         benefits: [],
@@ -223,7 +231,7 @@ export default function BusinessJobsPage() {
       setIsLoading(true);
 
       // Call API to update job
-      await wheelboardApi.job.updateJob({
+      const response = await wheelboardApi.job.updateJob({
         JobId: jobData.id,
         UserId: currentUser.id,
         Role: jobData.jobType || '',
@@ -231,8 +239,12 @@ export default function BusinessJobsPage() {
         Description: jobData.description || '',
         JobType: jobData.type || '',
         JobDuration: jobData.duration || '',
+        Openings: parseInt(jobData.openings || '1'),
+        Salary: parseFloat(jobData.salary || '0'),
         NewImages: jobData.images || [],
       });
+
+      console.log('✅ Update job response:', response);
 
       // Update local state
       const updatedJobs = jobs.map((job) => {
@@ -242,7 +254,7 @@ export default function BusinessJobsPage() {
             title: jobData.jobType || job.title,
             location: jobData.city || job.location,
             type: (jobData.type as BusinessJob['type']) || job.type,
-            salary: jobData.salary || job.salary,
+            salary: jobData.salary ? `₹${jobData.salary}/month` : job.salary,
             description: jobData.description || job.description,
             image: jobData.images?.[0]
               ? URL.createObjectURL(jobData.images[0])
@@ -312,6 +324,44 @@ export default function BusinessJobsPage() {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <BusinessProtected>
+        <Header />
+        <LoginSimulator />
+        <div className="flex h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600"></div>
+          <p className="ml-3 text-gray-600">Loading jobs...</p>
+        </div>
+        <Footer />
+      </BusinessProtected>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <BusinessProtected>
+        <Header />
+        <LoginSimulator />
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+            <p className="mt-4 text-lg font-semibold text-gray-900">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </BusinessProtected>
+    );
+  }
 
   return (
     <BusinessProtected>
@@ -710,7 +760,7 @@ export default function BusinessJobsPage() {
           setSelectedJobForApplications(null);
         }}
         jobTitle={selectedJobForApplications?.title || ''}
-        applications={selectedJobForApplications?.applications || []}
+        jobId={selectedJobForApplications?.id}
       />
 
       {/* Toast Notification */}

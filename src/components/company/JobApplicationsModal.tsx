@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Phone, MapPin, Calendar, FileText } from 'lucide-react';
@@ -11,6 +11,7 @@ interface JobApplicationsModalProps {
   onClose: () => void;
   jobTitle: string;
   applications: JobApplication[];
+  onStatusUpdate?: (applicationId: string, newStatus: string) => Promise<void>;
 }
 
 const statusColors = {
@@ -32,7 +33,23 @@ export default function JobApplicationsModal({
   onClose,
   jobTitle,
   applications,
+  onStatusUpdate,
 }: JobApplicationsModalProps) {
+  const [updatingApplicationId, setUpdatingApplicationId] = useState<string | null>(null);
+
+  const handleStatusUpdate = async (applicationId: string, newStatus: string) => {
+    if (!onStatusUpdate) return;
+    
+    setUpdatingApplicationId(applicationId);
+    try {
+      await onStatusUpdate(applicationId, newStatus);
+    } catch (error) {
+      console.error('Failed to update application status:', error);
+    } finally {
+      setUpdatingApplicationId(null);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -207,16 +224,20 @@ export default function JobApplicationsModal({
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="rounded-lg border border-green-300 bg-white px-4 py-2 text-xs font-semibold text-green-600 transition-all hover:bg-green-50"
+                                onClick={() => handleStatusUpdate(application.id || application.applicationId || '', 'shortlisted')}
+                                disabled={updatingApplicationId === (application.id || application.applicationId)}
+                                className="rounded-lg border border-green-300 bg-white px-4 py-2 text-xs font-semibold text-green-600 transition-all hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                Shortlist
+                                {updatingApplicationId === (application.id || application.applicationId) ? 'Updating...' : 'Shortlist'}
                               </motion.button>
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="rounded-lg border border-red-300 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-all hover:bg-red-50"
+                                onClick={() => handleStatusUpdate(application.id || application.applicationId || '', 'rejected')}
+                                disabled={updatingApplicationId === (application.id || application.applicationId)}
+                                className="rounded-lg border border-red-300 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-all hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                Reject
+                                {updatingApplicationId === (application.id || application.applicationId) ? 'Updating...' : 'Reject'}
                               </motion.button>
                             </>
                           )}

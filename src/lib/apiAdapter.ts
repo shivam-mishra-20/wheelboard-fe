@@ -84,6 +84,11 @@ export const api = {
 
       const response = await wheelboardApi.user.login(loginData);
 
+      console.log('=== LOGIN API DEBUG ===');
+      console.log('Login API response:', response);
+      console.log('Response success:', response.success);
+      console.log('Response data:', response.data);
+
       if (response.success && response.data) {
         // Map actual API response structure
         const userData = response.data as {
@@ -98,11 +103,22 @@ export const api = {
           companyName?: string;
         };
 
+        console.log('Extracted userId:', userData.userId);
+        console.log('Extracted token:', userData.token ? 'exists' : 'missing');
+        console.log('isProfileComplete:', userData.isProfileComplete);
+
         // Normalize userType to lowercase for frontend consistency
         const normalizedUserType = userData.userType.toLowerCase() as
           | 'professional'
           | 'company'
           | 'business';
+
+        // Service Provider users come as Company type with businessCategory 'Service Provider'
+        const mappedUserType: 'professional' | 'company' | 'business' =
+          (userData.businessCategory || '').toLowerCase() === 'service provider' ||
+          (userData.businessCategory || '').toLowerCase() === 'service-provider'
+            ? 'business'
+            : normalizedUserType;
 
         return {
           success: true,
@@ -113,7 +129,7 @@ export const api = {
             mobileNo: userData.mobileNo || '',
             name: userData.name || '',
             companyName: userData.companyName || '',
-            userType: normalizedUserType,
+            userType: mappedUserType,
             businessCategory: userData.businessCategory,
             isProfileComplete: userData.isProfileComplete,
             createdAt: new Date().toISOString(),
@@ -207,7 +223,7 @@ export const api = {
           mobileNo: data.mobileNo || data.phoneNumber || '',
           email: data.email || '',
           password: data.password,
-          businessCategory: data.businessCategory || 'service-provider',
+          businessCategory: data.businessCategory || 'Service Provider',
         });
 
         return {
@@ -259,6 +275,11 @@ export const api = {
    * Get current user session
    */
   getCurrentUser: (): UnifiedUser | null => {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
     if (API_MODE === 'real') {
       // For real API, check localStorage or session storage
       const userStr = localStorage.getItem('wheelboard_current_user');
@@ -293,8 +314,10 @@ export const api = {
    */
   logout: async (): Promise<{ success: boolean; message: string }> => {
     if (API_MODE === 'real') {
-      localStorage.removeItem('wheelboard_current_user');
-      localStorage.removeItem('authToken');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('wheelboard_current_user');
+        localStorage.removeItem('authToken');
+      }
       return {
         success: true,
         message: 'Logged out successfully!',
@@ -360,6 +383,7 @@ export const api = {
  * Helper to save authenticated user to localStorage
  */
 export const saveAuthUser = (user: UnifiedUser, token?: string): void => {
+  if (typeof window === 'undefined') return;
   localStorage.setItem('wheelboard_current_user', JSON.stringify(user));
   if (token) {
     localStorage.setItem('authToken', token);
@@ -370,6 +394,7 @@ export const saveAuthUser = (user: UnifiedUser, token?: string): void => {
  * Helper to get auth token
  */
 export const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
   return localStorage.getItem('authToken');
 };
 

@@ -18,10 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Search, Loader2 } from 'lucide-react';
 import { Upload, Select, message } from 'antd';
 import { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import { PlusOutlined } from '@ant-design/icons';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
 interface VehicleFormModalProps {
   isOpen: boolean;
@@ -74,6 +75,100 @@ export default function VehicleFormModal({
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [confirmChecked, setConfirmChecked] = useState(false);
 
+  // Vehicle lookup state
+  const [searchVehicleNumber, setSearchVehicleNumber] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [vehicleFound, setVehicleFound] = useState(false);
+
+  // Function to search vehicle details by registration number
+  const handleVehicleSearch = async () => {
+    if (!searchVehicleNumber.trim()) {
+      setSearchError('Please enter a vehicle number');
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+    setVehicleFound(false);
+
+    try {
+      const response = await wheelboardApi.vehicle.getVehicleDetails(
+        searchVehicleNumber.trim().toUpperCase()
+      );
+
+      console.log('Vehicle details response:', response);
+
+      if (response.success && response.data) {
+        // API now returns extracted vehicle data directly
+        const vehicleData = response.data as any;
+
+        console.log('Vehicle data:', vehicleData);
+
+        // Extract manufacturing year from vehicleManufacturingMonthYear (format: "01/2011")
+        let manufacturingYear = new Date().getFullYear();
+        if (vehicleData.vehicleManufacturingMonthYear) {
+          const parts = vehicleData.vehicleManufacturingMonthYear.split('/');
+          if (parts.length === 2) {
+            manufacturingYear = parseInt(parts[1]) || manufacturingYear;
+          }
+        }
+
+        // Map fuel type from API type field (DIESEL, PETROL, etc.)
+        const fuelTypeMap: Record<string, string> = {
+          DIESEL: 'Diesel',
+          PETROL: 'Petrol',
+          CNG: 'CNG',
+          ELECTRIC: 'Electric',
+          HYBRID: 'Hybrid',
+          LPG: 'LPG',
+        };
+        const mappedFuelType =
+          fuelTypeMap[vehicleData.type?.toUpperCase()] ||
+          vehicleData.type ||
+          'Diesel';
+
+        // Auto-fill the form with fetched data matching the API response
+        setFormData((prev) => ({
+          ...prev,
+          // Vehicle Number / Registration Number (e.g., "UP16AF0785")
+          registrationNumber:
+            vehicleData.vehicleNumber ||
+            vehicleData.regNo ||
+            searchVehicleNumber.toUpperCase(),
+          // Vehicle Model (e.g., "ENDEAVOUR")
+          model: vehicleData.model || '',
+          // Manufacturing Year from vehicleManufacturingMonthYear (e.g., 2011)
+          year: manufacturingYear,
+          // Vehicle Category (e.g., "LMV")
+          vehicleCategory: vehicleData.vehicleCategory || '',
+          // Fuel Type (e.g., "DIESEL" -> "Diesel")
+          fuelType: mappedFuelType,
+          // Owner Name (e.g., "MANMOHAN SINGH")
+          name: vehicleData.owner || '',
+          // Description - use permanent address
+          location:
+            vehicleData.permanentAddress || vehicleData.presentAddress || '',
+        }));
+
+        setVehicleFound(true);
+        message.success('Vehicle details fetched successfully!');
+      } else {
+        setSearchError(
+          response.message ||
+            'Vehicle not found. Please enter details manually.'
+        );
+      }
+    } catch (error: any) {
+      console.error('Vehicle search error:', error);
+      setSearchError(
+        'Failed to fetch vehicle details. Please try again or enter manually.'
+      );
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   // Initialize form with vehicle data or reset
   useEffect(() => {
     if (vehicle && mode === 'edit') {
@@ -94,6 +189,10 @@ export default function VehicleFormModal({
       });
       setFileList([]);
       setConfirmChecked(false);
+      // Reset search state
+      setSearchVehicleNumber('');
+      setSearchError(null);
+      setVehicleFound(false);
     } else if (mode === 'add' || !isOpen) {
       setFormData({
         name: '',
@@ -111,6 +210,10 @@ export default function VehicleFormModal({
       });
       setFileList([]);
       setConfirmChecked(false);
+      // Reset search state
+      setSearchVehicleNumber('');
+      setSearchError(null);
+      setVehicleFound(false);
     }
     setErrors({});
   }, [vehicle, mode, isOpen]);
@@ -265,6 +368,66 @@ export default function VehicleFormModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+          {/* Quick Vehicle Search - Only show in Add mode */}
+          {mode === 'add' && (
+            <div className="rounded-xl border-2 border-dashed border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Search className="h-5 w-5 text-green-600" />
+                <h3 className="font-semibold text-green-800">
+                  Quick Vehicle Search
+                </h3>
+              </div>
+              <p className="mb-3 text-sm text-green-700">
+                Enter vehicle number to auto-fill vehicle info
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  value={searchVehicleNumber}
+                  onChange={(e) => {
+                    setSearchVehicleNumber(e.target.value.toUpperCase());
+                    setSearchError(null);
+                  }}
+                  placeholder="Vehicle Number (e.g., UP16AF0785)"
+                  className="flex-1 border-green-200 bg-white focus:border-green-500 focus:ring-green-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleVehicleSearch();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleVehicleSearch}
+                  disabled={isSearching || !searchVehicleNumber.trim()}
+                  className="bg-green-600 hover:bg-green-700 disabled:bg-green-300"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Search Vehicle Details
+                    </>
+                  )}
+                </Button>
+              </div>
+              {searchError && (
+                <p className="mt-2 text-sm text-red-600">{searchError}</p>
+              )}
+              {vehicleFound && (
+                <p className="mt-2 flex items-center gap-1 text-sm text-green-600">
+                  <Check className="h-4 w-4" />
+                  Vehicle details auto-filled! Please verify and complete the
+                  form.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Vehicle Model */}
           <div className="space-y-2">
             <Label htmlFor="model" className="text-sm font-medium">

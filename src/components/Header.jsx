@@ -19,8 +19,10 @@ import {
   FiLogOut,
   FiChevronRight,
   FiLayers,
+  FiBell,
 } from 'react-icons/fi';
 import { Building2 } from 'lucide-react';
+import { wheelboardApi } from '../lib/wheelboardApi';
 
 // Default navigation links for non-authenticated users with icons
 const DEFAULT_NAV_LINKS = [
@@ -155,12 +157,19 @@ const Header = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [userSession, setUserSession] = useState(null);
   const [currentNavLinks, setCurrentNavLinks] = useState(DEFAULT_NAV_LINKS);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] =
+    useState(false);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [profileData, setProfileData] = useState(null);
   const lastScrollYRef = useRef(0);
   const [vw, setVw] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
   const headerRef = useRef(null);
   const profileDropdownRef = useRef(null);
+  const notificationDropdownRef = useRef(null);
 
   // Initialize viewport width and subscribe to resize - optimized
   useEffect(() => {
@@ -236,15 +245,15 @@ const Header = () => {
             icon: icons.home,
           },
           {
-            id: 'listings',
-            label: 'Listings',
-            href: '/business/listings',
+            id: 'jobs',
+            label: 'Jobs',
+            href: '/business/jobs',
             icon: icons.listings,
           },
           {
             id: 'services',
             label: 'Services',
-            href: '/business/services',
+            href: '/business/listings',
             icon: icons.services,
           },
           {
@@ -295,6 +304,43 @@ const Header = () => {
     }
   };
 
+  // Fetch notifications for authenticated users
+  const fetchNotifications = useCallback(async () => {
+    const user = api.getCurrentUser();
+    if (!user) return;
+
+    try {
+      setIsLoadingNotifications(true);
+      const response = await wheelboardApi.notification.getNotifications(
+        user.id
+      );
+      const notificationsData = Array.isArray(response)
+        ? response
+        : response.data || [];
+      setNotifications(notificationsData);
+      const unread = notificationsData.filter((n) => !n.isRead).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  }, []);
+
+  // Fetch user profile data from API
+  const fetchProfileData = useCallback(async (userId) => {
+    try {
+      const response = await wheelboardApi.user.getUserProfile(userId);
+      if (response.success && response.data) {
+        setProfileData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+    }
+  }, []);
+
   // Check for user session and update navigation - memoized with useCallback
   const updateSessionAndNavigation = useCallback(() => {
     const user = api.getCurrentUser();
@@ -302,11 +348,26 @@ const Header = () => {
       // Get role-based navigation links
       const navigationLinks = getNavigationLinksForUserType(user.userType);
 
+      // Determine profile image with priority: API data > localStorage > default
+      const profileImage =
+        profileData?.companyLogoPath ||
+        profileData?.companyLogo ||
+        user.profileImage ||
+        user.avatar ||
+        '/profile.png';
+
+      // Determine company name with priority: API data > localStorage
+      const displayName =
+        profileData?.companyName || user.companyName || user.name || 'User';
+
       // Create a session-like object for the Header
       const session = {
         isAuthenticated: true,
-        user: user,
-        profileImage: user.profileImage || user.avatar || '/profile.png',
+        user: {
+          ...user,
+          companyName: displayName,
+        },
+        profileImage: profileImage,
         navigationLinks: navigationLinks,
       };
       setUserSession(session);
@@ -326,10 +387,22 @@ const Header = () => {
     } else {
       setUserSession(null);
       setCurrentNavLinks(DEFAULT_NAV_LINKS);
+      setNotifications([]);
+      setUnreadCount(0);
+      setProfileData(null);
     }
-  }, [pathname]);
+  }, [pathname, profileData]);
+  // Fetch profile data and notifications when user is logged in
+  useEffect(() => {
+    const user = api.getCurrentUser();
+    if (user && user.id) {
+      fetchProfileData(user.id);
+      fetchNotifications();
+    }
+  }, [fetchProfileData, fetchNotifications]);
 
   useEffect(() => {
+    updateSessionAndNavigation();
     updateSessionAndNavigation();
 
     // Listen for storage changes (when user logs in/out)
@@ -341,12 +414,8 @@ const Header = () => {
 
     window.addEventListener('storage', handleStorageChange);
 
-    // Also check periodically in case localStorage was updated in same tab
-    const interval = setInterval(updateSessionAndNavigation, 1000);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
     };
   }, [updateSessionAndNavigation]);
 
@@ -525,7 +594,23 @@ const Header = () => {
     router.push('/');
   }, [router]);
 
-  // Close dropdown when clicking outside
+  // Handle mark notification as read
+  const handleMarkAsRead = useCallback(async (notificationId) => {
+    try {
+      await wheelboardApi.notification.markNotificationAsRead(notificationId);
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.notificationId === notificationId ? { ...n, isRead: true } : n
+        )
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  }, []);
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -534,15 +619,21 @@ const Header = () => {
       ) {
         setIsProfileDropdownOpen(false);
       }
+      if (
+        notificationDropdownRef.current &&
+        !notificationDropdownRef.current.contains(event.target)
+      ) {
+        setIsNotificationDropdownOpen(false);
+      }
     };
 
-    if (isProfileDropdownOpen) {
+    if (isProfileDropdownOpen || isNotificationDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [isProfileDropdownOpen]);
+  }, [isProfileDropdownOpen, isNotificationDropdownOpen]);
 
   // Redesigned desktop navigation with icons
   const renderDesktopNav = () => (
@@ -851,65 +942,178 @@ const Header = () => {
     </Link>
   );
 
+  // Notification Bell Component
+  const renderNotificationBell = () => {
+    if (!userSession) return null;
+
+    return (
+      <div className="relative hidden md:block" ref={notificationDropdownRef}>
+        <button
+          onClick={() =>
+            setIsNotificationDropdownOpen(!isNotificationDropdownOpen)
+          }
+          className="group relative rounded-lg p-2 transition-all duration-200 hover:bg-gray-50"
+        >
+          <FiBell
+            size={20}
+            className="text-gray-600 transition-colors group-hover:text-gray-900"
+          />
+          {unreadCount > 0 && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </motion.span>
+          )}
+        </button>
+
+        {/* Notification Dropdown */}
+        <AnimatePresence>
+          {isNotificationDropdownOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-0 top-full mt-2 max-h-96 w-80 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg"
+            >
+              <div className="border-b border-gray-100 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Notifications
+                  </h3>
+                  {unreadCount > 0 && (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {isLoadingNotifications ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary-500"></div>
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="py-8 text-center">
+                  <FiBell size={32} className="mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm text-gray-500">No notifications</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {notifications.map((notification) => (
+                    <button
+                      key={notification.notificationId || notification.id}
+                      onClick={() =>
+                        !notification.isRead &&
+                        handleMarkAsRead(
+                          notification.notificationId || notification.id
+                        )
+                      }
+                      className={`w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
+                        !notification.isRead ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {!notification.isRead && (
+                          <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500"></div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={`text-sm ${
+                              !notification.isRead
+                                ? 'font-semibold text-gray-900'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            {notification.message ||
+                              notification.title ||
+                              'New notification'}
+                          </p>
+                          {notification.createdAt && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              {new Date(
+                                notification.createdAt
+                              ).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   // Register/Login button or User Profile with Dropdown - enhanced
   const renderAuthSection = () => {
     if (userSession) {
       // Show user profile section with dropdown when authenticated
       return (
-        <div className="relative hidden md:block" ref={profileDropdownRef}>
-          <button
-            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-            className="group flex items-center gap-3 rounded-xl px-2 py-1.5 transition-all duration-200 hover:bg-gray-50"
-          >
-            <div className="h-9 w-9 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 transition-all duration-200 group-hover:border-primary-100 group-hover:shadow-md">
-              <img
-                src={userSession.profileImage}
-                alt="Profile"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.target.src = '/profile.png';
-                }}
-              />
-            </div>
-            <span className="hidden text-sm font-medium text-gray-700 transition-colors group-hover:text-gray-900 xl:block">
-              {userSession.user.companyName}
-            </span>
-            <motion.div
-              animate={{ rotate: isProfileDropdownOpen ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
+        <div className="flex items-center gap-2">
+          {renderNotificationBell()}
+          <div className="relative hidden md:block" ref={profileDropdownRef}>
+            <button
+              onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+              className="group flex items-center gap-3 rounded-xl px-2 py-1.5 transition-all duration-200 hover:bg-gray-50"
             >
-              <FiChevronRight className="rotate-90 text-gray-400" size={16} />
-            </motion.div>
-          </button>
-
-          {/* Dropdown Menu */}
-          <AnimatePresence>
-            {isProfileDropdownOpen && (
+              <div className="h-9 w-9 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 transition-all duration-200 group-hover:border-primary-100 group-hover:shadow-md">
+                <img
+                  src={userSession.profileImage}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.target.src = '/profile.png';
+                  }}
+                />
+              </div>
+              <span className="hidden text-sm font-medium text-gray-700 transition-colors group-hover:text-gray-900 xl:block">
+                {userSession.user.companyName}
+              </span>
               <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className="absolute left-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+                animate={{ rotate: isProfileDropdownOpen ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
               >
-                <Link
-                  href={getProfilePath()}
-                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                  onClick={() => setIsProfileDropdownOpen(false)}
-                >
-                  <FiUser size={16} className="text-gray-500" />
-                  <span>Profile</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-3 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
-                >
-                  <FiLogOut size={16} />
-                  <span>Logout</span>
-                </button>
+                <FiChevronRight className="rotate-90 text-gray-400" size={16} />
               </motion.div>
-            )}
-          </AnimatePresence>
+            </button>
+
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {isProfileDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+                >
+                  <Link
+                    href={getProfilePath()}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    onClick={() => setIsProfileDropdownOpen(false)}
+                  >
+                    <FiUser size={16} className="text-gray-500" />
+                    <span>Profile</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 border-t border-gray-100 px-4 py-3 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
+                  >
+                    <FiLogOut size={16} />
+                    <span>Logout</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       );
     }

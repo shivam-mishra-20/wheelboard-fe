@@ -95,7 +95,7 @@ type SortOption = 'dateDesc' | 'dateAsc' | 'distanceDesc' | 'distanceAsc';
 
 export default function CompanyTripsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TripStatus>('In-Process');
+  const [activeTab, setActiveTab] = useState<TripStatus>('Upcoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -122,8 +122,11 @@ export default function CompanyTripsPage() {
         const user = api.getCurrentUser();
         if (!user) {
           setError('Please log in to view trips');
+          setIsLoading(false);
           return;
         }
+
+        console.log('🔍 Fetching trips for user:', user.id);
 
         // Fetch all data in parallel
         const [tripsResponse, vehiclesResponse, driversResponse] =
@@ -137,6 +140,13 @@ export default function CompanyTripsPage() {
         const vehiclesData = (vehiclesResponse.data as any[]) || [];
         const driversData = (driversResponse.data as any[]) || [];
 
+        console.log('📦 Raw API Data:', {
+          trips: tripsData.length,
+          firstTrip: tripsData[0],
+          vehicles: vehiclesData.length,
+          drivers: driversData.length,
+        });
+
         // Map API trips to UI format
         const mappedTrips: Trip[] = tripsData.map((apiTrip: any) => ({
           // API fields
@@ -144,11 +154,7 @@ export default function CompanyTripsPage() {
           // UI compatibility fields
           id: apiTrip.tripId,
           title: `${apiTrip.pickupLocation} to ${apiTrip.deliveryLocation}`,
-          status: (apiTrip.tripStatus === 'Pending'
-            ? 'Upcoming'
-            : apiTrip.tripStatus === 'In Progress'
-              ? 'In-Process'
-              : 'Completed') as 'Completed' | 'In-Process' | 'Upcoming',
+          status: apiTrip.tripStatus as 'Completed' | 'In-Process' | 'Upcoming',
           deliveryType: 'Standard' as const, // Default value
           from: apiTrip.pickupLocation,
           to: apiTrip.deliveryLocation,
@@ -157,21 +163,23 @@ export default function CompanyTripsPage() {
           distance: '0 km', // Placeholder - API doesn't provide this
           duration: '0 hrs', // Placeholder - API doesn't provide this
           driver: {
-            id: apiTrip.driverId,
+            id: apiTrip.driverId || '',
             name: apiTrip.driverName || 'Unassigned',
             avatar: '/profile-pic.png',
           },
-          vehicle: apiTrip.vehicleId
-            ? {
-                id: apiTrip.vehicleId,
-                name: apiTrip.vehicleName || 'Unknown Vehicle',
-                type: 'Truck',
-                registrationNumber: apiTrip.vehicleName,
-              }
-            : undefined,
+          vehicle: {
+            id: apiTrip.vehicleId || '',
+            name:
+              apiTrip.vehicleModel || apiTrip.vehicleType || 'Unknown Vehicle',
+            type: apiTrip.vehicleType || 'Truck',
+            registrationNumber: apiTrip.vehicleNumber || 'N/A',
+          },
           image: '/truck-01.jpg', // Default image
           isAssigned: !!apiTrip.driverId && !!apiTrip.vehicleId,
+          bids: apiTrip.totalBidCount || 0,
         }));
+
+        console.log('✅ Mapped trips:', mappedTrips.length, mappedTrips);
 
         setTrips(mappedTrips);
         setVehicles(vehiclesData);
@@ -188,7 +196,53 @@ export default function CompanyTripsPage() {
     fetchTripsData();
   }, []);
 
-  const handleTripCreated = () => {
+  const handleTripCreated = async () => {
+    // Refresh trips data
+    try {
+      const user = api.getCurrentUser();
+      if (user) {
+        const tripsResponse = await wheelboardApi.trip.getTripsByUser(user.id);
+        const tripsData = (tripsResponse.data as any[]) || [];
+
+        const mappedTrips: Trip[] = tripsData.map((apiTrip: any) => ({
+          ...apiTrip,
+          id: apiTrip.tripId,
+          title: `${apiTrip.pickupLocation} to ${apiTrip.deliveryLocation}`,
+          status: apiTrip.tripStatus as 'Completed' | 'In-Process' | 'Upcoming',
+          deliveryType: 'Standard' as const,
+          from: apiTrip.pickupLocation,
+          to: apiTrip.deliveryLocation,
+          departureDate: apiTrip.pickupDate,
+          departureTime: apiTrip.pickupTime,
+          distance: '0 km',
+          duration: '0 hrs',
+          driver: {
+            id: apiTrip.driverId || '',
+            name: apiTrip.driverName || 'Unassigned',
+            avatar: '/profile-pic.png',
+          },
+          vehicle: apiTrip.vehicleId
+            ? {
+                id: apiTrip.vehicleId,
+                name:
+                  apiTrip.vehicleModel ||
+                  apiTrip.vehicleType ||
+                  'Unknown Vehicle',
+                type: apiTrip.vehicleType || 'Truck',
+                registrationNumber: apiTrip.vehicleNumber || 'N/A',
+              }
+            : undefined,
+          image: '/truck-01.jpg',
+          isAssigned: !!apiTrip.driverId && !!apiTrip.vehicleId,
+          bids: apiTrip.totalBidCount || 0,
+        }));
+
+        setTrips(mappedTrips);
+      }
+    } catch (error) {
+      console.error('Error refreshing trips:', error);
+    }
+
     // Switch to Upcoming tab
     setActiveTab('Upcoming');
     // Show success toast
@@ -197,7 +251,64 @@ export default function CompanyTripsPage() {
     setTimeout(() => setShowSuccessToast(false), 5000);
   };
 
-  const handleTripScheduled = () => {
+  const handleTripScheduled = async () => {
+    // Refresh trips data
+    try {
+      const user = api.getCurrentUser();
+      if (user) {
+        const tripsResponse = await wheelboardApi.trip.getTripsByUser(user.id);
+        const tripsData = (tripsResponse.data as any[]) || [];
+
+        const mappedTrips: Trip[] = tripsData.map((apiTrip: any) => ({
+          ...apiTrip,
+          id: apiTrip.tripId,
+          title: `${apiTrip.pickupLocation} to ${apiTrip.deliveryLocation}`,
+          status: (apiTrip.tripStatus === 'Upcoming'
+            ? 'Upcoming'
+            : apiTrip.tripStatus === 'In Progress' ||
+                apiTrip.tripStatus === 'InProgress'
+              ? 'In-Process'
+              : 'Completed') as 'Completed' | 'In-Process' | 'Upcoming',
+          deliveryType: 'Standard' as const,
+          from: apiTrip.pickupLocation,
+          to: apiTrip.deliveryLocation,
+          departureDate: apiTrip.pickupDate,
+          departureTime: apiTrip.pickupTime,
+          distance: '0 km',
+          duration: '0 hrs',
+          driver: {
+            id: apiTrip.driverId || '',
+            name: apiTrip.driverName || 'Unassigned',
+            avatar: '/profile-pic.png',
+          },
+          vehicle: apiTrip.vehicleId
+            ? {
+                id: apiTrip.vehicleId,
+                name:
+                  apiTrip.vehicleModel ||
+                  apiTrip.vehicleType ||
+                  'Unknown Vehicle',
+                type: apiTrip.vehicleType || 'Truck',
+                registrationNumber: apiTrip.vehicleNumber || 'N/A',
+              }
+            : undefined,
+          image: '/truck-01.jpg',
+          isAssigned: !!apiTrip.driverId && !!apiTrip.vehicleId,
+          bids: apiTrip.totalBidCount || 0,
+        }));
+
+        console.log('Mapped trips after schedule:', mappedTrips);
+        console.log(
+          'Trips with Upcoming status:',
+          mappedTrips.filter((t) => t.status === 'Upcoming')
+        );
+
+        setTrips(mappedTrips);
+      }
+    } catch (error) {
+      console.error('Error refreshing trips:', error);
+    }
+
     // Switch to Upcoming tab
     setActiveTab('Upcoming');
     // Show schedule success toast
@@ -226,7 +337,9 @@ export default function CompanyTripsPage() {
 
   // Filter trips based on active tab, search, status filter
   const filteredTrips = trips
-    .filter((trip) => trip.status === activeTab)
+    .filter((trip) => {
+      return trip.status === activeTab;
+    })
     .filter((trip) => {
       const matchesSearch =
         trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,6 +378,17 @@ export default function CompanyTripsPage() {
           return 0;
       }
     });
+
+  console.log('🎯 Filtered Trips:', {
+    total: trips.length,
+    activeTab,
+    filtered: filteredTrips.length,
+    trips: filteredTrips.map((t) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+    })),
+  });
 
   const getStatusColor = (status: TripStatus) => {
     switch (status) {
@@ -510,7 +634,6 @@ export default function CompanyTripsPage() {
             </div>
           </motion.div>
 
-          {/* Trips Grid */}
           {isLoading ? (
             <motion.div
               initial={{ opacity: 0 }}
@@ -570,221 +693,233 @@ export default function CompanyTripsPage() {
               </p>
             </motion.div>
           ) : (
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredTrips.map((trip) => (
-                  <motion.div
-                    key={trip.id}
-                    variants={item}
-                    layout
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="group overflow-hidden rounded-3xl bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
-                  >
-                    {/* Card Header Image */}
-                    <div className="relative h-48 overflow-hidden">
-                      <Image
-                        src={trip.image || '/truck-01.jpg'}
-                        alt={trip.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <>
+              {/* <div className="mb-4 rounded bg-blue-50 p-3 text-sm">
+                <strong>Rendering {filteredTrips.length} trips:</strong>
+                <ul className="mt-2 space-y-1">
+                  {filteredTrips.map((t, i) => (
+                    <li key={i}>
+                      {i + 1}. {t.title} (Status: {t.status}, ID: {t.id})
+                    </li>
+                  ))}
+                </ul>
+              </div> */}
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+              >
+                <AnimatePresence mode="popLayout">
+                  {filteredTrips.map((trip) => (
+                    <motion.div
+                      key={trip.id}
+                      variants={item}
+                      layout
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="group overflow-hidden rounded-3xl bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                    >
+                      {/* Card Header Image */}
+                      <div className="relative h-48 overflow-hidden">
+                        <Image
+                          src={trip.image || '/truck-01.jpg'}
+                          alt={trip.title}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                      {/* Status Badge - Top Left */}
-                      <div className="absolute left-3 top-3">
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getStatusColor(trip.status).bg} ${getStatusColor(trip.status).text} ${getStatusColor(trip.status).border}`}
-                        >
-                          {trip.status}
-                        </span>
+                        {/* Status Badge - Top Left */}
+                        <div className="absolute left-3 top-3">
+                          <span
+                            className={`rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getStatusColor(trip.status).bg} ${getStatusColor(trip.status).text} ${getStatusColor(trip.status).border}`}
+                          >
+                            {trip.status}
+                          </span>
+                        </div>
+
+                        {/* Delivery Type Badge - Top Right */}
+                        <div className="absolute right-3 top-3">
+                          <span
+                            className={`rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getDeliveryTypeBadge(trip.deliveryType)}`}
+                          >
+                            {trip.deliveryType}
+                          </span>
+                        </div>
+
+                        {/* Progress Bar for In-Process */}
+                        {trip.status === 'In-Process' && trip.progress && (
+                          <div className="absolute bottom-0 left-0 right-0 h-2 bg-black/20 backdrop-blur-sm">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${trip.progress}%` }}
+                              transition={{ duration: 1, ease: 'easeOut' }}
+                              className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
+                            />
+                          </div>
+                        )}
                       </div>
 
-                      {/* Delivery Type Badge - Top Right */}
-                      <div className="absolute right-3 top-3">
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur-sm ${getDeliveryTypeBadge(trip.deliveryType)}`}
-                        >
-                          {trip.deliveryType}
-                        </span>
-                      </div>
+                      {/* Card Content */}
+                      <div className="p-5">
+                        {/* Title */}
+                        <h3 className="mb-3 text-lg font-bold text-gray-900 transition-colors group-hover:text-primary-600">
+                          {trip.title}
+                        </h3>
 
-                      {/* Progress Bar for In-Process */}
-                      {trip.status === 'In-Process' && trip.progress && (
-                        <div className="absolute bottom-0 left-0 right-0 h-2 bg-black/20 backdrop-blur-sm">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${trip.progress}%` }}
-                            transition={{ duration: 1, ease: 'easeOut' }}
-                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card Content */}
-                    <div className="p-5">
-                      {/* Title */}
-                      <h3 className="mb-3 text-lg font-bold text-gray-900 transition-colors group-hover:text-primary-600">
-                        {trip.title}
-                      </h3>
-
-                      {/* Trip Details */}
-                      <div className="mb-4 space-y-2 text-sm text-gray-600">
-                        {/* Date & Time */}
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-primary-500" />
-                          <span>
-                            {new Date(trip.departureDate).toLocaleDateString(
-                              'en-US',
-                              {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              }
-                            )}{' '}
-                            • {trip.departureTime}
-                          </span>
-                        </div>
-
-                        {/* Route */}
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-primary-500" />
-                          <span className="truncate">
-                            {trip.from} → {trip.to}
-                          </span>
-                        </div>
-
-                        {/* Driver */}
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-primary-500" />
-                          <span className="truncate">{trip.driver.name}</span>
-                        </div>
-
-                        {/* Vehicle */}
-                        <div className="flex items-center gap-2">
-                          <Truck className="h-4 w-4 text-primary-500" />
-                          <span className="truncate">
-                            {trip.vehicle?.name} {'•'}{' '}
-                            {trip.vehicle?.registrationNumber}
-                          </span>
-                        </div>
-
-                        {/* Distance & Duration */}
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-primary-500" />
-                          <span>
-                            {trip.distance} • {trip.duration}
-                          </span>
-                        </div>
-
-                        {/* Assignment Status for Upcoming Trips */}
-                        {trip.status === 'Upcoming' && (
+                        {/* Trip Details */}
+                        <div className="mb-4 space-y-2 text-sm text-gray-600">
+                          {/* Date & Time */}
                           <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-primary-500" />
-                            <span
-                              className={`font-semibold ${
-                                trip.isAssigned
-                                  ? 'text-green-600'
-                                  : 'text-orange-600'
-                              }`}
-                            >
-                              {trip.isAssigned ? 'Assigned' : 'Unassigned'}
+                            <Calendar className="h-4 w-4 text-primary-500" />
+                            <span>
+                              {new Date(trip.departureDate).toLocaleDateString(
+                                'en-US',
+                                {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                }
+                              )}{' '}
+                              • {trip.departureTime}
                             </span>
                           </div>
-                        )}
 
-                        {/* ETA for In-Process */}
-                        {trip.status === 'In-Process' && trip.eta && (
-                          <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-2">
-                            <TrendingUp className="h-4 w-4 text-blue-600" />
-                            <span className="font-semibold text-blue-700">
-                              ETA: {trip.eta}
+                          {/* Route */}
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-primary-500" />
+                            <span className="truncate">
+                              {trip.from} → {trip.to}
                             </span>
                           </div>
-                        )}
 
-                        {/* Bids for Upcoming/Completed */}
-                        {trip.bids && (
-                          <div className="flex items-center gap-2 rounded-lg bg-green-50 p-2">
-                            <Package className="h-4 w-4 text-green-600" />
-                            <span className="font-semibold text-green-700">
-                              {trip.bids} Bids Available
+                          {/* Driver */}
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-primary-500" />
+                            <span className="truncate">{trip.driver.name}</span>
+                          </div>
+
+                          {/* Vehicle */}
+                          <div className="flex items-center gap-2">
+                            <Truck className="h-4 w-4 text-primary-500" />
+                            <span className="truncate">
+                              {trip.vehicle?.name} {'•'}{' '}
+                              {trip.vehicle?.registrationNumber}
                             </span>
                           </div>
-                        )}
-                      </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-2">
-                        {/* In-Process Trip Buttons */}
-                        {trip.status === 'In-Process' && (
-                          <>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
-                            >
-                              <Navigation className="h-4 w-4" />
-                              Track Trip
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-600 shadow-sm transition-all hover:border-primary-300 hover:bg-primary-50"
-                            >
-                              <Phone className="h-4 w-4" />
-                              Call Driver
-                            </motion.button>
-                          </>
-                        )}
+                          {/* Distance & Duration */}
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-primary-500" />
+                            <span>
+                              {trip.distance} • {trip.duration}
+                            </span>
+                          </div>
 
-                        {/* Upcoming Trip Buttons */}
-                        {trip.status === 'Upcoming' && (
-                          <>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleViewBids(trip.id)}
-                              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
-                            >
-                              <Users className="h-4 w-4" />
-                              View Bids
-                            </motion.button>
+                          {/* Assignment Status for Upcoming Trips */}
+                          {trip.status === 'Upcoming' && (
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-primary-500" />
+                              <span
+                                className={`font-semibold ${
+                                  trip.isAssigned
+                                    ? 'text-green-600'
+                                    : 'text-orange-600'
+                                }`}
+                              >
+                                {trip.isAssigned ? 'Assigned' : 'Unassigned'}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* ETA for In-Process */}
+                          {trip.status === 'In-Process' && trip.eta && (
+                            <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-2">
+                              <TrendingUp className="h-4 w-4 text-blue-600" />
+                              <span className="font-semibold text-blue-700">
+                                ETA: {trip.eta}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Bids for Upcoming/Completed */}
+                          {trip.bids && (
+                            <div className="flex items-center gap-2 rounded-lg bg-green-50 p-2">
+                              <Package className="h-4 w-4 text-green-600" />
+                              <span className="font-semibold text-green-700">
+                                {trip.bids} Bids Available
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap gap-2">
+                          {/* In-Process Trip Buttons */}
+                          {trip.status === 'In-Process' && (
+                            <>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
+                              >
+                                <Navigation className="h-4 w-4" />
+                                Track Trip
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-600 shadow-sm transition-all hover:border-primary-300 hover:bg-primary-50"
+                              >
+                                <Phone className="h-4 w-4" />
+                                Call Driver
+                              </motion.button>
+                            </>
+                          )}
+
+                          {/* Upcoming Trip Buttons */}
+                          {trip.status === 'Upcoming' && (
+                            <>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleViewBids(trip.id)}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
+                              >
+                                <Users className="h-4 w-4" />
+                                View Bids
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleViewDetails(trip.id)}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-600 shadow-sm transition-all hover:border-primary-300 hover:bg-primary-50"
+                              >
+                                <Eye className="h-4 w-4" />
+                                View Details
+                              </motion.button>
+                            </>
+                          )}
+
+                          {/* Completed Trip Button */}
+                          {trip.status === 'Completed' && (
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => handleViewDetails(trip.id)}
-                              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary-200 bg-white px-4 py-2.5 text-sm font-semibold text-primary-600 shadow-sm transition-all hover:border-primary-300 hover:bg-primary-50"
+                              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
                             >
                               <Eye className="h-4 w-4" />
                               View Details
                             </motion.button>
-                          </>
-                        )}
-
-                        {/* Completed Trip Button */}
-                        {trip.status === 'Completed' && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleViewDetails(trip.id)}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
-                          >
-                            <Eye className="h-4 w-4" />
-                            View Details
-                          </motion.button>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            </>
           )}
 
           {/* New Trip Button - Floating */}

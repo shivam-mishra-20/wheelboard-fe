@@ -24,25 +24,88 @@ import Header from '../../../../components/Header';
 import LoginSimulator from '../../../../components/LoginSimulator';
 import Footer from '../../../../components/Footer';
 import { BusinessProtected } from '../../../../components/ProtectedRoute';
-import { businessServiceListings, serviceBookingsData } from '@/lib/mockApi';
 import ServiceAssignmentsModal from '@/components/business/ServiceAssignmentsModal';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+import type { ServiceData } from '@/types/ServiceData';
 
 export default function ServiceDetailPage() {
   const router = useRouter();
   const params = useParams();
   const serviceId = params?.id as string;
 
-  const service = businessServiceListings.myServices.find(
-    (s) => s.id === serviceId
-  );
-
+  const [service, setService] = useState<ServiceData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isAssignmentsModalOpen, setIsAssignmentsModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Get assignments for this service
-  const serviceAssignments = serviceBookingsData.filter(
-    (booking) => booking.serviceId === serviceId
-  );
+  // Mock data for service assignments
+  const serviceAssignments: any[] = [];
+
+  // Fetch service details from API
+  React.useEffect(() => {
+    const fetchService = async () => {
+      try {
+        setIsLoading(true);
+        const user = api.getCurrentUser();
+        if (!user) {
+          setError('Please log in to view service details');
+          return;
+        }
+        setCurrentUser(user);
+
+        // Fetch all services and find the matching one
+        const response = await wheelboardApi.service.getServiceList(user.id);
+        const servicesData: any[] = Array.isArray(response)
+          ? response
+          : (response as any)?.data || [];
+
+        const apiService = servicesData.find(
+          (s: any) => (s.serviceId || s.jobId || s.id) === serviceId
+        );
+
+        if (apiService) {
+          const mappedService: ServiceData = {
+            id: apiService.serviceId || apiService.jobId || apiService.id,
+            title:
+              apiService.serviceTitle || apiService.serviceName || 'Service',
+            category: apiService.category || 'General',
+            categoryColor: apiService.categoryColor || '#f36969',
+            description: apiService.description || '',
+            status: apiService.isVisible ? 'Published' : 'Draft',
+            pricing: {
+              type: apiService.isFlatPrice ? 'Fixed' : 'On Request',
+              amount: String(apiService.price || 0),
+              currency: 'INR',
+            },
+            location: apiService.city || apiService.fullAddress || '',
+            contactNumber: apiService.contactNumber || user.mobileNo || '',
+            email: user.email || '',
+            createdAt: apiService.dateEntered || new Date().toISOString(),
+            updatedAt:
+              apiService.dateModified ||
+              apiService.dateEntered ||
+              new Date().toISOString(),
+            images: apiService.imageUrls || [],
+          };
+          setService(mappedService);
+        } else {
+          setError('Service not found');
+        }
+      } catch (err) {
+        console.error('Error fetching service:', err);
+        setError('Failed to load service details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (serviceId) {
+      fetchService();
+    }
+  }, [serviceId]);
 
   const handleViewAssignments = () => {
     setIsAssignmentsModalOpen(true);
@@ -53,10 +116,29 @@ export default function ServiceDetailPage() {
     router.push(`/business/bookings/${bookingId}`);
   };
 
-  if (!service) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-600">Service not found</p>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600"></div>
+        <p className="ml-3 text-gray-600">Loading service...</p>
+      </div>
+    );
+  }
+
+  if (error || !service) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-900">
+            {error || 'Service not found'}
+          </p>
+          <button
+            onClick={() => router.push('/business/listings')}
+            className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
+          >
+            Back to Listings
+          </button>
+        </div>
       </div>
     );
   }
@@ -65,11 +147,32 @@ export default function ServiceDetailPage() {
     router.push(`/business/listings?edit=${serviceId}`);
   };
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this service?')) {
-      // In real app, call API to delete
-      console.log('Delete service:', serviceId);
+  const handleDelete = async () => {
+    if (
+      !currentUser ||
+      !confirm('Are you sure you want to delete this service?')
+    )
+      return;
+
+    try {
+      console.log(
+        '🗑️ Deleting service:',
+        serviceId,
+        'for user:',
+        currentUser.id
+      );
+      const deleteResponse = await wheelboardApi.service.deleteService(
+        serviceId,
+        currentUser.id
+      );
+      console.log('✅ Delete response:', deleteResponse);
+      console.log('✅ Service deleted successfully');
       router.push('/business/listings');
+    } catch (error: any) {
+      console.error('❌ Error deleting service:', error);
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'Unknown error';
+      alert(`Failed to delete service: ${errorMessage}`);
     }
   };
 

@@ -20,6 +20,7 @@ import Footer from '../../../components/Footer';
 import { BusinessProtected } from '../../../components/ProtectedRoute';
 import AddServiceModal from '../../../components/AddServiceModal';
 import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 
 // Import the shared ServiceData type
 import type { ServiceData } from '@/types/ServiceData';
@@ -48,10 +49,13 @@ function BusinessListingsInner() {
       try {
         setIsLoading(true);
 
-        // Get current user
-        const user = wheelboardApi.getCurrentUser?.() || {
-          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
-        };
+        // Get current user via unified adapter
+        const user = api.getCurrentUser();
+        if (!user) {
+          setError('Please log in to view services');
+          setIsLoading(false);
+          return;
+        }
         setCurrentUser(user);
 
         // Fetch services for this business user
@@ -61,41 +65,51 @@ function BusinessListingsInner() {
         // Handle response - could be direct array or wrapped in data
         const servicesData: any[] = Array.isArray(response)
           ? response
-          : response.data || [];
+          : (response as any)?.data || [];
+
+        // Log first service to see what fields are available
+        if (servicesData.length > 0) {
+          console.log('🔍 Sample service from API:', servicesData[0]);
+        }
 
         // Map API data to ServiceData format
         const mappedServices: ServiceData[] = servicesData.map(
           (apiService: any, index: number) => {
             const serviceName =
+              apiService.serviceTitle ||
               apiService.serviceName ||
-              apiService.ServiceName ||
               `Service ${index + 1}`;
 
             return {
               id:
                 apiService.serviceId ||
+                apiService.jobId ||
                 apiService.id ||
-                `service-${Date.now()}-${index}`,
+                `service-${index}`,
               title: serviceName,
-              category:
-                apiService.serviceCategory || apiService.category || 'General',
+              category: apiService.category || 'General',
               categoryColor: apiService.categoryColor || '#f36969',
               description:
                 apiService.description ||
                 'Professional service for your business',
-              status: (apiService.availability === 'Available' ||
-              apiService.status === 'Active'
-                ? 'Published'
-                : 'Draft') as 'Published' | 'Draft',
+              status: (apiService.isVisible ? 'Published' : 'Draft') as
+                | 'Published'
+                | 'Draft',
               pricing: {
-                type: 'Fixed' as const,
-                amount: apiService.priceRange || apiService.price || '0',
+                type: apiService.isFlatPrice
+                  ? ('Fixed' as const)
+                  : ('On Request' as const),
+                amount: String(apiService.price || 0),
                 currency: 'INR',
               },
-              location: apiService.location || 'India',
-              contactNumber: apiService.contactNumber || user.phoneNumber || '',
-              email: apiService.email || user.email || '',
-              updatedAt: apiService.updatedAt || new Date().toISOString(),
+              location: apiService.city || apiService.fullAddress || 'India',
+              contactNumber: apiService.contactNumber || user.mobileNo || '',
+              email: user.email || '',
+              createdAt: apiService.dateEntered || new Date().toISOString(),
+              updatedAt:
+                apiService.dateModified ||
+                apiService.dateEntered ||
+                new Date().toISOString(),
               images: apiService.imageUrls || [],
             };
           }
@@ -112,7 +126,6 @@ function BusinessListingsInner() {
     };
 
     fetchServices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle edit from URL parameter
@@ -142,16 +155,28 @@ function BusinessListingsInner() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this service?')) return;
 
+    if (!currentUser) return;
+
     try {
+      console.log('🗑️ Deleting service:', id, 'for user:', currentUser.id);
+
       // Call API to delete service
-      await wheelboardApi.service.deleteServiceAssignment(id);
+      const deleteResponse = await wheelboardApi.service.deleteService(
+        id,
+        currentUser.id
+      );
+      console.log('✅ Delete response:', deleteResponse);
 
       // Update local state
       setServices((prev) => prev.filter((s) => s.id !== id));
       console.log('✅ Service deleted successfully');
     } catch (error) {
       console.error('❌ Error deleting service:', error);
-      alert('Failed to delete service. Please try again.');
+      if (error instanceof Error) {
+        alert(`Failed to delete service: ${error.message}`);
+      } else {
+        alert('Failed to delete service. Please try again.');
+      }
     }
   };
 
@@ -179,21 +204,51 @@ function BusinessListingsInner() {
         serviceData.status === 'Published' ? 'Published' : 'Draft';
 
       if (selectedService) {
+        // Validate required fields
+        const contactNumber = serviceData.contactNumber || currentUser.mobileNo;
+        if (!contactNumber) {
+          alert('Contact number is required');
+          return;
+        }
+
         // Update existing service
-        await wheelboardApi.service.updateService({
+        const updatePayload = {
           ServiceId: selectedService.id,
           UserId: currentUser.id,
-          ServiceName: serviceData.title,
-          ServiceCategory: serviceData.category,
+          ServiceTitle: serviceData.title,
+          ContactNumber: contactNumber,
+          WhatsappNumber: contactNumber,
           Description: serviceData.description,
-          PriceRange: serviceData.pricing?.amount || '0',
-          Location: serviceData.location || '',
-          Availability:
-            normalizedStatus === 'Published' ? 'Available' : 'Unavailable',
-          ContactNumber: serviceData.contactNumber || '',
-          Email: serviceData.email || '',
-          ServiceImage: serviceData.images?.[0] as File | undefined,
+          IsFlatPrice: serviceData.pricing?.type === 'Fixed',
+          Price: parseFloat(serviceData.pricing?.amount || '0'),
+          City: serviceData.location || '',
+          FullAddress: serviceData.location || '',
+          IsVisible: normalizedStatus === 'Published',
+          BusinessFrom: '09:00',
+          BusinessTo: '18:00',
+          DaysOpen: 'Mon-Fri',
+          ModifiedBy: currentUser.id,
+          NewImages: serviceData.images as File[] | undefined,
+        };
+
+        console.log('🔄 Updating service with full payload:', {
+          ServiceId: updatePayload.ServiceId,
+          UserId: updatePayload.UserId,
+          ModifiedBy: updatePayload.ModifiedBy,
+          ServiceTitle: updatePayload.ServiceTitle,
+          '--- IDs validation ---': '',
+          'ServiceId type': typeof updatePayload.ServiceId,
+          'ServiceId value': updatePayload.ServiceId,
+          'UserId type': typeof updatePayload.UserId,
+          'UserId value': updatePayload.UserId,
+          'ModifiedBy type': typeof updatePayload.ModifiedBy,
+          'ModifiedBy value': updatePayload.ModifiedBy,
         });
+
+        const updateResponse =
+          await wheelboardApi.service.updateService(updatePayload);
+
+        console.log('✅ Service update response:', updateResponse);
 
         // Update local state
         setServices((prev) =>
@@ -203,31 +258,49 @@ function BusinessListingsInner() {
                   ...serviceData,
                   status: normalizedStatus,
                   id: selectedService.id,
+                  createdAt: s.createdAt,
+                  updatedAt: new Date().toISOString(),
                 }
               : s
           )
         );
         console.log('✅ Service updated successfully');
       } else {
+        // Validate required fields
+        const contactNumber = serviceData.contactNumber || currentUser.mobileNo;
+        if (!contactNumber) {
+          alert('Contact number is required');
+          return;
+        }
+
         // Add new service
         const response = await wheelboardApi.service.addService({
           UserId: currentUser.id,
-          ServiceName: serviceData.title,
-          ServiceCategory: serviceData.category,
+          ServiceTitle: serviceData.title,
+          ContactNumber: contactNumber,
+          WhatsappNumber: contactNumber,
           Description: serviceData.description,
-          PriceRange: serviceData.pricing?.amount || '0',
-          Location: serviceData.location || '',
-          Availability:
-            normalizedStatus === 'Published' ? 'Available' : 'Unavailable',
-          ContactNumber: serviceData.contactNumber || '',
-          Email: serviceData.email || '',
-          ServiceImage: serviceData.images?.[0] as File | undefined,
+          IsFlatPrice: serviceData.pricing?.type === 'Fixed',
+          Price: parseFloat(serviceData.pricing?.amount || '0'),
+          City: serviceData.location || '',
+          FullAddress: serviceData.location || '',
+          IsVisible: normalizedStatus === 'Published',
+          BusinessFrom: '09:00',
+          BusinessTo: '18:00',
+          DaysOpen: 'Mon-Fri',
+          CreatedBy: currentUser.id,
+          Images: serviceData.images as File[] | undefined,
         });
 
         // Add to local state with generated ID
+        console.log('✅ Add service response:', response);
+        const responseData = (response as any).data || response;
         const newService = {
           ...serviceData,
-          id: response.data?.serviceId || `service-${Date.now()}`,
+          id:
+            responseData.serviceId ||
+            responseData.jobId ||
+            `service-${Date.now()}`,
           status: normalizedStatus,
         };
         setServices((prev) => [...prev, newService]);
@@ -241,9 +314,11 @@ function BusinessListingsInner() {
       if (editId) {
         router.push('/business/listings');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error saving service:', error);
-      alert('Failed to save service. Please try again.');
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'Unknown error';
+      alert(`Failed to save service: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
