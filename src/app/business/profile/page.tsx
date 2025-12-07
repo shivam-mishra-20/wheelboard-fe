@@ -19,6 +19,8 @@ import {
   Building2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 
 interface BusinessProfile {
   id: string;
@@ -57,23 +59,15 @@ const ProfilePage = () => {
     const fetchProfile = async () => {
       try {
         // Get current user ID from auth context
-        const currentUser = localStorage.getItem('currentUser');
-        const userId = currentUser
-          ? JSON.parse(currentUser).id
-          : '48e36413-ba01-4850-8aae-8c8d05206dc7';
+        const currentUser = api.getCurrentUser();
+        const userId =
+          currentUser?.id || '48e36413-ba01-4850-8aae-8c8d05206dc7';
 
-        // Fetch user profile from API
-        const response = await fetch(
-          `https://wheelboardapi.addonshareware.com/api/User/user-profile/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-            },
-          }
-        );
+        // Fetch user profile from API using wheelboardApi
+        const response = await wheelboardApi.user.getUserProfile(userId);
 
-        if (response.ok) {
-          const data = await response.json();
+        if (response.success && response.data) {
+          const data = response.data as any;
           console.log('👤 Profile Response:', data);
 
           const apiProfile: BusinessProfile = {
@@ -91,10 +85,22 @@ const ProfilePage = () => {
             state: data.state || '',
             zipCode: data.zipCode || '',
             gstNumber: data.gstNumber || '',
-            servicesOffered: data.servicesOffered || [],
-            businessType: data.businessType || [],
+            servicesOffered: Array.isArray(data.servicesOffered)
+              ? data.servicesOffered
+              : typeof data.servicesOffered === 'string' && data.servicesOffered
+                ? data.servicesOffered.split(',').map((s: string) => s.trim())
+                : [],
+            businessType: Array.isArray(data.businessType)
+              ? data.businessType
+              : typeof data.businessType === 'string' && data.businessType
+                ? data.businessType.split(',').map((t: string) => t.trim())
+                : [],
             description: data.description || '',
-            logo: data.businessLogo || data.logo || '/profile.png',
+            logo:
+              data.businessLogoPath ||
+              data.businessLogo ||
+              data.logo ||
+              '/profile.png',
             website: data.website || '',
             createdAt: data.createdAt || new Date().toISOString(),
           };
@@ -103,7 +109,7 @@ const ProfilePage = () => {
           setEditedProfile(apiProfile);
           setLogoPreview(apiProfile.logo || null);
         } else {
-          console.error('Failed to fetch profile');
+          console.error('Failed to fetch profile:', response.message);
         }
       } catch (error) {
         console.error('❌ Error fetching profile:', error);

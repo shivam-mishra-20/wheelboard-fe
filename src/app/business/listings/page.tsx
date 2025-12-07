@@ -72,26 +72,15 @@ function BusinessListingsInner() {
           console.log('🔍 Sample service from API:', servicesData[0]);
         }
 
-        // Map API data to ServiceData format
+        // Map API data to ServiceData format - using exact API response fields
         const mappedServices: ServiceData[] = servicesData.map(
-          (apiService: any, index: number) => {
-            const serviceName =
-              apiService.serviceTitle ||
-              apiService.serviceName ||
-              `Service ${index + 1}`;
-
+          (apiService: any) => {
             return {
-              id:
-                apiService.serviceId ||
-                apiService.jobId ||
-                apiService.id ||
-                `service-${index}`,
-              title: serviceName,
-              category: apiService.category || 'General',
-              categoryColor: apiService.categoryColor || '#f36969',
-              description:
-                apiService.description ||
-                'Professional service for your business',
+              id: apiService.serviceId,
+              title: apiService.title, // API returns 'title' not 'serviceTitle'
+              category: apiService.serviceCategory || '',
+              categoryColor: '#f36969',
+              description: apiService.description || '',
               status: (apiService.isVisible ? 'Published' : 'Draft') as
                 | 'Published'
                 | 'Draft',
@@ -102,15 +91,16 @@ function BusinessListingsInner() {
                 amount: String(apiService.price || 0),
                 currency: 'INR',
               },
-              location: apiService.city || apiService.fullAddress || 'India',
-              contactNumber: apiService.contactNumber || user.mobileNo || '',
-              email: user.email || '',
-              createdAt: apiService.dateEntered || new Date().toISOString(),
-              updatedAt:
-                apiService.dateModified ||
-                apiService.dateEntered ||
-                new Date().toISOString(),
-              images: apiService.imageUrls || [],
+              location: apiService.city || apiService.fullAddress || '',
+              contactNumber: apiService.contactNumber || '',
+              whatsappNumber: apiService.whatsappNumber || '',
+              email: '',
+              createdAt: '',
+              updatedAt: '',
+              images: apiService.images || [],
+              businessFrom: apiService.businessFrom || '',
+              businessTo: apiService.businessTo || '',
+              daysOpen: apiService.daysOpen || '',
             };
           }
         );
@@ -250,21 +240,49 @@ function BusinessListingsInner() {
 
         console.log('✅ Service update response:', updateResponse);
 
-        // Update local state
-        setServices((prev) =>
-          prev.map((s) =>
-            s.id === selectedService.id
-              ? {
-                  ...serviceData,
-                  status: normalizedStatus,
-                  id: selectedService.id,
-                  createdAt: s.createdAt,
-                  updatedAt: new Date().toISOString(),
-                }
-              : s
-          )
+        // Refetch services from API to get the latest data
+        const refreshResponse = await wheelboardApi.service.getServiceList(
+          currentUser.id
         );
-        console.log('✅ Service updated successfully');
+        const servicesData: any[] = Array.isArray(refreshResponse)
+          ? refreshResponse
+          : (refreshResponse as any)?.data || [];
+
+        // Map API data to ServiceData format - using exact API response fields
+        const mappedServices: ServiceData[] = servicesData.map(
+          (apiService: any) => {
+            return {
+              id: apiService.serviceId,
+              title: apiService.title, // API returns 'title' not 'serviceTitle'
+              category: apiService.serviceCategory || '',
+              categoryColor: '#f36969',
+              description: apiService.description || '',
+              status: (apiService.isVisible ? 'Published' : 'Draft') as
+                | 'Published'
+                | 'Draft',
+              pricing: {
+                type: apiService.isFlatPrice
+                  ? ('Fixed' as const)
+                  : ('On Request' as const),
+                amount: String(apiService.price || 0),
+                currency: 'INR',
+              },
+              location: apiService.city || apiService.fullAddress || '',
+              contactNumber: apiService.contactNumber || '',
+              whatsappNumber: apiService.whatsappNumber || '',
+              email: '',
+              createdAt: '',
+              updatedAt: '',
+              images: apiService.images || [],
+              businessFrom: apiService.businessFrom || '',
+              businessTo: apiService.businessTo || '',
+              daysOpen: apiService.daysOpen || '',
+            };
+          }
+        );
+
+        setServices(mappedServices);
+        console.log('✅ Services refreshed after update:', mappedServices);
       } else {
         // Validate required fields
         const contactNumber = serviceData.contactNumber || currentUser.mobileNo;
@@ -292,19 +310,51 @@ function BusinessListingsInner() {
           Images: serviceData.images as File[] | undefined,
         });
 
-        // Add to local state with generated ID
         console.log('✅ Add service response:', response);
-        const responseData = (response as any).data || response;
-        const newService = {
-          ...serviceData,
-          id:
-            responseData.serviceId ||
-            responseData.jobId ||
-            `service-${Date.now()}`,
-          status: normalizedStatus,
-        };
-        setServices((prev) => [...prev, newService]);
-        console.log('✅ Service added successfully');
+
+        // Refetch services from API to get the latest data
+        const refreshResponse = await wheelboardApi.service.getServiceList(
+          currentUser.id
+        );
+        const servicesData: any[] = Array.isArray(refreshResponse)
+          ? refreshResponse
+          : (refreshResponse as any)?.data || [];
+
+        // Map API data to ServiceData format - using exact API response fields
+        const mappedServices: ServiceData[] = servicesData.map(
+          (apiService: any) => {
+            return {
+              id: apiService.serviceId,
+              title: apiService.title,
+              category: apiService.serviceCategory || '',
+              categoryColor: '#f36969',
+              description: apiService.description || '',
+              status: (apiService.isVisible ? 'Published' : 'Draft') as
+                | 'Published'
+                | 'Draft',
+              pricing: {
+                type: apiService.isFlatPrice
+                  ? ('Fixed' as const)
+                  : ('On Request' as const),
+                amount: String(apiService.price || 0),
+                currency: 'INR',
+              },
+              location: apiService.city || apiService.fullAddress || '',
+              contactNumber: apiService.contactNumber || '',
+              whatsappNumber: apiService.whatsappNumber || '',
+              email: '',
+              createdAt: '',
+              updatedAt: '',
+              images: apiService.images || [],
+              businessFrom: apiService.businessFrom || '',
+              businessTo: apiService.businessTo || '',
+              daysOpen: apiService.daysOpen || '',
+            };
+          }
+        );
+
+        setServices(mappedServices);
+        console.log('✅ Services refreshed after add:', mappedServices);
       }
 
       setShowAddModal(false);

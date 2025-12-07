@@ -62,10 +62,11 @@ export default function AddExpensePage() {
         const purposesResponse = await wheelboardApi.trip.getExpensePurposes();
         const purposes = Array.isArray(purposesResponse)
           ? purposesResponse
-          : purposesResponse.data || [];
+          : (purposesResponse as any)?.data || [];
+        const purposesArray = Array.isArray(purposes) ? purposes : [];
 
         // Map API expense purposes with icons
-        const mappedPurposes = purposes.map((purpose: any) => {
+        const mappedPurposes = purposesArray.map((purpose: any) => {
           const iconMap: Record<string, string> = {
             Fuel: '⛽',
             Food: '🍔',
@@ -89,10 +90,11 @@ export default function AddExpensePage() {
         const tripsResponse = await wheelboardApi.trip.getAssignedTrips(userId);
         const tripsData = Array.isArray(tripsResponse)
           ? tripsResponse
-          : tripsResponse.data || [];
+          : (tripsResponse as any)?.data || [];
+        const tripsArray = Array.isArray(tripsData) ? tripsData : [];
 
-        setTrips(tripsData);
-        console.log('✅ Trips loaded:', tripsData.length);
+        setTrips(tripsArray);
+        console.log('✅ Trips loaded:', tripsArray.length);
       } catch (error) {
         console.error('❌ Error fetching data:', error);
       } finally {
@@ -175,15 +177,17 @@ export default function AddExpensePage() {
         ? JSON.parse(currentUser).id
         : '48e36413-ba01-4850-8aae-8c8d05206dc7';
 
-      // Prepare expense data
-      const expenseData = {
-        CreatedBy: userId,
-        ExpensePurposeId: formData.expensePurposeId,
-        Amount: parseFloat(formData.amount),
-        ExpenseDate: new Date(formData.date).toISOString(),
-        Description: formData.description || '',
+      // Prepare expense data matching the exact API format
+      const expenseData: any = {
         TripId: formData.tripId || '00000000-0000-0000-0000-000000000000',
-        ...(formData.receipt && { ReceiptFile: formData.receipt }),
+        ExpensePurposeId: formData.expensePurposeId,
+        ExpenseDate: new Date(formData.date).toISOString(),
+        ExpenseId: '00000000-0000-0000-0000-000000000000', // New expense, so empty GUID
+        ReceiptFile: formData.receipt || null,
+        Amount: parseFloat(formData.amount),
+        Description: formData.description || '',
+        ReceiptPath: formData.receipt ? formData.receipt.name : 'no-receipt',
+        CreatedBy: userId,
       };
 
       console.log('📦 Expense data:', expenseData);

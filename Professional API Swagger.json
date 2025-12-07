@@ -8,8 +8,44 @@
   "paths": {
     "/api/Job/open-job-list": {
       "get": {
-        "tags": [
-          "JobApi"
+        "tags": ["JobApi"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Job/job-like-toggle": {
+      "post": {
+        "tags": ["JobApi"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -20,9 +56,7 @@
     },
     "/api/Job/apply-job": {
       "post": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -51,9 +85,7 @@
     },
     "/api/Job/applied-jobs/{userId}": {
       "get": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "parameters": [
           {
             "name": "userId",
@@ -74,9 +106,7 @@
     },
     "/api/MasterData/getAllServices": {
       "get": {
-        "tags": [
-          "MasterDataApi"
-        ],
+        "tags": ["MasterDataApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -86,8 +116,46 @@
     },
     "/api/MasterData/getAllBusinessType": {
       "get": {
-        "tags": [
-          "MasterDataApi"
+        "tags": ["MasterDataApi"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/NotificationsApi/notifications": {
+      "get": {
+        "tags": ["NotificationsApi"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/NotificationsApi/notification/read": {
+      "post": {
+        "tags": ["NotificationsApi"],
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -98,9 +166,7 @@
     },
     "/api/Post/add": {
       "post": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -166,9 +232,7 @@
     },
     "/api/Post/user/{userId}": {
       "get": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "userId",
@@ -189,9 +253,7 @@
     },
     "/api/Post/get-all-post": {
       "get": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -200,10 +262,8 @@
       }
     },
     "/api/Post/approve/{postId}": {
-      "put": {
-        "tags": [
-          "PostApi"
-        ],
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -223,10 +283,8 @@
       }
     },
     "/api/Post/reject/{postId}": {
-      "put": {
-        "tags": [
-          "PostApi"
-        ],
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -245,11 +303,9 @@
         }
       }
     },
-    "/api/Post/{postId}": {
-      "delete": {
-        "tags": [
-          "PostApi"
-        ],
+    "/api/Post/{postId}/delete": {
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -270,9 +326,7 @@
     },
     "/api/Trip/trip_expense_save": {
       "post": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -356,9 +410,7 @@
     },
     "/api/Trip/trip_expense_purposes": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -368,9 +420,7 @@
     },
     "/api/Trip/unassign-trip-list": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -380,9 +430,7 @@
     },
     "/api/Trip/unassigned-trip-details/{tripId}": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "parameters": [
           {
             "name": "tripId",
@@ -403,9 +451,7 @@
     },
     "/api/Trip/assign-trip-list/{userId}": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "parameters": [
           {
             "name": "userId",
@@ -424,11 +470,67 @@
         }
       }
     },
+    "/api/Trip/start-trip": {
+      "post": {
+        "tags": ["TripApi"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripStatus"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripStatus"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Trip/end-trip": {
+      "post": {
+        "tags": ["TripApi"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripStatus"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripStatus"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Trip/submit-bid": {
       "post": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -457,9 +559,7 @@
     },
     "/api/Trip/save-calendar-events": {
       "post": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -488,9 +588,7 @@
     },
     "/api/Trip/get-events-by-userId/{userId}": {
       "get": {
-        "tags": [
-          "TripApi"
-        ],
+        "tags": ["TripApi"],
         "parameters": [
           {
             "name": "userId",
@@ -511,9 +609,7 @@
     },
     "/api/User/professional_signup": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -598,9 +694,7 @@
     },
     "/api/User/update-professional-profile": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -675,9 +769,7 @@
     },
     "/api/User/login": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -706,9 +798,7 @@
     },
     "/api/User/user-profile/{userId}": {
       "get": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "parameters": [
           {
             "name": "userId",
@@ -729,9 +819,7 @@
     },
     "/api/User/save-referral": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -760,9 +848,7 @@
     },
     "/api/User/GetReferralsByUserId/{userId}": {
       "get": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "parameters": [
           {
             "name": "userId",
@@ -938,6 +1024,16 @@
           }
         },
         "additionalProperties": false
+      },
+      "TripStatus": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
       }
     },
     "securitySchemes": {
@@ -951,7 +1047,7 @@
   },
   "security": [
     {
-      "Bearer": [ ]
+      "Bearer": []
     }
   ]
 }

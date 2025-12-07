@@ -171,6 +171,13 @@ export default function BusinessJobsPage() {
 
       // Create new job object
       const responseData = (response as any)?.data || response;
+      const imageUrl =
+        responseData?.imageUrls?.[0] ||
+        responseData?.imageUrl ||
+        (jobData.images?.[0]
+          ? URL.createObjectURL(jobData.images[0])
+          : '/tires.png');
+
       const newJob: BusinessJob = {
         id: responseData.jobId || 'job-' + Date.now(),
         title: jobData.jobType || 'New Job',
@@ -181,9 +188,7 @@ export default function BusinessJobsPage() {
         description: jobData.description || '',
         requirements: [],
         benefits: [],
-        image: jobData.images?.[0]
-          ? URL.createObjectURL(jobData.images[0])
-          : '/tires.png',
+        image: imageUrl,
         createdAt: new Date().toISOString(),
         status: 'Active',
         views: 0,
@@ -246,6 +251,13 @@ export default function BusinessJobsPage() {
 
       console.log('✅ Update job response:', response);
 
+      // Extract image URLs from response
+      const responseData = (response as any)?.data || response;
+      const updatedImageUrl =
+        responseData?.imageUrls?.[0] ||
+        responseData?.imageUrl ||
+        (jobData.images?.[0] ? URL.createObjectURL(jobData.images[0]) : null);
+
       // Update local state
       const updatedJobs = jobs.map((job) => {
         if (job.id === jobData.id) {
@@ -256,9 +268,7 @@ export default function BusinessJobsPage() {
             type: (jobData.type as BusinessJob['type']) || job.type,
             salary: jobData.salary ? `₹${jobData.salary}/month` : job.salary,
             description: jobData.description || job.description,
-            image: jobData.images?.[0]
-              ? URL.createObjectURL(jobData.images[0])
-              : job.image,
+            image: updatedImageUrl || job.image,
           };
         }
         return job;

@@ -204,13 +204,16 @@ export const userApi = {
     State: string;
     City: string;
     DriverImage?: File;
-  }) => {
+  }): Promise<ApiResponse<{ message: string; imageUrl: string }>> => {
     const formData = buildFormData(data);
-    return apiRequest('/api/User/update-professional-profile', {
-      method: 'POST',
-      data: formData,
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return apiRequest<{ message: string; imageUrl: string }>(
+      '/api/User/update-professional-profile',
+      {
+        method: 'POST',
+        data: formData,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
   },
 
   // POST /api/User/company_signup
@@ -271,15 +274,25 @@ export const userApi = {
 
   // POST /api/User/save-referral
   saveReferral: async (data: {
-    referralId: string;
+    referralId?: string;
     createdBy: string;
-    referredTo: string;
-    status: string;
-  }) => {
-    return apiRequest('/api/User/save-referral', {
-      method: 'POST',
-      data,
-    });
+    partnerId?: number;
+    userId: string;
+    fullName: string;
+    mobileNumber: string;
+    email?: string;
+    role: string;
+    location?: string;
+    notifyOnAcceptance: boolean;
+    referralStatus?: string;
+  }): Promise<ApiResponse<{ success: boolean; message: string }>> => {
+    return apiRequest<{ success: boolean; message: string }>(
+      '/api/User/save-referral',
+      {
+        method: 'POST',
+        data,
+      }
+    );
   },
 
   // POST /api/User/UploadSliderImage
@@ -306,8 +319,40 @@ export const userApi = {
   },
 
   // GET /api/User/GetReferralsByUserId/{userId}
-  getReferralsByUserId: async (userId: string) => {
-    return apiRequest(`/api/User/GetReferralsByUserId/${userId}`, {
+  getReferralsByUserId: async (
+    userId: string
+  ): Promise<
+    ApiResponse<
+      Array<{
+        referralId: string;
+        createdBy: string;
+        partnerId: number | null;
+        userId: string;
+        fullName: string;
+        mobileNumber: string;
+        email: string;
+        role: string;
+        location: string;
+        notifyOnAcceptance: boolean;
+        referralStatus: string;
+      }>
+    >
+  > => {
+    return apiRequest<
+      Array<{
+        referralId: string;
+        createdBy: string;
+        partnerId: number | null;
+        userId: string;
+        fullName: string;
+        mobileNumber: string;
+        email: string;
+        role: string;
+        location: string;
+        notifyOnAcceptance: boolean;
+        referralStatus: string;
+      }>
+    >(`/api/User/GetReferralsByUserId/${userId}`, {
       method: 'GET',
     });
   },
@@ -377,7 +422,7 @@ export const serviceApi = {
     });
   },
 
-  // PUT /api/Service/update-service
+  // POST /api/Service/update-service
   updateService: async (data: {
     ServiceId: string;
     UserId: string;
@@ -398,7 +443,7 @@ export const serviceApi = {
   }) => {
     const formData = buildFormData(data);
     return apiRequest('/api/Service/update-service', {
-      method: 'PUT',
+      method: 'POST',
       data: formData,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -448,6 +493,34 @@ export const serviceApi = {
     });
   },
 
+  // GET /api/Service/service-assign-list?serviceId={serviceId} - Get bookings/assignments for a specific service
+  getServiceAssignments: async (serviceId: string) => {
+    return apiRequest(`/api/Service/service-assign-list?serviceId=${serviceId}`, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Service/complete-service?assignmentId={assignmentId} - Mark service as completed
+  completeService: async (assignmentId: string) => {
+    return apiRequest(`/api/Service/complete-service?assignmentId=${assignmentId}`, {
+      method: 'POST',
+    });
+  },
+
+  // POST /api/Service/update-service-status?assignmentId={assignmentId}&status={status} - Update booking status
+  updateServiceStatus: async (assignmentId: string, status: string) => {
+    return apiRequest(`/api/Service/update-service-status?assignmentId=${assignmentId}&status=${encodeURIComponent(status)}`, {
+      method: 'POST',
+    });
+  },
+
+  // POST /api/Service/cancel-service?assignmentId={assignmentId} - Cancel a service booking
+  cancelService: async (assignmentId: string) => {
+    return apiRequest(`/api/Service/cancel-service?assignmentId=${assignmentId}`, {
+      method: 'POST',
+    });
+  },
+
   // POST /api/Service/{assignmentId}/delete
   deleteServiceAssignment: async (assignmentId: string) => {
     return apiRequest(`/api/Service/${assignmentId}/delete`, {
@@ -455,12 +528,12 @@ export const serviceApi = {
     });
   },
 
-  // DELETE /api/Service/{serviceId}/user/{userId}
+  // POST /api/Service/{serviceId}/user/{userId}/delete
   deleteService: async (serviceId: string, userId: string) => {
     return apiRequest(
-      `/api/Service/${serviceId}/user/${userId}?jobId=${serviceId}`,
+      `/api/Service/${serviceId}/user/${userId}/delete`,
       {
-        method: 'DELETE',
+        method: 'POST',
       }
     );
   },
@@ -570,6 +643,38 @@ export const jobApi = {
     return apiRequest('/api/Job/update-job-status', {
       method: 'POST',
       data,
+    });
+  },
+
+  // GET /api/Job/open-job-list?userId={userId} - Get open jobs for professionals
+  getOpenJobList: async (userId?: string) => {
+    const url = userId
+      ? `/api/Job/open-job-list?userId=${userId}`
+      : '/api/Job/open-job-list';
+    return apiRequest(url, {
+      method: 'GET',
+    });
+  },
+
+  // POST /api/Job/job-like-toggle - Toggle like on a job
+  toggleJobLike: async (jobId: string, userId: string) => {
+    return apiRequest(`/api/Job/job-like-toggle?jobId=${jobId}&userId=${userId}`, {
+      method: 'POST',
+    });
+  },
+
+  // POST /api/Job/apply-job - Apply for a job
+  applyJob: async (data: { jobId: string; userId: string }) => {
+    return apiRequest('/api/Job/apply-job', {
+      method: 'POST',
+      data,
+    });
+  },
+
+  // GET /api/Job/applied-jobs/{userId} - Get jobs applied by user
+  getAppliedJobs: async (userId: string) => {
+    return apiRequest(`/api/Job/applied-jobs/${userId}`, {
+      method: 'GET',
     });
   },
 };
@@ -984,6 +1089,22 @@ export const tripApi = {
   getCalendarEvents: async (userId: string) => {
     return apiRequest(`/api/Trip/get-events-by-userId/${userId}`, {
       method: 'GET',
+    });
+  },
+
+  // POST /api/Trip/start-trip - Mark trip as started
+  startTrip: async (tripId: string) => {
+    return apiRequest('/api/Trip/start-trip', {
+      method: 'POST',
+      data: { tripId },
+    });
+  },
+
+  // POST /api/Trip/end-trip - Mark trip as ended
+  endTrip: async (tripId: string) => {
+    return apiRequest('/api/Trip/end-trip', {
+      method: 'POST',
+      data: { tripId },
     });
   },
 };

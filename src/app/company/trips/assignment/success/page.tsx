@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   CheckCircle2,
@@ -16,28 +16,14 @@ import {
   Building2,
   ArrowRight,
   Download,
-  TrendingUp,
-  Star,
+  Phone,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { companyHomeData, type Trip } from '@/lib/mockApi';
-
-// Mock driver data
-const getDriverById = (id: string) => {
-  return {
-    id,
-    name: 'Jon Doe',
-    avatar: '/profile.png',
-    phoneNumber: '704 Hameogeo +61 70063',
-    rating: 4.6,
-    totalTrips: 162,
-    isVerified: true,
-    experience: '5 years',
-  };
-};
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 
 function TripAssignmentSuccessInner() {
   const searchParams = useSearchParams();
@@ -45,9 +31,95 @@ function TripAssignmentSuccessInner() {
 
   const driverId = searchParams.get('driverId');
   const tripId = searchParams.get('tripId');
+  const bidId = searchParams.get('bidId');
   const amount = searchParams.get('amount');
   const paymentOption = searchParams.get('paymentOption');
   const paymentMethod = searchParams.get('paymentMethod');
+  const orderId = searchParams.get('orderId');
+  const paymentId = searchParams.get('paymentId');
+
+  const [trip, setTrip] = useState<any>(null);
+  const [driver, setDriver] = useState<any>(null);
+  const [bid, setBid] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [assignmentComplete, setAssignmentComplete] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDataAndAssignTrip = async () => {
+      if (!tripId || !driverId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const user = api.getCurrentUser();
+
+        // Fetch trip data
+        let foundTrip = null;
+        if (user?.id) {
+          const tripResponse = await wheelboardApi.trip.getTripsByUser(user.id);
+          const trips = (tripResponse.data as any[]) || [];
+          foundTrip = trips.find((t: any) => t.tripId === tripId);
+        }
+
+        if (!foundTrip) {
+          try {
+            const tripDetailsResponse =
+              await wheelboardApi.trip.getUnassignedTripDetails(tripId);
+            foundTrip =
+              (tripDetailsResponse as any).data || tripDetailsResponse;
+          } catch (error) {
+            console.error('Error fetching trip details:', error);
+          }
+        }
+
+        setTrip(foundTrip);
+
+        // Fetch driver data
+        const driverResponse =
+          await wheelboardApi.transport.getDriverDetails(driverId);
+        setDriver((driverResponse as any).data || driverResponse);
+
+        // Fetch bid data if bidId is provided
+        if (bidId) {
+          const bidsResponse = await wheelboardApi.trip.getTripBids(tripId);
+          const bidsData = ((bidsResponse as any).data as any[]) || [];
+          const foundBid = bidsData.find((b: any) => b.bidId === bidId);
+          setBid(foundBid);
+        }
+
+        // Assign the trip after successful payment verification
+        try {
+          // Call assign trip API
+          await wheelboardApi.trip.assignTrip(tripId);
+          setAssignmentComplete(true);
+          console.log('Trip assigned successfully');
+
+          // Fetch confirmation details
+          try {
+            const confirmationResponse =
+              await wheelboardApi.trip.getTripConfirmation(tripId);
+            setConfirmationData(
+              (confirmationResponse as any).data || confirmationResponse
+            );
+          } catch (error) {
+            console.error('Error fetching confirmation:', error);
+          }
+        } catch (error) {
+          console.error('Error assigning trip:', error);
+          // Still show success page even if assignment API fails
+          // as payment was already processed and verified
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDataAndAssignTrip();
+  }, [tripId, driverId, bidId]);
 
   if (!driverId || !tripId || !amount) {
     return (
@@ -73,9 +145,19 @@ function TripAssignmentSuccessInner() {
     );
   }
 
-  const driver = getDriverById(driverId);
-  const trips = companyHomeData.allTrips || [];
-  const trip = trips.find((t: Trip) => t.id === tripId);
+  if (isLoading) {
+    return (
+      <CompanyProtected>
+        <Header />
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 pt-16">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+            <p className="text-gray-600">Processing assignment...</p>
+          </div>
+        </div>
+      </CompanyProtected>
+    );
+  }
 
   const getPaymentMethodLabel = () => {
     switch (paymentMethod) {
@@ -85,6 +167,8 @@ function TripAssignmentSuccessInner() {
         return 'UPI';
       case 'netbanking':
         return 'Net Banking';
+      case 'cash':
+        return 'Cash on Completion';
       default:
         return 'Credit / Debit Card';
     }
@@ -98,6 +182,8 @@ function TripAssignmentSuccessInner() {
         return <Smartphone className="h-5 w-5" />;
       case 'netbanking':
         return <Building2 className="h-5 w-5" />;
+      case 'cash':
+        return <DollarSign className="h-5 w-5" />;
       default:
         return <CreditCard className="h-5 w-5" />;
     }
@@ -157,7 +243,9 @@ function TripAssignmentSuccessInner() {
               transition={{ delay: 0.3 }}
               className="mt-2 text-gray-600"
             >
-              Your payment has been processed and driver has been assigned
+              {paymentMethod === 'cash'
+                ? 'Trip assigned successfully - Payment to be collected in cash'
+                : 'Your payment has been processed and driver has been assigned'}
             </motion.p>
           </motion.div>
 
@@ -173,7 +261,7 @@ function TripAssignmentSuccessInner() {
                 <div>
                   <p className="text-sm text-white/80">Transaction ID</p>
                   <p className="font-mono text-lg font-bold text-white">
-                    {transactionId}
+                    {paymentId || orderId || transactionId}
                   </p>
                 </div>
                 <div className="text-right">
@@ -181,6 +269,14 @@ function TripAssignmentSuccessInner() {
                   <p className="font-semibold text-white">{timestamp}</p>
                 </div>
               </div>
+              {orderId && paymentId && (
+                <div className="mt-3 border-t border-white/20 pt-3">
+                  <p className="text-xs text-white/70">Order ID: {orderId}</p>
+                  <p className="text-xs text-white/70">
+                    Payment ID: {paymentId}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="p-6">
@@ -192,7 +288,11 @@ function TripAssignmentSuccessInner() {
                       <DollarSign className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Amount Paid</p>
+                      <p className="text-sm text-gray-600">
+                        {paymentMethod === 'cash'
+                          ? 'Amount to Pay'
+                          : 'Amount Paid'}
+                      </p>
                       <p className="font-semibold text-gray-900">
                         {getPaymentOptionLabel()}
                       </p>
@@ -236,25 +336,33 @@ function TripAssignmentSuccessInner() {
 
               <div className="p-6">
                 <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {/* From */}
+                  {/* Pickup */}
                   <div className="flex items-start gap-3">
                     <div className="rounded-full bg-green-100 p-2">
                       <MapPin className="h-5 w-5 text-green-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">From</p>
-                      <p className="font-semibold text-gray-900">{trip.from}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500">
+                        Pickup
+                      </p>
+                      <p className="truncate font-semibold text-gray-900">
+                        {trip.pickupLocation || 'N/A'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* To */}
+                  {/* Destination */}
                   <div className="flex items-start gap-3">
                     <div className="rounded-full bg-red-100 p-2">
                       <MapPin className="h-5 w-5 text-red-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">To</p>
-                      <p className="font-semibold text-gray-900">{trip.to}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500">
+                        Destination
+                      </p>
+                      <p className="truncate font-semibold text-gray-900">
+                        {trip.destination || 'N/A'}
+                      </p>
                     </div>
                   </div>
 
@@ -266,7 +374,7 @@ function TripAssignmentSuccessInner() {
                     <div>
                       <p className="text-sm font-medium text-gray-500">Date</p>
                       <p className="font-semibold text-gray-900">
-                        {trip.departureDate}
+                        {trip.pickupDate || 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -279,34 +387,33 @@ function TripAssignmentSuccessInner() {
                     <div>
                       <p className="text-sm font-medium text-gray-500">Time</p>
                       <p className="font-semibold text-gray-900">
-                        {trip.departureTime}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Distance */}
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-orange-100 p-2">
-                      <TrendingUp className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">
-                        Distance
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        {trip.distance}
+                        {trip.pickupTime || 'N/A'}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Trip ID */}
-                <div className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 p-4 text-center">
-                  <p className="text-sm text-white/80">Trip ID</p>
-                  <p className="font-mono text-lg font-bold text-white">
-                    {trip.id.toUpperCase()}
-                  </p>
-                </div>
+                {trip?.tripCode && (
+                  <div className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 p-4 text-center">
+                    <p className="text-sm text-white/80">Trip ID</p>
+                    <p className="font-mono text-lg font-bold text-white">
+                      {trip.tripCode}
+                    </p>
+                  </div>
+                )}
+
+                {/* Assignment Status */}
+                {assignmentComplete && (
+                  <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <p className="font-semibold text-green-700">
+                        Trip Assigned Successfully
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -324,38 +431,22 @@ function TripAssignmentSuccessInner() {
 
             <div className="p-6">
               <div className="flex items-center gap-4">
-                <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-blue-100">
-                  <Image
-                    alt={driver.name}
-                    fill
-                    src={driver.avatar}
-                    className="object-cover"
-                  />
-                  {driver.isVerified && (
-                    <div className="absolute -bottom-1 -right-1 rounded-full bg-green-500 p-1">
-                      <CheckCircle2 className="h-4 w-4 text-white" />
-                    </div>
-                  )}
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-blue-200 bg-blue-100">
+                  <User className="h-10 w-10 text-blue-600" />
                 </div>
 
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {driver.name}
-                  </h3>
-                  <p className="text-sm text-gray-600">{driver.phoneNumber}</p>
-                  <div className="mt-2 flex items-center gap-4">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold text-gray-700">
-                        {driver.rating}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {driver.totalTrips} trips
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {driver.experience}
-                    </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate text-xl font-bold text-gray-900">
+                      {bid?.name || driver?.driverName || 'Driver'}
+                    </h3>
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-500" />
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-gray-600">
+                    <Phone className="h-4 w-4 flex-shrink-0" />
+                    <p className="truncate text-sm">
+                      {bid?.contactNumber || driver?.mobileNo || 'N/A'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -383,7 +474,11 @@ function TripAssignmentSuccessInner() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => router.push(`/company/trips?tripId=${trip.id}`)}
+                onClick={() =>
+                  router.push(
+                    `/company/trips?tripId=${trip.tripId || trip.tripCode}`
+                  )
+                }
                 className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg"
               >
                 <User className="h-5 w-5" />
@@ -411,6 +506,12 @@ function TripAssignmentSuccessInner() {
             <p className="text-sm text-gray-700">
               A confirmation email has been sent to your registered email
               address. The driver will be notified and will contact you shortly.
+              {paymentMethod === 'cash' && (
+                <span className="mt-2 block font-semibold text-orange-700">
+                  💵 Please keep ₹{parseFloat(amount).toLocaleString()} ready in
+                  cash for the driver.
+                </span>
+              )}
             </p>
           </motion.div>
         </main>

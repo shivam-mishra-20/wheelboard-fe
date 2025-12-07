@@ -11,7 +11,6 @@ import {
   Search,
   Filter,
   ChevronDown,
-  TrendingUp,
   Users,
   CheckCircle2,
   AlertCircle,
@@ -24,6 +23,7 @@ import {
 } from 'lucide-react';
 import Headers from '@/components/Header';
 import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 import type { DetailedJob } from '@/lib/mockApi';
 
 type JobFilter = 'all' | 'Active' | 'Paused' | 'Closed';
@@ -50,43 +50,53 @@ export default function ProfessionalJobsPage() {
     experience: '',
     expectedSalary: '',
   });
+  const [likingJobId, setLikingJobId] = useState<string | null>(null);
+  const [likedJobs, setLikedJobs] = useState<string[]>([]);
   const [allJobs, setAllJobs] = useState<DetailedJob[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Load liked jobs from localStorage
+  useEffect(() => {
+    const liked = localStorage.getItem('likedJobs');
+    if (liked) {
+      setLikedJobs(JSON.parse(liked));
+    }
+  }, []);
 
   // Fetch jobs from API
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        setIsLoading(true);
-
-        // Get current user
-        const user = wheelboardApi.getCurrentUser?.() || {
-          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
-        };
+        // Get current user from API
+        const user = api.getCurrentUser();
+        if (!user || !user.id) {
+          console.error('User not authenticated');
+          return;
+        }
         setCurrentUser(user);
 
-        // Fetch open jobs
-        const openJobsResponse = await wheelboardApi.job.getOpenJobList();
+        // Fetch open jobs with userId to get isApplied and isLiked status
+        const openJobsResponse = await wheelboardApi.job.getOpenJobList(
+          user.id
+        );
         console.log('💼 Open Jobs Response:', openJobsResponse);
 
         const jobsData: any[] = Array.isArray(openJobsResponse)
           ? openJobsResponse
-          : openJobsResponse.data || [];
+          : (openJobsResponse as any).data || [];
 
-        // Fetch applied jobs for current user
-        const appliedJobsResponse = await wheelboardApi.job.getAppliedJobs(
-          user.id
-        );
-        console.log('✅ Applied Jobs Response:', appliedJobsResponse);
-        const appliedJobsData: any[] = Array.isArray(appliedJobsResponse)
-          ? appliedJobsResponse
-          : appliedJobsResponse.data || [];
-        const appliedJobIds = appliedJobsData.map(
-          (job: any) => job.jobId || job.id
-        );
+        // Extract applied job IDs from response
+        const appliedJobIds = jobsData
+          .filter((job: any) => job.isApplied)
+          .map((job: any) => job.jobId);
         setAppliedJobs(appliedJobIds);
+
+        // Extract liked job IDs from response
+        const likedJobIds = jobsData
+          .filter((job: any) => job.isLiked)
+          .map((job: any) => job.jobId);
+        setLikedJobs(likedJobIds);
+        localStorage.setItem('likedJobs', JSON.stringify(likedJobIds));
 
         // Map API data to DetailedJob format
         const mappedJobs: DetailedJob[] = jobsData.map((apiJob: any) => ({
@@ -95,30 +105,29 @@ export default function ProfessionalJobsPage() {
           department: apiJob.department || 'General',
           location: apiJob.city || apiJob.location || 'Not specified',
           type: (apiJob.jobType || 'Full-time') as DetailedJob['type'],
-          salary: apiJob.salary || 'Competitive',
+          salary: apiJob.salary
+            ? `₹${apiJob.salary.toLocaleString()}`
+            : 'Competitive',
           description: apiJob.description || '',
           requirements: apiJob.requirements || [],
           benefits: apiJob.benefits || [],
-          image: apiJob.imageUrls?.[0] || '/tires.png',
+          image: apiJob.imagePaths?.[0] || '/tires.png',
           createdAt: apiJob.createdAt || new Date().toISOString(),
           status: (apiJob.status || 'Active') as 'Active' | 'Paused' | 'Closed',
           views: apiJob.views || 0,
           applications: apiJob.applications || [],
           urgent: apiJob.urgent || false,
+          likeCount: apiJob.likeCount || 0,
         }));
 
         setAllJobs(mappedJobs);
         console.log('✅ Mapped Jobs:', mappedJobs);
       } catch (error) {
         console.error('❌ Error fetching jobs:', error);
-        setError('Failed to load jobs');
-      } finally {
-        setIsLoading(false);
       }
     };
 
     fetchJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Calculate stats
@@ -126,17 +135,15 @@ export default function ProfessionalJobsPage() {
     const totalJobs = allJobs.filter((job) => job.status === 'Active').length;
     const appliedCount = appliedJobs.length;
     const savedCount = savedJobs.length;
-    const urgentJobs = allJobs.filter(
-      (job) => job.urgent && job.status === 'Active'
-    ).length;
+    const likedCount = likedJobs.length;
 
     return {
       totalJobs,
       appliedCount,
       savedCount,
-      urgentJobs,
+      likedCount,
     };
-  }, [allJobs, appliedJobs.length, savedJobs.length]);
+  }, [allJobs, appliedJobs.length, savedJobs.length, likedJobs.length]);
 
   // Filter jobs
   const filteredJobs = useMemo(() => {
@@ -184,6 +191,61 @@ export default function ProfessionalJobsPage() {
     );
   };
 
+  const handleLikeToggle = async (jobId: string) => {
+    if (!currentUser?.id) {
+      console.error('User not logged in');
+      return;
+    }
+
+    try {
+      setLikingJobId(jobId);
+
+      // Optimistic update
+      const isCurrentlyLiked = likedJobs.includes(jobId);
+      const newLikedJobs = isCurrentlyLiked
+        ? likedJobs.filter((id) => id !== jobId)
+        : [...likedJobs, jobId];
+
+      setLikedJobs(newLikedJobs);
+      localStorage.setItem('likedJobs', JSON.stringify(newLikedJobs));
+
+      // Call API
+      const response = await wheelboardApi.job.toggleJobLike(
+        jobId,
+        currentUser.id
+      );
+      const responseData = (response as any).data;
+
+      console.log('✅ Job like toggled:', {
+        isLiked: responseData?.isLiked,
+        likeCount: responseData?.likeCount,
+      });
+
+      // Update jobs with new like count if available
+      if (responseData?.likeCount !== undefined) {
+        setAllJobs((prevJobs) =>
+          prevJobs.map((job) =>
+            job.id === jobId
+              ? { ...job, likeCount: responseData.likeCount }
+              : job
+          )
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error toggling job like:', error);
+      // Revert optimistic update on error
+      const isCurrentlyLiked = likedJobs.includes(jobId);
+      const revertedLikedJobs = isCurrentlyLiked
+        ? [...likedJobs, jobId]
+        : likedJobs.filter((id) => id !== jobId);
+
+      setLikedJobs(revertedLikedJobs);
+      localStorage.setItem('likedJobs', JSON.stringify(revertedLikedJobs));
+    } finally {
+      setLikingJobId(null);
+    }
+  };
+
   const handleApplyClick = (job: DetailedJob) => {
     setSelectedJob(job);
     setIsApplyModalOpen(true);
@@ -191,18 +253,16 @@ export default function ProfessionalJobsPage() {
 
   const handleSubmitApplication = async () => {
     if (!selectedJob || !currentUser) {
-      setError('Please log in to apply for jobs');
+      console.error('User not logged in or no job selected');
       return;
     }
 
     if (!applicationData.coverLetter || !applicationData.experience) {
-      setError('Please fill in all required fields');
+      console.error('Missing required fields');
       return;
     }
 
     try {
-      setIsLoading(true);
-
       // Call API to apply for job
       await wheelboardApi.job.applyJob({
         jobId: selectedJob.id,
@@ -221,9 +281,6 @@ export default function ProfessionalJobsPage() {
       console.log('✅ Application submitted successfully');
     } catch (error) {
       console.error('❌ Error applying for job:', error);
-      setError('Failed to submit application');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -315,15 +372,21 @@ export default function ProfessionalJobsPage() {
           </button>
 
           <button
-            onClick={() => router.push('/professional/jobs/urgent')}
-            className="rounded-xl border border-gray-200 bg-white p-3 text-left shadow-sm transition-all hover:scale-105 hover:border-orange-300 hover:shadow-lg lg:rounded-2xl lg:p-6"
+            onClick={() => router.push('/professional/jobs/liked')}
+            className="rounded-xl border border-gray-200 bg-white p-3 text-left shadow-sm transition-all hover:scale-105 hover:border-pink-300 hover:shadow-lg lg:rounded-2xl lg:p-6"
           >
-            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/30 lg:mb-3 lg:h-12 lg:w-12 lg:rounded-xl">
-              <TrendingUp className="h-5 w-5 text-white lg:h-6 lg:w-6" />
+            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg shadow-pink-500/30 lg:mb-3 lg:h-12 lg:w-12 lg:rounded-xl">
+              <svg
+                className="h-5 w-5 text-white lg:h-6 lg:w-6"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
             </div>
-            <p className="text-xs text-gray-500 lg:text-sm">Urgent</p>
+            <p className="text-xs text-gray-500 lg:text-sm">Liked</p>
             <p className="text-xl font-bold text-[#535353] lg:text-3xl">
-              {stats.urgentJobs}
+              {stats.likedCount}
             </p>
           </button>
         </div>
@@ -577,6 +640,36 @@ export default function ProfessionalJobsPage() {
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLikeToggle(job.id);
+                            }}
+                            disabled={likingJobId === job.id}
+                            className={`flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-all disabled:opacity-50 ${
+                              likedJobs.includes(job.id)
+                                ? 'border-pink-500 bg-pink-500 text-white'
+                                : 'border-gray-300 bg-white text-gray-600 hover:border-pink-500 hover:text-pink-500'
+                            }`}
+                          >
+                            <svg
+                              className="h-5 w-5"
+                              fill={
+                                likedJobs.includes(job.id)
+                                  ? 'currentColor'
+                                  : 'none'
+                              }
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                              />
+                            </svg>
+                          </button>
+                          <button
                             onClick={() => toggleSaveJob(job.id)}
                             className={`flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-all ${
                               isSaved
@@ -609,6 +702,34 @@ export default function ProfessionalJobsPage() {
 
                     {/* Action Buttons - Mobile */}
                     <div className="mt-3 flex gap-2 lg:hidden">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLikeToggle(job.id);
+                        }}
+                        disabled={likingJobId === job.id}
+                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 transition-all disabled:opacity-50 ${
+                          likedJobs.includes(job.id)
+                            ? 'border-pink-500 bg-pink-500 text-white'
+                            : 'border-gray-300 bg-white text-gray-600 hover:border-pink-500 hover:text-pink-500'
+                        }`}
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill={
+                            likedJobs.includes(job.id) ? 'currentColor' : 'none'
+                          }
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
+                        </svg>
+                      </button>
                       <button
                         onClick={() => toggleSaveJob(job.id)}
                         className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 transition-all ${

@@ -1,7 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+import { Loader2 } from 'lucide-react';
 import type { Variants } from 'framer-motion';
 
 interface Job {
@@ -15,10 +19,7 @@ interface Job {
   postedAt: string;
   location: string;
   salary: string;
-}
-
-interface JobListingsProps {
-  jobs: Job[];
+  isLiked?: boolean;
 }
 
 const container: Variants = {
@@ -40,7 +41,150 @@ const item: Variants = {
   },
 };
 
-export default function JobListings({ jobs }: JobListingsProps) {
+// Helper to calculate time ago
+const getTimeAgo = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800)
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return `${Math.floor(diffInSeconds / 604800)}w ago`;
+};
+
+export default function JobListings() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [likingJobId, setLikingJobId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true);
+        const currentUser = api.getCurrentUser();
+        const userId = currentUser?.id;
+
+        const response = await wheelboardApi.job.getOpenJobList(userId);
+        console.log('💼 Open Jobs Response:', response);
+
+        const apiResponse = response as any;
+        let jobsData: any[] = [];
+
+        if (apiResponse.success && apiResponse.data) {
+          jobsData = Array.isArray(apiResponse.data)
+            ? apiResponse.data
+            : [apiResponse.data];
+        } else if (Array.isArray(apiResponse)) {
+          jobsData = apiResponse;
+        }
+
+        // Transform and take first 3 jobs
+        const transformedJobs: Job[] = jobsData.slice(0, 3).map((job: any) => ({
+          id: job.jobId || job.id,
+          company: job.companyName || job.company || 'Company',
+          position: job.role || job.title || job.position || 'Job Position',
+          description: job.description || 'No description available',
+          image: (job.images && job.images[0]) || job.image || '/truck-01.jpg',
+          likes: job.likes || 0,
+          applicants: job.applicants || job.openings || 0,
+          postedAt: job.createdDate ? getTimeAgo(job.createdDate) : 'Recently',
+          location: job.city || job.location || 'Location',
+          salary: job.salary
+            ? `₹${job.salary.toLocaleString()}`
+            : 'Competitive',
+          isLiked: job.isLiked || false,
+        }));
+
+        setJobs(transformedJobs);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+        setJobs([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  const handleLikeToggle = async (jobId: string) => {
+    const currentUser = api.getCurrentUser();
+    if (!currentUser?.id) {
+      console.log('Please log in to like jobs');
+      return;
+    }
+
+    try {
+      setLikingJobId(jobId);
+
+      // Optimistic update
+      setJobs((prevJobs) =>
+        prevJobs.map((job) =>
+          job.id === jobId
+            ? {
+                ...job,
+                isLiked: !job.isLiked,
+                likes: job.isLiked ? job.likes - 1 : job.likes + 1,
+              }
+            : job
+        )
+      );
+
+      // Call API
+      await wheelboardApi.job.toggleJobLike(jobId, currentUser.id);
+      console.log('✅ Job like toggled successfully');
+    } catch (error) {
+      console.error('❌ Error toggling job like:', error);
+      // Revert optimistic update on error
+      setJobs((prevJobs) =>
+        prevJobs.map((job) =>
+          job.id === jobId
+            ? {
+                ...job,
+                isLiked: !job.isLiked,
+                likes: job.isLiked ? job.likes + 1 : job.likes - 1,
+              }
+            : job
+        )
+      );
+    } finally {
+      setLikingJobId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="mb-8 md:mb-16">
+        <div className="mb-5 flex items-center justify-between md:mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+            Available <span className="text-[#f36969]">Jobs</span>
+          </h2>
+        </div>
+        <div className="flex min-h-[300px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+      </div>
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <div className="mb-8 md:mb-16">
+        <div className="mb-5 flex items-center justify-between md:mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+            Available <span className="text-[#f36969]">Jobs</span>
+          </h2>
+        </div>
+        <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-gray-200 bg-gray-50">
+          <p className="text-gray-500">No jobs available at the moment</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-8 md:mb-16">
       {/* Header */}
@@ -163,22 +307,37 @@ export default function JobListings({ jobs }: JobListingsProps) {
               {/* Footer */}
               <div className="flex items-center justify-between border-t border-gray-100 pt-3 md:pt-4">
                 <div className="flex items-center gap-3 text-xs text-gray-500 md:gap-4 md:text-sm">
-                  <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLikeToggle(job.id);
+                    }}
+                    disabled={likingJobId === job.id}
+                    className="flex items-center gap-1 transition-all hover:scale-110 disabled:opacity-50"
+                  >
                     <svg
-                      className="h-4 w-4"
-                      fill="none"
+                      className={`h-4 w-4 transition-colors ${
+                        job.isLiked
+                          ? 'fill-[#f36969] stroke-[#f36969]'
+                          : 'fill-none stroke-current'
+                      }`}
                       viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      strokeWidth={2}
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
                         d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
                       />
                     </svg>
-                    <span className="font-medium">{job.likes}</span>
-                  </div>
+                    <span
+                      className={`font-medium ${
+                        job.isLiked ? 'text-[#f36969]' : ''
+                      }`}
+                    >
+                      {job.likes}
+                    </span>
+                  </button>
                   <div className="flex items-center gap-1">
                     <svg
                       className="h-4 w-4"

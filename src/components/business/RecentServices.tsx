@@ -1,38 +1,109 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+import { Loader2 } from 'lucide-react';
 
 interface Service {
-  id: number;
+  id: string;
   title: string;
   description: string;
   image: string;
   category: string;
 }
 
-const services: Service[] = [
-  {
-    id: 1,
-    title: 'Fleet Maintenance & Repair',
-    description:
-      'Comprehensive maintenance and repair services for all types of commercial vehicles. Regular servicing, emergency repairs, and preventive maintenance.',
-    image: '/excavator.jpg',
-    category: 'Maintenance',
-  },
-  {
-    id: 2,
-    title: 'Vehicle Parts Supply',
-    description:
-      'Genuine and aftermarket parts supply for trucks, buses, and heavy machinery. Fast delivery and quality assurance for all components.',
-    image:
-      '/Cards/450-4504112_engine-carens-automotive-motors-parts-kia-cerato-clipart 1.png',
-    category: 'Parts',
-  },
-];
-
 export default function RecentServices() {
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setIsLoading(true);
+        const currentUser = api.getCurrentUser();
+
+        if (!currentUser) {
+          console.log('No user logged in');
+          setServices([]);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await wheelboardApi.service.getServiceList(
+          currentUser.id
+        );
+        console.log('🔧 Recent Services Response:', response);
+
+        const apiResponse = response as any;
+        let servicesData: any[] = [];
+
+        if (apiResponse.success && apiResponse.data) {
+          servicesData = Array.isArray(apiResponse.data)
+            ? apiResponse.data
+            : [apiResponse.data];
+        } else if (Array.isArray(apiResponse)) {
+          servicesData = apiResponse;
+        }
+
+        // Transform and take first 2 services
+        const transformedServices: Service[] = servicesData
+          .slice(0, 2)
+          .map((service: any) => ({
+            id: service.serviceId,
+            title: service.title || service.serviceTitle,
+            description: service.description || 'No description available',
+            image: (service.images && service.images[0]) || '/excavator.jpg',
+            category: service.serviceCategory || service.category || 'Service',
+          }));
+
+        setServices(transformedServices);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        setServices([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="mb-12 md:mb-20">
+        <div className="mb-6 flex items-start justify-between gap-3 sm:flex-row sm:items-center md:mb-8 lg:mb-10">
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl lg:text-4xl">
+            Recent <span className="text-[#f36969]">Services</span>
+          </h2>
+        </div>
+        <div className="flex min-h-[300px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+      </div>
+    );
+  }
+
+  if (services.length === 0) {
+    return (
+      <div className="mb-12 md:mb-20">
+        <div className="mb-6 flex items-start justify-between gap-3 sm:flex-row sm:items-center md:mb-8 lg:mb-10">
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl lg:text-4xl">
+            Recent <span className="text-[#f36969]">Services</span>
+          </h2>
+        </div>
+        <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-gray-200 bg-gray-50">
+          <p className="text-gray-500">
+            No services available. Add your first service!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-12 md:mb-20">
       {/* Header Section */}
@@ -106,48 +177,34 @@ export default function RecentServices() {
 
                 {/* Action Buttons */}
                 <div className="mt-auto flex flex-wrap gap-2 sm:gap-3">
-                  <motion.button
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm sm:flex-none sm:rounded-xl sm:px-4 sm:text-sm"
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  <Link href={`/business/listings/${service.id}`}>
+                    <motion.button
+                      className="flex items-center justify-center gap-2 rounded-lg bg-[#f36969]/10 px-3 py-2 text-xs font-semibold text-[#f36969] transition-all hover:bg-[#f36969] hover:text-white hover:shadow-md sm:rounded-xl sm:px-4 sm:text-sm"
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      whileTap={{ scale: 0.97 }}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                      />
-                    </svg>
-                    <span className="hidden sm:inline">Share</span>
-                    <span className="sm:hidden">Share</span>
-                  </motion.button>
-                  <motion.button
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#f36969]/10 px-3 py-2 text-xs font-semibold text-[#f36969] transition-all hover:bg-[#f36969] hover:text-white hover:shadow-md sm:flex-none sm:rounded-xl sm:px-4 sm:text-sm"
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    <span className="hidden sm:inline">Edit</span>
-                    <span className="sm:hidden">Edit</span>
-                  </motion.button>
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                      <span>View Details</span>
+                    </motion.button>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -65,21 +65,53 @@ export default function FeedCard({
   const getCategoryBadge = () => {
     if (!post.category) return null;
 
-    const badges: Record<string, string> = {
-      services: 'bg-blue-100 text-blue-700 border-blue-200',
-      tip: 'bg-green-100 text-green-700 border-green-200',
-      Promotions: 'bg-purple-100 text-purple-700 border-purple-200',
-      question: 'bg-orange-100 text-orange-700 border-orange-200',
-      general: 'bg-gray-100 text-gray-700 border-gray-200',
+    const categoryLower = post.category.toLowerCase();
+    const badges: Record<
+      string,
+      { bg: string; text: string; border: string; icon: string }
+    > = {
+      services: {
+        bg: 'bg-blue-50',
+        text: 'text-blue-700',
+        border: 'border-blue-200',
+        icon: '🛠️',
+      },
+      tips: {
+        bg: 'bg-green-50',
+        text: 'text-green-700',
+        border: 'border-green-200',
+        icon: '💡',
+      },
+      promotions: {
+        bg: 'bg-purple-50',
+        text: 'text-purple-700',
+        border: 'border-purple-200',
+        icon: '🎉',
+      },
+      question: {
+        bg: 'bg-orange-50',
+        text: 'text-orange-700',
+        border: 'border-orange-200',
+        icon: '❓',
+      },
+      general: {
+        bg: 'bg-gray-50',
+        text: 'text-gray-700',
+        border: 'border-gray-200',
+        icon: '📌',
+      },
     };
+
+    const badge = badges[categoryLower] || badges.general;
+    const displayCategory =
+      post.category.charAt(0).toUpperCase() + post.category.slice(1);
 
     return (
       <span
-        className={`rounded-full border px-3 py-1 text-xs font-semibold ${badges[post.category]}`}
+        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${badge.bg} ${badge.text} ${badge.border}`}
       >
-        {post.category === 'Promotions'
-          ? 'Promotions'
-          : post.category.charAt(0).toUpperCase() + post.category.slice(1)}
+        <span>{badge.icon}</span>
+        {displayCategory}
       </span>
     );
   };
@@ -105,15 +137,15 @@ export default function FeedCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/50 sm:rounded-3xl"
+      className="overflow-hidden rounded-2xl border-2 border-gray-100 bg-white shadow-sm transition-all duration-300 hover:border-[#f36969]/20 hover:shadow-xl lg:rounded-3xl"
     >
       {/* Header */}
-      <div className="p-4 sm:p-5">
+      <div className="p-4 sm:p-5 lg:p-6">
         {/* Top Row: Avatar + Name + Actions */}
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <div className="relative h-11 w-11 flex-shrink-0 sm:h-12 sm:w-12">
-            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600 shadow-md ring-2 ring-white sm:h-12 sm:w-12">
+          <div className="relative h-12 w-12 flex-shrink-0 sm:h-14 sm:w-14">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#f36969] to-[#f36565] shadow-md ring-2 ring-white sm:h-14 sm:w-14">
               {post.author.avatar ? (
                 <Image
                   src={post.author.avatar}
@@ -122,7 +154,7 @@ export default function FeedCard({
                   className="rounded-full object-cover"
                 />
               ) : (
-                <span className="text-sm font-bold text-white sm:text-base">
+                <span className="text-base font-bold text-white sm:text-lg">
                   {post.author.initials}
                 </span>
               )}
@@ -131,13 +163,12 @@ export default function FeedCard({
 
           {/* Author Info */}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="truncate text-sm font-bold text-gray-900 sm:text-base">
-                {post.author.name}
-              </h3>
-              {getUserTypeBadge()}
-            </div>
-            <p className="mt-0.5 text-xs text-gray-500">{post.timeAgo}</p>
+            <h3 className="truncate text-base font-bold text-[#535353] sm:text-lg">
+              {post.author.name}
+            </h3>
+            <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
+              {post.timeAgo}
+            </p>
           </div>
 
           {/* Delete/Menu Button */}
@@ -177,12 +208,12 @@ export default function FeedCard({
           {getCategoryBadge()}
           {post.status && (
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
                 post.status === 'Approved'
-                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                   : post.status === 'Rejected'
-                    ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
-                    : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                    ? 'border-red-200 bg-red-50 text-red-700'
+                    : 'border-amber-200 bg-amber-50 text-amber-700'
               }`}
             >
               <span
@@ -271,84 +302,110 @@ export default function FeedCard({
       </AnimatePresence>
 
       {/* Content */}
-      <div className="px-4 pb-3 sm:px-5 sm:pb-4">
+      <div className="px-4 pb-3 sm:px-5 sm:pb-4 lg:px-6">
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 sm:text-base">
           {post.content}
         </p>
       </div>
 
-      {/* Image */}
-      {post.image && (
-        <div className="relative aspect-video w-full overflow-hidden bg-gray-100">
-          <Image
-            src={post.image}
-            alt="Post content"
-            fill
-            className="object-cover transition-transform duration-500 hover:scale-105"
-          />
+      {/* Images */}
+      {post.images && post.images.length > 0 && (
+        <div
+          className={`grid gap-2 px-4 pb-4 sm:px-5 sm:pb-5 lg:px-6 ${
+            post.images.length === 1
+              ? 'grid-cols-1'
+              : post.images.length === 2
+                ? 'grid-cols-2'
+                : post.images.length === 3
+                  ? 'grid-cols-3'
+                  : 'grid-cols-2'
+          }`}
+        >
+          {post.images.slice(0, 4).map((imageUrl, index) => (
+            <div
+              key={index}
+              className={`relative overflow-hidden rounded-xl bg-gray-100 ${
+                post.images.length === 1 ? 'aspect-video' : 'aspect-square'
+              } ${index === 3 && post.images.length > 4 ? 'relative' : ''}`}
+            >
+              <Image
+                src={imageUrl}
+                alt={`Post image ${index + 1}`}
+                fill
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+              {index === 3 && post.images.length > 4 && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                  <span className="text-2xl font-bold text-white">
+                    +{post.images.length - 4}
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
       {/* Engagement Stats */}
-      <div className="flex items-center justify-between border-t border-gray-100 px-4 py-2.5 sm:px-5 sm:py-3">
+      <div className="flex items-center justify-between border-t-2 border-gray-100 px-4 py-3 sm:px-5 lg:px-6">
         <div className="flex items-center gap-4 text-xs sm:gap-6 sm:text-sm">
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 transition-colors hover:text-primary-600"
+            className="flex items-center gap-1.5 transition-colors hover:text-[#f36969]"
           >
             <Heart
-              className={`h-4 w-4 ${localLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+              className={`h-4 w-4 sm:h-5 sm:w-5 ${localLiked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
             />
             <span className="font-semibold text-gray-700">{localLikes}</span>
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 transition-colors hover:text-primary-600"
+            className="flex items-center gap-1.5 transition-colors hover:text-[#f36969]"
           >
-            <MessageCircle className="h-4 w-4 text-gray-400" />
+            <MessageCircle className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
             <span className="font-semibold text-gray-700">
               {post.comments.length}
             </span>
           </button>
           <span className="flex items-center gap-1.5">
-            <Share2 className="h-4 w-4 text-gray-400" />
+            <Share2 className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
             <span className="font-semibold text-gray-700">{post.shares}</span>
           </span>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-3 border-t border-gray-100">
+      <div className="grid grid-cols-3 border-t-2 border-gray-100">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={handleLike}
-          className={`flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors sm:py-3.5 ${
+          className={`flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all sm:py-3.5 sm:text-base ${
             localLiked
-              ? 'text-red-500'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+              ? 'bg-red-50 text-red-600'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-[#f36969]'
           }`}
         >
           <Heart className={`h-5 w-5 ${localLiked ? 'fill-current' : ''}`} />
-          <span>Like</span>
+          <span className="hidden sm:inline">Like</span>
         </motion.button>
 
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center justify-center gap-2 border-x border-gray-100 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800 sm:py-3.5"
+          className="flex items-center justify-center gap-2 border-x-2 border-gray-100 py-3 text-sm font-semibold text-gray-600 transition-all hover:bg-gray-50 hover:text-[#f36969] sm:py-3.5 sm:text-base"
         >
           <MessageCircle className="h-5 w-5" />
-          <span>Comment</span>
+          <span className="hidden sm:inline">Comment</span>
         </motion.button>
 
         <div className="relative">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowShareMenu(!showShareMenu)}
-            className="flex w-full items-center justify-center gap-2 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800 sm:py-3.5"
+            className="flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold text-gray-600 transition-all hover:bg-gray-50 hover:text-[#f36969] sm:py-3.5 sm:text-base"
           >
             <Share2 className="h-5 w-5" />
-            <span>Share</span>
+            <span className="hidden sm:inline">Share</span>
           </motion.button>
 
           {/* Share Menu Dropdown */}

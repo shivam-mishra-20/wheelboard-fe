@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -16,48 +16,178 @@ import {
   CreditCard,
   Tag,
   Timer,
+  Loader2,
 } from 'lucide-react';
 import Header from '@/components/Header';
 import LoginSimulator from '@/components/LoginSimulator';
 import Footer from '@/components/Footer';
 import { BusinessProtected } from '@/components/ProtectedRoute';
-import { serviceBookingsData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+
+// Interface for service booking/assignment from API
+interface ServiceBooking {
+  assignmentId: string;
+  serviceId: string;
+  serviceName: string;
+  serviceTitle?: string;
+  assignedToUserId: string;
+  companyName?: string;
+  customerName?: string;
+  companyPhone?: string;
+  phoneNumber?: string;
+  location?: string;
+  address?: string;
+  vehicleNumber?: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  description?: string;
+  notes?: string;
+  status: string;
+  category?: string;
+  serviceType?: string;
+  price?: number;
+  amount?: number;
+  currency?: string;
+  duration?: string;
+  bookedBy?: string;
+  internalNotes?: string;
+  createdAt?: string;
+}
 
 export default function BookingDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const bookingId = params?.id as string;
+  const [booking, setBooking] = useState<ServiceBooking | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const booking = serviceBookingsData.find((b) => b.id === bookingId);
+  // Fetch booking details from API
+  useEffect(() => {
+    const fetchBooking = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  const handleMarkComplete = () => {
+        const user = api.getCurrentUser();
+        if (!user) {
+          setError('Please log in to view booking details');
+          return;
+        }
+
+        // Get all assigned services for the user
+        const response = await wheelboardApi.service.getAssignedServices(
+          user.id
+        );
+
+        if (response.success && response.data) {
+          const assignments = response.data as ServiceBooking[];
+          const foundBooking = assignments.find(
+            (a) => a.assignmentId === bookingId
+          );
+
+          if (foundBooking) {
+            setBooking(foundBooking);
+          } else {
+            setError('Booking not found');
+          }
+        } else {
+          setError('Failed to load booking details');
+        }
+      } catch (err) {
+        console.error('Error fetching booking:', err);
+        setError('An error occurred while loading booking details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (bookingId) {
+      fetchBooking();
+    }
+  }, [bookingId]);
+
+  const handleMarkComplete = async () => {
+    if (!booking) return;
+
     setIsCompleting(true);
-    // Simulate API call
-    setTimeout(() => {
-      alert('Booking marked as completed!');
-      setIsCompleting(false);
-    }, 1000);
-  };
+    try {
+      const response = await wheelboardApi.service.completeService(
+        booking.assignmentId
+      );
 
-  const handleCancelAppointment = () => {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
-      alert('Appointment cancelled successfully!');
-      router.back();
+      if (response.success) {
+        setBooking({ ...booking, status: 'Completed' });
+        alert('Booking marked as completed!');
+      } else {
+        alert(response.message || 'Failed to complete booking');
+      }
+    } catch (err) {
+      console.error('Error completing booking:', err);
+      alert('An error occurred while completing the booking');
+    } finally {
+      setIsCompleting(false);
     }
   };
 
-  if (!booking) {
+  const handleCancelAppointment = async () => {
+    if (!booking) return;
+
+    if (!confirm('Are you sure you want to cancel this appointment?')) {
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      const response = await wheelboardApi.service.cancelService(
+        booking.assignmentId
+      );
+
+      if (response.success) {
+        alert('Appointment cancelled successfully!');
+        router.back();
+      } else {
+        alert(response.message || 'Failed to cancel appointment');
+      }
+    } catch (err) {
+      console.error('Error cancelling booking:', err);
+      alert('An error occurred while cancelling the appointment');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <BusinessProtected>
+        <Header />
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-[#f36969]" />
+            <p className="text-gray-600">Loading booking details...</p>
+          </div>
+        </div>
+      </BusinessProtected>
+    );
+  }
+
+  // Error state
+  if (error || !booking) {
     return (
       <BusinessProtected>
         <Header />
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
           <div className="text-center">
             <h2 className="mb-2 text-2xl font-bold text-gray-900">
-              Booking Not Found
+              {error || 'Booking Not Found'}
             </h2>
             <p className="mb-4 text-gray-600">
-              The booking you&apos;re looking for doesn&apos;t exist.
+              The booking you&apos;re looking for doesn&apos;t exist or
+              couldn&apos;t be loaded.
             </p>
             <button
               onClick={() => router.back()}
@@ -70,6 +200,17 @@ export default function BookingDetailsPage() {
       </BusinessProtected>
     );
   }
+
+  // Extract booking details with fallbacks
+  const serviceName = booking.serviceTitle || booking.serviceName || 'Service';
+  const customerName =
+    booking.customerName || booking.companyName || 'Customer';
+  const phoneNumber = booking.phoneNumber || booking.companyPhone || '';
+  const locationAddress =
+    booking.address || booking.location || 'Not specified';
+  const bookingStatus = booking.status || 'Pending';
+  const priceAmount = booking.amount || booking.price || 0;
+  const priceCurrency = booking.currency || '₹';
 
   return (
     <BusinessProtected>
@@ -100,30 +241,33 @@ export default function BookingDetailsPage() {
                 <div className="bg-gradient-to-br from-[#f36969] to-[#e85555] px-6 py-8 text-white">
                   <div className="mb-4 flex justify-center">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 text-2xl font-bold backdrop-blur-sm">
-                      {booking.companyName
+                      {customerName
                         .split(' ')
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join('')
-                        .toUpperCase()}
+                        .toUpperCase()
+                        .slice(0, 2)}
                     </div>
                   </div>
                   <h2 className="text-center text-xl font-bold">
-                    {booking.companyName}
+                    {customerName}
                   </h2>
                 </div>
 
                 <div className="space-y-4 px-6 py-6">
-                  <div className="flex items-start gap-3">
-                    <Phone className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">
-                        Phone Number
-                      </p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {booking.companyPhone}
-                      </p>
+                  {phoneNumber && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-500">
+                          Phone Number
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {phoneNumber}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex items-start gap-3">
                     <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
@@ -132,10 +276,24 @@ export default function BookingDetailsPage() {
                         Location
                       </p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {booking.location}
+                        {locationAddress}
                       </p>
                     </div>
                   </div>
+
+                  {booking.vehicleNumber && (
+                    <div className="flex items-start gap-3">
+                      <Tag className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-500">
+                          Vehicle Number
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {booking.vehicleNumber}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-start gap-3">
                     <User className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
@@ -144,20 +302,18 @@ export default function BookingDetailsPage() {
                         Booked By
                       </p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {booking.bookedBy === 'Company'
-                          ? booking.companyName
-                          : booking.bookedBy}
+                        {booking.bookedBy || customerName}
                       </p>
                     </div>
                   </div>
 
-                  {booking.notes && (
+                  {(booking.notes || booking.description) && (
                     <div className="rounded-lg bg-orange-50 p-3">
                       <p className="mb-1 text-xs font-medium text-orange-700">
                         Special Instructions
                       </p>
                       <p className="text-sm text-orange-900">
-                        &quot;{booking.notes}&quot;
+                        &quot;{booking.notes || booking.description}&quot;
                       </p>
                     </div>
                   )}
@@ -171,19 +327,21 @@ export default function BookingDetailsPage() {
                 transition={{ delay: 0.1 }}
                 className="space-y-3 rounded-2xl bg-white p-6 shadow-sm"
               >
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    window.open(`tel:${booking.companyPhone}`, '_self')
-                  }
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 py-3.5 font-semibold text-white transition-colors hover:bg-teal-700"
-                >
-                  <Phone className="h-5 w-5" />
-                  Call Customer
-                </motion.button>
+                {phoneNumber && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => window.open(`tel:${phoneNumber}`, '_self')}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 py-3.5 font-semibold text-white transition-colors hover:bg-teal-700"
+                  >
+                    <Phone className="h-5 w-5" />
+                    Call Customer
+                  </motion.button>
+                )}
 
-                {booking.status === 'Confirmed' && (
+                {(bookingStatus === 'Confirmed' ||
+                  bookingStatus === 'Pending' ||
+                  bookingStatus === 'In Progress') && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -191,20 +349,32 @@ export default function BookingDetailsPage() {
                     disabled={isCompleting}
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3.5 font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                   >
-                    <CheckCircle className="h-5 w-5" />
+                    {isCompleting ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-5 w-5" />
+                    )}
                     {isCompleting ? 'Completing...' : 'Mark as Completed'}
                   </motion.button>
                 )}
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleCancelAppointment}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-red-300 bg-white py-3.5 font-semibold text-red-600 transition-colors hover:bg-red-50"
-                >
-                  <X className="h-5 w-5" />
-                  Cancel Appointment
-                </motion.button>
+                {bookingStatus !== 'Completed' &&
+                  bookingStatus !== 'Cancelled' && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCancelAppointment}
+                      disabled={isCancelling}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-red-300 bg-white py-3.5 font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {isCancelling ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <X className="h-5 w-5" />
+                      )}
+                      {isCancelling ? 'Cancelling...' : 'Cancel Appointment'}
+                    </motion.button>
+                  )}
               </motion.div>
             </div>
 
@@ -221,33 +391,37 @@ export default function BookingDetailsPage() {
                   <div className="flex-1">
                     <div className="mb-2 flex items-center gap-3">
                       <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">
-                        {booking.serviceName}
+                        {serviceName}
                       </h1>
                       <span
                         className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                          booking.status === 'Confirmed'
+                          bookingStatus === 'Confirmed'
                             ? 'bg-teal-100 text-teal-700'
-                            : booking.status === 'Pending'
+                            : bookingStatus === 'Pending'
                               ? 'bg-yellow-100 text-yellow-700'
-                              : booking.status === 'Completed'
+                              : bookingStatus === 'Completed'
                                 ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
+                                : bookingStatus === 'In Progress'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-red-100 text-red-700'
                         }`}
                       >
-                        {booking.status}
+                        {bookingStatus}
                       </span>
                     </div>
                     <p className="text-sm text-gray-500">
-                      Service ID: #{booking.id}
+                      Assignment ID: #{booking.assignmentId.slice(0, 8)}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="text-3xl font-bold text-gray-900">
-                      {booking.pricing.currency}
-                      {booking.pricing.amount}
+                  {priceAmount > 0 && (
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {priceCurrency}
+                        {priceAmount}
+                      </div>
+                      <div className="text-sm text-gray-500">Service Fee</div>
                     </div>
-                    <div className="text-sm text-gray-500">Fixed Rate</div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-4 text-sm">
@@ -295,37 +469,43 @@ export default function BookingDetailsPage() {
                 </h2>
 
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-lg bg-blue-50 p-2">
-                      <Tag className="h-5 w-5 text-blue-600" />
+                  {booking.serviceType && (
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-lg bg-blue-50 p-2">
+                        <Tag className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Service Type</p>
+                        <p className="font-semibold text-gray-900">
+                          {booking.serviceType}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Service Type</p>
-                      <p className="font-semibold text-gray-900">
-                        {booking.serviceType}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-lg bg-purple-50 p-2">
-                      <FileText className="h-5 w-5 text-purple-600" />
+                  {booking.category && (
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-lg bg-purple-50 p-2">
+                        <FileText className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Category</p>
+                        <p className="font-semibold text-gray-900">
+                          {booking.category}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Category</p>
-                      <p className="font-semibold text-gray-900">
-                        {booking.category}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
                   <div className="flex items-start gap-3">
                     <div className="rounded-lg bg-green-50 p-2">
                       <CreditCard className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Pricing Type</p>
-                      <p className="font-semibold text-gray-900">Fixed Rate</p>
+                      <p className="text-sm text-gray-500">Service ID</p>
+                      <p className="font-semibold text-gray-900">
+                        {booking.serviceId.slice(0, 8)}...
+                      </p>
                     </div>
                   </div>
                 </div>

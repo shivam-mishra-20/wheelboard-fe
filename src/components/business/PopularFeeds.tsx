@@ -1,7 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { Loader2 } from 'lucide-react';
 
 interface FeedPost {
   id: string;
@@ -14,57 +17,6 @@ interface FeedPost {
   image: string;
   timeAgo: string;
 }
-
-const feeds: FeedPost[] = [
-  {
-    id: '1',
-    author: {
-      name: 'Fleet Operations',
-      initials: 'FO',
-    },
-    title: 'Industry Insights',
-    description:
-      'Latest trends in fleet management and logistics optimization strategies',
-    image: '/image.png',
-    timeAgo: '3 days ago',
-  },
-  {
-    id: '2',
-    author: {
-      name: 'Maintenance Team',
-      initials: 'MT',
-    },
-    title: 'Service Updates',
-    description:
-      'New preventive maintenance schedules and service improvements',
-    image: '/excavator.jpg',
-    timeAgo: '5 days ago',
-  },
-  {
-    id: '3',
-    author: {
-      name: 'Business Network',
-      initials: 'BN',
-    },
-    title: 'Market Trends',
-    description:
-      'Current market dynamics and opportunities in transportation sector',
-    image: '/truck-01.jpg',
-    timeAgo: '7 days ago',
-  },
-  {
-    id: '4',
-    author: {
-      name: 'Operations Hub',
-      initials: 'OH',
-    },
-    title: 'Tech Integration',
-    description:
-      'Digital transformation and technology adoption in fleet management',
-    image: '/yellow-truck.jpg',
-    timeAgo: '10 days ago',
-  },
-];
 
 import type { Variants } from 'framer-motion';
 
@@ -87,7 +39,117 @@ const item: Variants = {
   },
 };
 
+// Helper function to calculate time ago
+const getTimeAgo = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600)
+    return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800)
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+};
+
+// Helper to get initials from name
+const getInitials = (name: string): string => {
+  const words = name.trim().split(' ');
+  if (words.length >= 2) {
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 export default function PopularFeeds() {
+  const [feeds, setFeeds] = useState<FeedPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeeds = async () => {
+      try {
+        setIsLoading(true);
+        const response = await wheelboardApi.post.getAllPosts();
+        console.log('📰 All Posts Response:', response);
+
+        const apiResponse = response as any;
+        let postsData: any[] = [];
+
+        if (apiResponse.success && apiResponse.data) {
+          postsData = Array.isArray(apiResponse.data)
+            ? apiResponse.data
+            : [apiResponse.data];
+        } else if (Array.isArray(apiResponse)) {
+          postsData = apiResponse;
+        }
+
+        // Transform API data to FeedPost format and take first 4
+        const transformedFeeds: FeedPost[] = postsData
+          .slice(0, 4)
+          .map((post: any) => ({
+            id: post.postId || post.id,
+            author: {
+              name: post.userName || post.authorName || 'Business User',
+              initials: getInitials(
+                post.userName || post.authorName || 'Business User'
+              ),
+            },
+            title: post.category || 'Community Post',
+            description:
+              post.content || post.description || 'No description available',
+            image:
+              (post.images && post.images[0]) || post.image || '/image.png',
+            timeAgo: post.createdDate
+              ? getTimeAgo(post.createdDate)
+              : 'Recently',
+          }));
+
+        setFeeds(transformedFeeds);
+      } catch (error) {
+        console.error('Error fetching feeds:', error);
+        // Set empty array on error
+        setFeeds([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeeds();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="mb-12 md:mb-20">
+        <div className="mb-6 flex items-start justify-between gap-4 md:mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+            Popular <span className="text-[#f36969]">Feeds</span>
+          </h2>
+        </div>
+        <div className="flex min-h-[300px] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+      </div>
+    );
+  }
+
+  if (feeds.length === 0) {
+    return (
+      <div className="mb-12 md:mb-20">
+        <div className="mb-6 flex items-start justify-between gap-4 md:mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+            Popular <span className="text-[#f36969]">Feeds</span>
+          </h2>
+        </div>
+        <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-gray-200 bg-gray-50">
+          <p className="text-gray-500">No feeds available at the moment</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-12 md:mb-20">
       <motion.div

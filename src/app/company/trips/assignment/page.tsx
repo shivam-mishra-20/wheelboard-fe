@@ -1,22 +1,22 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   MapPin,
   Calendar,
   Clock,
-  CreditCard,
   CheckCircle2,
-  Building2,
-  Smartphone,
-  DollarSign,
   Shield,
-  TrendingUp,
-  Info,
+  User,
+  Phone,
+  CreditCard,
+  Smartphone,
+  Building2,
+  DollarSign,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
@@ -24,60 +24,183 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { wheelboardApi } from '@/lib/wheelboardApi';
 import { api } from '@/lib/apiAdapter';
-import type { Trip } from '@/types/api';
-
-// Mock driver data
-const getDriverById = (id: string) => {
-  return {
-    id,
-    name: 'Jon Doe',
-    avatar: '/profile.png',
-    phoneNumber: '704 Hameogeo +61 70063',
-    rating: 4.6,
-    totalTrips: 162,
-    isVerified: true,
-    experience: '5 years',
-  };
-};
 
 function TripAssignmentInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const driverId = searchParams.get('driverId');
   const tripId = searchParams.get('tripId');
+  const bidId = searchParams.get('bidId');
 
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<
-    'bid' | 'platform' | 'total'
-  >('total');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    'card' | 'upi' | 'netbanking'
+    'card' | 'upi' | 'netbanking' | 'cash'
   >('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [trip, setTrip] = useState<any>(null);
+  const [driver, setDriver] = useState<any>(null);
+  const [bid, setBid] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTripData = async () => {
-      if (!tripId) return;
+    const fetchData = async () => {
+      if (!tripId || !driverId) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const user = api.getCurrentUser();
-        if (!user) return;
 
-        // Fetch trips and find the specific one
-        const response = await wheelboardApi.trip.getTripsByUser(user.id);
-        const trips = (response.data as any[]) || [];
-        const foundTrip = trips.find((t: any) => t.tripId === tripId);
+        // Fetch trip data
+        let foundTrip = null;
+        if (user?.id) {
+          const tripResponse = await wheelboardApi.trip.getTripsByUser(user.id);
+          const trips = (tripResponse.data as any[]) || [];
+          foundTrip = trips.find((t: any) => t.tripId === tripId);
+        }
+
+        if (!foundTrip) {
+          try {
+            const tripDetailsResponse =
+              await wheelboardApi.trip.getUnassignedTripDetails(tripId);
+            foundTrip =
+              (tripDetailsResponse as any).data || tripDetailsResponse;
+          } catch (error) {
+            console.error('Error fetching trip details:', error);
+          }
+        }
+
         setTrip(foundTrip);
+
+        // Fetch driver data
+        const driverResponse =
+          await wheelboardApi.transport.getDriverDetails(driverId);
+        setDriver((driverResponse as any).data || driverResponse);
+
+        // Fetch bid data if bidId is provided
+        if (bidId) {
+          const bidsResponse = await wheelboardApi.trip.getTripBids(tripId);
+          const bidsData = ((bidsResponse as any).data as any[]) || [];
+          const foundBid = bidsData.find((b: any) => b.bidId === bidId);
+          setBid(foundBid);
+        }
       } catch (error) {
-        console.error('Error fetching trip:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTripData();
-  }, [tripId]);
+    fetchData();
+  }, [tripId, driverId, bidId]);
+
+  const bidAmount = bid?.bidAmount || 0;
+  const platformFee = bidAmount * 0.05;
+  const totalAmount = bidAmount + platformFee;
+
+  const handlePayment = async () => {
+    if (!tripId || !bidId) {
+      alert('Missing trip or bid information');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const user = api.getCurrentUser();
+      if (!user?.id) {
+        alert('Please log in to continue');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Handle CASH payment separately
+      if (selectedPaymentMethod === 'cash') {
+        // For cash payment, skip Razorpay and go directly to success
+        // Payment will be collected in person
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        router.push(
+          `/company/trips/assignment/success?driverId=${driverId}&tripId=${tripId}&bidId=${bidId}&amount=${totalAmount}&paymentMethod=cash`
+        );
+        return;
+      }
+
+      // Step 1: Create Razorpay order
+      const orderResponse = await wheelboardApi.trip.createPaymentOrder({
+        totalAmount: totalAmount,
+      });
+
+      const orderData = (orderResponse as any).data || orderResponse;
+      const orderId = orderData.orderId || orderData.id;
+
+      if (!orderId) {
+        throw new Error('Failed to create payment order');
+      }
+
+      // Step 2: Initialize Razorpay checkout (if Razorpay is loaded)
+      if (typeof window !== 'undefined' && (window as any).Razorpay) {
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
+          amount: totalAmount * 100, // Convert to paise
+          currency: 'INR',
+          name: 'WheelBoard',
+          description: `Trip Assignment - ${trip?.tripCode || tripId}`,
+          order_id: orderId,
+          handler: async function (response: any) {
+            try {
+              // Step 3: Verify payment
+              const verifyResponse = await wheelboardApi.trip.verifyPayment({
+                tripId: tripId,
+                bidId: bidId,
+                userId: user.id,
+                amount: bidAmount,
+                platformFee: platformFee,
+                totalAmount: totalAmount,
+                orderId: orderId,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              });
+
+              // Payment verified, redirect to success page
+              router.push(
+                `/company/trips/assignment/success?driverId=${driverId}&tripId=${tripId}&bidId=${bidId}&amount=${totalAmount}&paymentMethod=${selectedPaymentMethod}&orderId=${orderId}&paymentId=${response.razorpay_payment_id}`
+              );
+            } catch (error) {
+              console.error('Payment verification error:', error);
+              alert('Payment verification failed. Please contact support.');
+              setIsProcessing(false);
+            }
+          },
+          prefill: {
+            name: user.name || '',
+            email: user.email || '',
+            contact: (user as any).phone || (user as any).mobileNo || '',
+          },
+          theme: {
+            color: '#3B82F6',
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessing(false);
+            },
+          },
+        };
+
+        const razorpay = new (window as any).Razorpay(options);
+        razorpay.open();
+      } else {
+        // Fallback: Direct payment simulation for testing
+        console.warn('Razorpay not loaded, using simulation');
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        router.push(
+          `/company/trips/assignment/success?driverId=${driverId}&tripId=${tripId}&bidId=${bidId}&amount=${totalAmount}&paymentMethod=${selectedPaymentMethod}`
+        );
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Payment failed. Please try again.');
+      setIsProcessing(false);
+    }
+  };
 
   if (!driverId || !tripId) {
     return (
@@ -105,523 +228,301 @@ function TripAssignmentInner() {
     );
   }
 
-  const driver = getDriverById(driverId);
-
-  if (isLoading) {
+  if (isLoading || !driver || !trip) {
     return (
       <CompanyProtected>
         <Header />
         <div className="flex min-h-screen items-center justify-center bg-gray-50 pt-16">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            <p className="text-gray-600">Loading trip details...</p>
+            <p className="text-gray-600">Loading assignment details...</p>
           </div>
         </div>
       </CompanyProtected>
     );
   }
-
-  if (!trip) {
-    return (
-      <CompanyProtected>
-        <Header />
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 pt-16">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Trip Not Found</h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.back()}
-              className="mt-6 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 font-semibold text-white shadow-md"
-            >
-              Go Back
-            </motion.button>
-          </div>
-        </div>
-      </CompanyProtected>
-    );
-  }
-
-  // Calculate payment amounts (no booking fee)
-  const bidAmount = 2500;
-  const platformFee = bidAmount * 0.05; // 5% platform fee
-  const totalAmount = bidAmount + platformFee;
-
-  const getPaymentAmount = () => {
-    switch (selectedPaymentOption) {
-      case 'bid':
-        return bidAmount;
-      case 'platform':
-        return platformFee;
-      case 'total':
-        return totalAmount;
-      default:
-        return totalAmount;
-    }
-  };
-
-  const handlePayment = async () => {
-    try {
-      setIsProcessing(true);
-      const user = api.getCurrentUser();
-      if (!user) {
-        alert('Please log in to continue');
-        return;
-      }
-
-      const paymentAmount = getPaymentAmount();
-
-      // Step 1: Create Razorpay order
-      const orderResponse = await wheelboardApi.trip.createPaymentOrder({
-        totalAmount: paymentAmount,
-      });
-
-      // Here you would integrate with Razorpay SDK to collect payment
-      // For now, we'll simulate the payment flow
-
-      // Step 2: After payment, verify it
-      // const verifyResponse = await wheelboardApi.trip.verifyPayment({
-      //   tripId: tripId,
-      //   bidId: '', // You'll need to pass the bid ID
-      //   userId: user.id,
-      //   amount: bidAmount,
-      //   platformFee: platformFee,
-      //   totalAmount: paymentAmount,
-      //   orderId: orderResponse.data.orderId,
-      //   paymentId: '', // From Razorpay
-      //   signature: '', // From Razorpay
-      // });
-
-      // Step 3: Navigate to success page
-      router.push(
-        `/company/trips/assignment/success?driverId=${driverId}&tripId=${tripId}&amount=${paymentAmount}&paymentOption=${selectedPaymentOption}&paymentMethod=${selectedPaymentMethod}`
-      );
-    } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   return (
     <CompanyProtected>
       <Header />
       <LoginSimulator />
 
-      <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <motion.button
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.back()}
-            className="mb-6 flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-primary-300 hover:bg-primary-50"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            Back
-          </motion.button>
+      <div className="min-h-screen bg-gray-50 py-6 pt-20 font-poppins">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          {/* Header */}
+          <div className="mb-6 flex items-center gap-4">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                Trip Assignment
+              </h1>
+              <p className="text-sm text-gray-500">
+                Review and confirm assignment
+              </p>
+            </div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <h1 className="text-3xl font-bold text-gray-900">
-              Assignment & Payment
-            </h1>
-            <p className="mt-2 text-gray-600">
-              Review trip details and complete payment to assign driver
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="space-y-6 lg:col-span-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="rounded-3xl bg-white p-6 shadow-lg"
-              >
-                <h2 className="mb-4 text-xl font-bold text-gray-900">
-                  Trip Overview
-                </h2>
-
-                <div className="space-y-4">
+          <div className="space-y-4">
+            {/* Trip Details Card */}
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
+                <h2 className="font-semibold text-gray-900">Trip Details</h2>
+              </div>
+              <div className="p-6">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-green-100 p-2">
+                    <div className="rounded-lg bg-green-50 p-2">
                       <MapPin className="h-5 w-5 text-green-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-gray-500">
-                        Pickup Location
+                        Pickup
                       </p>
-                      <p className="font-semibold text-gray-900">{trip.from}</p>
+                      <p className="truncate font-medium text-gray-900">
+                        {trip?.pickupLocation || 'N/A'}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-red-100 p-2">
+                    <div className="rounded-lg bg-red-50 p-2">
                       <MapPin className="h-5 w-5 text-red-600" />
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-gray-500">
                         Destination
                       </p>
-                      <p className="font-semibold text-gray-900">{trip.to}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-full bg-blue-100 p-2">
-                        <Calendar className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">
-                          Date
-                        </p>
-                        <p className="font-semibold text-gray-900">
-                          {trip.departureDate}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-full bg-purple-100 p-2">
-                        <Clock className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">
-                          Time
-                        </p>
-                        <p className="font-semibold text-gray-900">
-                          {trip.departureTime}
-                        </p>
-                      </div>
+                      <p className="truncate font-medium text-gray-900">
+                        {trip?.destination || 'N/A'}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-[#f36969]/10 p-2">
-                      <TrendingUp className="h-5 w-5 text-[#f36969]" />
+                    <div className="rounded-lg bg-blue-50 p-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">
-                        Distance
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        {trip.distance}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-500">Date</p>
+                      <p className="font-medium text-gray-900">
+                        {trip?.pickupDate || 'N/A'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-xl bg-gradient-to-r from-[#f36969] to-[#e85555] p-4 text-center">
-                    <p className="text-sm text-white/80">Trip ID</p>
-                    <p className="font-mono text-lg font-bold text-white">
-                      {trip.id.toUpperCase()}
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-purple-50 p-2">
+                      <Clock className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-500">Time</p>
+                      <p className="font-medium text-gray-900">
+                        {trip?.pickupTime || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {trip?.tripCode && (
+                  <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs font-medium text-gray-500">Trip ID</p>
+                    <p className="font-mono text-sm font-semibold text-gray-900">
+                      {trip.tripCode}
                     </p>
                   </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="rounded-3xl bg-white p-6 shadow-lg"
-              >
-                <h2 className="mb-4 text-xl font-bold text-gray-900">
-                  Assigned Driver
-                </h2>
-
-                <div className="flex items-center gap-4">
-                  <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-[#f36969]/20">
-                    <Image
-                      src={driver.avatar}
-                      alt={driver.name}
-                      fill
-                      className="object-cover"
-                    />
-                    {driver.isVerified && (
-                      <div className="absolute -bottom-1 -right-1 rounded-full bg-green-500 p-1">
-                        <CheckCircle2 className="h-4 w-4 text-white" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {driver.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {driver.phoneNumber}
-                    </p>
-                    <div className="mt-1 flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-sm">
-                        <span className="text-yellow-500">★</span>
-                        <span className="font-semibold text-gray-700">
-                          {driver.rating}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {driver.totalTrips} trips
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {driver.experience}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="rounded-3xl bg-white p-6 shadow-lg"
-              >
-                <h2 className="mb-4 text-xl font-bold text-gray-900">
-                  Select Payment Option
-                </h2>
-
-                <div className="space-y-3">
-                  <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-gray-200 p-4 transition-all hover:border-[#f36969]/50 hover:bg-[#f36969]/5">
-                    <div className="flex items-center gap-3">
-                      <input
-                        checked={selectedPaymentOption === 'bid'}
-                        name="paymentOption"
-                        onChange={() => setSelectedPaymentOption('bid')}
-                        type="radio"
-                        className="h-5 w-5 text-[#f36969]"
-                      />
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          Bid Amount Only
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Pay only the driver&apos;s bid amount
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-[#f36969]">
-                        ₹{bidAmount}
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-gray-200 p-4 transition-all hover:border-[#f36969]/50 hover:bg-[#f36969]/5">
-                    <div className="flex items-center gap-3">
-                      <input
-                        checked={selectedPaymentOption === 'platform'}
-                        name="paymentOption"
-                        onChange={() => setSelectedPaymentOption('platform')}
-                        type="radio"
-                        className="h-5 w-5 text-[#f36969]"
-                      />
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          Platform Fee Only
-                        </p>
-                        <p className="text-sm text-gray-600">5% platform fee</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-purple-600">
-                        ₹{platformFee.toFixed(2)}
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-[#f36969]/50 bg-[#f36969]/5 p-4 transition-all">
-                    <div className="flex items-center gap-3">
-                      <input
-                        checked={selectedPaymentOption === 'total'}
-                        name="paymentOption"
-                        onChange={() => setSelectedPaymentOption('total')}
-                        type="radio"
-                        className="h-5 w-5 text-[#f36969]"
-                      />
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          Total Amount (Recommended)
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          All fees included
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-green-600">
-                        ₹{totalAmount.toFixed(2)}
-                      </p>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="mt-4 flex items-start gap-2 rounded-xl bg-blue-50 p-4">
-                  <Info className="h-5 w-5 flex-shrink-0 text-blue-600" />
-                  <p className="text-sm text-gray-700">
-                    Paying the total amount ensures seamless trip execution and
-                    platform support.
-                  </p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="rounded-3xl bg-white p-6 shadow-lg"
-              >
-                <h2 className="mb-4 text-xl font-bold text-gray-900">
-                  Payment Method
-                </h2>
-
-                <div className="space-y-3">
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-gray-200 p-4 transition-all hover:border-[#f36969]/50 hover:bg-[#f36969]/5">
-                    <input
-                      checked={selectedPaymentMethod === 'card'}
-                      name="paymentMethod"
-                      onChange={() => setSelectedPaymentMethod('card')}
-                      type="radio"
-                      className="h-5 w-5 text-[#f36969]"
-                    />
-                    <CreditCard className="h-6 w-6 text-gray-600" />
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        Credit / Debit Card
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Visa, Mastercard, Amex
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-gray-200 p-4 transition-all hover:border-[#f36969]/50 hover:bg-[#f36969]/5">
-                    <input
-                      checked={selectedPaymentMethod === 'upi'}
-                      name="paymentMethod"
-                      onChange={() => setSelectedPaymentMethod('upi')}
-                      type="radio"
-                      className="h-5 w-5 text-[#f36969]"
-                    />
-                    <Smartphone className="h-6 w-6 text-gray-600" />
-                    <div>
-                      <p className="font-semibold text-gray-900">UPI</p>
-                      <p className="text-sm text-gray-600">
-                        Google Pay, PhonePe, Paytm
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-gray-200 p-4 transition-all hover:border-[#f36969]/50 hover:bg-[#f36969]/5">
-                    <input
-                      checked={selectedPaymentMethod === 'netbanking'}
-                      name="paymentMethod"
-                      onChange={() => setSelectedPaymentMethod('netbanking')}
-                      type="radio"
-                      className="h-5 w-5 text-[#f36969]"
-                    />
-                    <Building2 className="h-6 w-6 text-gray-600" />
-                    <div>
-                      <p className="font-semibold text-gray-900">Net Banking</p>
-                      <p className="text-sm text-gray-600">
-                        All major banks supported
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </motion.div>
+                )}
+              </div>
             </div>
 
-            <div className="lg:col-span-1">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="sticky top-24 rounded-3xl bg-gradient-to-br from-[#f36969] to-[#e85555] p-6 shadow-xl"
-              >
-                <h2 className="mb-6 text-xl font-bold text-white">
-                  Payment Summary
-                </h2>
-
-                <div className="space-y-4">
-                  <div className="space-y-3 rounded-xl bg-white/10 p-4 backdrop-blur-sm">
-                    <div className="flex items-center justify-between text-white/90">
-                      <span>Bid Amount</span>
-                      <span className="font-semibold">₹{bidAmount}</span>
+            {/* Driver Details Card */}
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
+                <h2 className="font-semibold text-gray-900">Assigned Driver</h2>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
+                    <User className="h-8 w-8 text-primary-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="truncate font-semibold text-gray-900">
+                        {bid?.name || driver?.driverName || 'Driver'}
+                      </h3>
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-500" />
                     </div>
-                    <div className="flex items-center justify-between text-white/90">
-                      <span>Platform Fee (5%)</span>
-                      <span className="font-semibold">
-                        ₹{platformFee.toFixed(2)}
+                    <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
+                      <Phone className="h-4 w-4" />
+                      <span className="truncate">
+                        {bid?.contactNumber || driver?.mobileNo || 'N/A'}
                       </span>
                     </div>
-                    <div className="border-t border-white/20 pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-white">
-                          Total
-                        </span>
-                        <span className="text-2xl font-bold text-white">
-                          ₹{totalAmount.toFixed(2)}
-                        </span>
-                      </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Summary Card */}
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
+                <h2 className="font-semibold text-gray-900">Payment Summary</h2>
+              </div>
+              <div className="p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Bid Amount</span>
+                    <span className="font-semibold text-gray-900">
+                      ₹{bidAmount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Platform Fee (5%)</span>
+                    <span className="font-semibold text-gray-900">
+                      ₹{platformFee.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold text-gray-900">
+                        Total Amount
+                      </span>
+                      <span className="text-2xl font-bold text-primary-600">
+                        ₹{totalAmount.toLocaleString()}
+                      </span>
                     </div>
                   </div>
-
-                  <div className="rounded-xl bg-white p-4">
-                    <p className="mb-1 text-sm text-gray-600">
-                      You&apos;re paying
-                    </p>
-                    <p className="text-3xl font-bold text-[#f36969]">
-                      ₹{getPaymentAmount().toFixed(2)}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-600">
-                      {selectedPaymentOption === 'bid' && 'Bid Amount'}
-                      {selectedPaymentOption === 'platform' && 'Platform Fee'}
-                      {selectedPaymentOption === 'total' && 'Total Amount'}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-center gap-2 rounded-xl bg-white/10 p-3 text-white backdrop-blur-sm">
-                    <Shield className="h-5 w-5" />
-                    <span className="text-sm font-medium">Secure Payment</span>
-                  </div>
-
-                  <motion.button
-                    disabled={isProcessing}
-                    whileHover={{ scale: isProcessing ? 1 : 1.02 }}
-                    whileTap={{ scale: isProcessing ? 1 : 0.98 }}
-                    onClick={handlePayment}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-4 font-bold text-[#f36969] shadow-lg transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#f36969] border-t-transparent" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <DollarSign className="h-5 w-5" />
-                        Pay Now & Confirm
-                      </>
-                    )}
-                  </motion.button>
-
-                  <p className="text-center text-xs text-white/70">
-                    By proceeding, you agree to our terms & conditions
-                  </p>
                 </div>
-              </motion.div>
+              </div>
+            </div>
+
+            {/* Payment Method Card */}
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
+                <h2 className="font-semibold text-gray-900">Payment Method</h2>
+              </div>
+              <div className="p-6">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition ${selectedPaymentMethod === 'card' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={selectedPaymentMethod === 'card'}
+                      onChange={(e) =>
+                        setSelectedPaymentMethod(e.target.value as any)
+                      }
+                      className="h-4 w-4 text-primary-600"
+                    />
+                    <CreditCard className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">
+                      Card
+                    </span>
+                  </label>
+
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition ${selectedPaymentMethod === 'upi' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="upi"
+                      checked={selectedPaymentMethod === 'upi'}
+                      onChange={(e) =>
+                        setSelectedPaymentMethod(e.target.value as any)
+                      }
+                      className="h-4 w-4 text-primary-600"
+                    />
+                    <Smartphone className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">
+                      UPI
+                    </span>
+                  </label>
+
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition ${selectedPaymentMethod === 'netbanking' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="netbanking"
+                      checked={selectedPaymentMethod === 'netbanking'}
+                      onChange={(e) =>
+                        setSelectedPaymentMethod(e.target.value as any)
+                      }
+                      className="h-4 w-4 text-primary-600"
+                    />
+                    <Building2 className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">
+                      Banking
+                    </span>
+                  </label>
+
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition ${selectedPaymentMethod === 'cash' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cash"
+                      checked={selectedPaymentMethod === 'cash'}
+                      onChange={(e) =>
+                        setSelectedPaymentMethod(e.target.value as any)
+                      }
+                      className="h-4 w-4 text-primary-600"
+                    />
+                    <DollarSign className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">
+                      Cash
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3 pb-6">
+              <button
+                onClick={handlePayment}
+                disabled={isProcessing}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 font-semibold text-white shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isProcessing ? (
+                  <>
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Processing Payment...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="h-5 w-5" />
+                    Confirm & Pay ₹{totalAmount.toLocaleString()}
+                  </>
+                )}
+              </button>
+
+              {selectedPaymentMethod === 'cash' ? (
+                <p className="text-center text-xs text-gray-500">
+                  💵 Payment will be collected in cash upon trip completion
+                </p>
+              ) : (
+                <p className="text-center text-xs text-gray-500">
+                  <Shield className="mr-1 inline h-3 w-3" />
+                  Secure payment powered by industry-standard encryption
+                </p>
+              )}
             </div>
           </div>
-        </main>
-
-        <Footer />
+        </div>
       </div>
+
+      <Footer />
     </CompanyProtected>
   );
 }

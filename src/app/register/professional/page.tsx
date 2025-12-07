@@ -1,10 +1,228 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, saveAuthUser } from '@/lib/apiAdapter';
 import { formatDateForApi } from '@/lib/userApi';
+
+// Indian States and Cities Data
+const statesAndCities: Record<string, string[]> = {
+  'Andhra Pradesh': [
+    'Visakhapatnam',
+    'Vijayawada',
+    'Guntur',
+    'Nellore',
+    'Kurnool',
+    'Tirupati',
+    'Kakinada',
+    'Rajahmundry',
+  ],
+  'Arunachal Pradesh': ['Itanagar', 'Naharlagun', 'Pasighat', 'Tawang', 'Ziro'],
+  Assam: [
+    'Guwahati',
+    'Silchar',
+    'Dibrugarh',
+    'Jorhat',
+    'Nagaon',
+    'Tinsukia',
+    'Tezpur',
+  ],
+  Bihar: [
+    'Patna',
+    'Gaya',
+    'Bhagalpur',
+    'Muzaffarpur',
+    'Purnia',
+    'Darbhanga',
+    'Bihar Sharif',
+  ],
+  Chhattisgarh: [
+    'Raipur',
+    'Bhilai',
+    'Bilaspur',
+    'Korba',
+    'Durg',
+    'Rajnandgaon',
+  ],
+  Goa: ['Panaji', 'Margao', 'Vasco da Gama', 'Mapusa', 'Ponda'],
+  Gujarat: [
+    'Ahmedabad',
+    'Surat',
+    'Vadodara',
+    'Rajkot',
+    'Bhavnagar',
+    'Jamnagar',
+    'Gandhinagar',
+    'Anand',
+  ],
+  Haryana: [
+    'Faridabad',
+    'Gurgaon',
+    'Panipat',
+    'Ambala',
+    'Yamunanagar',
+    'Rohtak',
+    'Hisar',
+    'Karnal',
+  ],
+  'Himachal Pradesh': [
+    'Shimla',
+    'Dharamshala',
+    'Solan',
+    'Mandi',
+    'Kullu',
+    'Manali',
+  ],
+  Jharkhand: [
+    'Ranchi',
+    'Jamshedpur',
+    'Dhanbad',
+    'Bokaro',
+    'Deoghar',
+    'Hazaribagh',
+  ],
+  Karnataka: [
+    'Bangalore',
+    'Mysore',
+    'Hubli',
+    'Mangalore',
+    'Belgaum',
+    'Dharwad',
+    'Tumkur',
+    'Bellary',
+  ],
+  Kerala: [
+    'Thiruvananthapuram',
+    'Kochi',
+    'Kozhikode',
+    'Thrissur',
+    'Kollam',
+    'Palakkad',
+    'Kannur',
+  ],
+  'Madhya Pradesh': [
+    'Indore',
+    'Bhopal',
+    'Jabalpur',
+    'Gwalior',
+    'Ujjain',
+    'Sagar',
+    'Dewas',
+    'Satna',
+  ],
+  Maharashtra: [
+    'Mumbai',
+    'Pune',
+    'Nagpur',
+    'Thane',
+    'Nashik',
+    'Aurangabad',
+    'Solapur',
+    'Amravati',
+  ],
+  Manipur: ['Imphal', 'Thoubal', 'Churachandpur', 'Bishnupur'],
+  Meghalaya: ['Shillong', 'Tura', 'Nongstoin', 'Jowai'],
+  Mizoram: ['Aizawl', 'Lunglei', 'Champhai', 'Serchhip'],
+  Nagaland: ['Kohima', 'Dimapur', 'Mokokchung', 'Tuensang'],
+  Odisha: [
+    'Bhubaneswar',
+    'Cuttack',
+    'Rourkela',
+    'Berhampur',
+    'Sambalpur',
+    'Puri',
+    'Balasore',
+  ],
+  Punjab: [
+    'Ludhiana',
+    'Amritsar',
+    'Jalandhar',
+    'Patiala',
+    'Bathinda',
+    'Mohali',
+    'Pathankot',
+  ],
+  Rajasthan: [
+    'Jaipur',
+    'Jodhpur',
+    'Kota',
+    'Bikaner',
+    'Ajmer',
+    'Udaipur',
+    'Bhilwara',
+    'Alwar',
+  ],
+  Sikkim: ['Gangtok', 'Namchi', 'Geyzing', 'Mangan'],
+  'Tamil Nadu': [
+    'Chennai',
+    'Coimbatore',
+    'Madurai',
+    'Tiruchirappalli',
+    'Salem',
+    'Tirunelveli',
+    'Tiruppur',
+    'Vellore',
+  ],
+  Telangana: [
+    'Hyderabad',
+    'Warangal',
+    'Nizamabad',
+    'Khammam',
+    'Karimnagar',
+    'Ramagundam',
+  ],
+  Tripura: ['Agartala', 'Dharmanagar', 'Udaipur', 'Kailasahar'],
+  'Uttar Pradesh': [
+    'Lucknow',
+    'Kanpur',
+    'Ghaziabad',
+    'Agra',
+    'Meerut',
+    'Varanasi',
+    'Allahabad',
+    'Bareilly',
+    'Noida',
+  ],
+  Uttarakhand: [
+    'Dehradun',
+    'Haridwar',
+    'Roorkee',
+    'Haldwani',
+    'Rudrapur',
+    'Nainital',
+  ],
+  'West Bengal': [
+    'Kolkata',
+    'Howrah',
+    'Durgapur',
+    'Asansol',
+    'Siliguri',
+    'Bardhaman',
+    'Malda',
+  ],
+  'Andaman and Nicobar Islands': ['Port Blair', 'Car Nicobar', 'Diglipur'],
+  Chandigarh: ['Chandigarh'],
+  'Dadra and Nagar Haveli and Daman and Diu': ['Daman', 'Diu', 'Silvassa'],
+  Delhi: [
+    'New Delhi',
+    'North Delhi',
+    'South Delhi',
+    'East Delhi',
+    'West Delhi',
+    'Central Delhi',
+  ],
+  'Jammu and Kashmir': [
+    'Srinagar',
+    'Jammu',
+    'Anantnag',
+    'Baramulla',
+    'Udhampur',
+  ],
+  Ladakh: ['Leh', 'Kargil'],
+  Lakshadweep: ['Kavaratti', 'Agatti', 'Amini'],
+  Puducherry: ['Puducherry', 'Karaikal', 'Mahe', 'Yanam'],
+};
 
 export default function ProfessionalRegisterPage() {
   const router = useRouter();
@@ -24,6 +242,17 @@ export default function ProfessionalRegisterPage() {
   const [messageType, setMessageType] = useState<'success' | 'error'>(
     'success'
   );
+
+  // Get cities for selected state
+  const availableCities = useMemo(() => {
+    return stateName ? statesAndCities[stateName] || [] : [];
+  }, [stateName]);
+
+  // Reset city when state changes
+  const handleStateChange = (newState: string) => {
+    setStateName(newState);
+    setCity(''); // Reset city when state changes
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,7 +511,6 @@ export default function ProfessionalRegisterPage() {
                     <option value="Driver">Driver</option>
                     <option value="Helper">Helper</option>
                     <option value="Technician">Technician</option>
-                    <option value="Operator">Operator</option>
                   </select>
                 </div>
 
@@ -292,13 +520,18 @@ export default function ProfessionalRegisterPage() {
                   </label>
                   <select
                     value={stateName}
-                    onChange={(e) => setStateName(e.target.value)}
+                    onChange={(e) => handleStateChange(e.target.value)}
                     className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
                     required
                   >
                     <option value="">Select state</option>
-                    <option value="state-1">State 1</option>
-                    <option value="state-2">State 2</option>
+                    {Object.keys(statesAndCities)
+                      .sort()
+                      .map((state) => (
+                        <option key={state} value={state}>
+                          {state}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -308,12 +541,18 @@ export default function ProfessionalRegisterPage() {
                   <select
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900 transition-colors hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60"
                     required
+                    disabled={!stateName}
                   >
-                    <option value="">Select city</option>
-                    <option value="city-1">City 1</option>
-                    <option value="city-2">City 2</option>
+                    <option value="">
+                      {stateName ? 'Select city' : 'Select state first'}
+                    </option>
+                    {availableCities.map((cityName) => (
+                      <option key={cityName} value={cityName}>
+                        {cityName}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

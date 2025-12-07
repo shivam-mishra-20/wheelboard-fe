@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -13,25 +13,81 @@ import {
   AlertCircle,
   Building2,
   Eye,
-  Users,
   Calendar,
   FileText,
   Send,
+  User,
+  Briefcase,
+  MessageSquare,
+  TrendingUp,
 } from 'lucide-react';
 import Headers from '@/components/Header';
-import { companyHomeData } from '@/lib/mockApi';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
+
+interface AppliedJob {
+  applicationId: string;
+  jobId: string;
+  salary: number;
+  jobRole: string;
+  jobDuration: string;
+  jobCity: string;
+  jobType: string;
+  jobDescription: string;
+  userId: string;
+  fullName: string;
+  userLocation: string;
+  appliedDate: string;
+  status: string;
+  salaryExpectation: number;
+  remarks: string;
+}
 
 export default function AppliedJobsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [appliedJobs] = useState<string[]>(['job-2', 'job-1', 'job-5']); // Mock applied jobs
+  const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const allJobs = companyHomeData.allJobs;
+  // Fetch applied jobs from API
+  useEffect(() => {
+    const fetchAppliedJobs = async () => {
+      try {
+        setIsLoading(true);
 
-  // Filter to show only applied jobs
+        // Get current user from API
+        const user = api.getCurrentUser();
+        if (!user || !user.id) {
+          setError('Please log in to view applied jobs');
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch applied jobs using the dedicated endpoint
+        const response = await wheelboardApi.job.getAppliedJobs(user.id);
+        console.log('✅ Applied Jobs Response:', response);
+
+        const jobsData: AppliedJob[] = Array.isArray(response)
+          ? response
+          : (response as any).data || [];
+
+        setAppliedJobs(jobsData);
+      } catch (error) {
+        console.error('❌ Error fetching applied jobs:', error);
+        setError('Failed to load applied jobs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAppliedJobs();
+  }, []);
+
+  // Filter applied jobs list
   const appliedJobsList = useMemo(() => {
-    return allJobs.filter((job) => appliedJobs.includes(job.id));
-  }, [allJobs, appliedJobs]);
+    return appliedJobs;
+  }, [appliedJobs]);
 
   // Search filter
   const filteredJobs = useMemo(() => {
@@ -40,56 +96,69 @@ export default function AppliedJobsPage() {
     const query = searchQuery.toLowerCase();
     return appliedJobsList.filter(
       (job) =>
-        job.title.toLowerCase().includes(query) ||
-        job.location.toLowerCase().includes(query) ||
-        job.department.toLowerCase().includes(query)
+        job.jobRole.toLowerCase().includes(query) ||
+        job.jobCity.toLowerCase().includes(query) ||
+        job.jobType.toLowerCase().includes(query) ||
+        job.jobDescription.toLowerCase().includes(query)
     );
   }, [searchQuery, appliedJobsList]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const pending = 2;
-    const reviewed = 1;
-    const shortlisted = 0;
-    const rejected = 0;
+    const pending = appliedJobs.filter(
+      (job) => job.status === 'Pending'
+    ).length;
+    const accepted = appliedJobs.filter(
+      (job) => job.status === 'Accepted'
+    ).length;
+    const rejected = appliedJobs.filter(
+      (job) => job.status === 'Rejected'
+    ).length;
+    const reviewed = appliedJobs.filter(
+      (job) => job.status === 'Reviewed'
+    ).length;
 
     return {
       total: appliedJobs.length,
       pending,
       reviewed,
-      shortlisted,
+      shortlisted: accepted,
       rejected,
     };
-  }, [appliedJobs.length]);
+  }, [appliedJobs]);
 
   const getJobTypeColor = (type: string) => {
-    switch (type) {
-      case 'Full-time':
-        return 'bg-blue-100 text-blue-700';
-      case 'Part-time':
-        return 'bg-purple-100 text-purple-700';
-      case 'Contract':
-        return 'bg-orange-100 text-orange-700';
-      case 'Freelance':
-        return 'bg-green-100 text-green-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
+    const typeLower = type.toLowerCase();
+    if (typeLower.includes('full'))
+      return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (typeLower.includes('part'))
+      return 'bg-purple-50 text-purple-700 border-purple-200';
+    if (typeLower.includes('contract'))
+      return 'bg-orange-50 text-orange-700 border-orange-200';
+    if (typeLower.includes('freelance'))
+      return 'bg-green-50 text-green-700 border-green-200';
+    if (typeLower.includes('technician'))
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    return 'bg-gray-50 text-gray-700 border-gray-200';
   };
 
-  // Mock application status
-  const getApplicationStatus = (jobId: string) => {
-    const statuses: { [key: string]: string } = {
-      'job-1': 'reviewed',
-      'job-2': 'pending',
-      'job-5': 'pending',
-    };
-    return statuses[jobId] || 'pending';
+  const getDurationColor = (duration: string) => {
+    const durationLower = duration.toLowerCase();
+    if (durationLower.includes('task'))
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (durationLower.includes('hour'))
+      return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    if (durationLower.includes('day'))
+      return 'bg-teal-50 text-teal-700 border-teal-200';
+    if (durationLower.includes('month'))
+      return 'bg-violet-50 text-violet-700 border-violet-200';
+    return 'bg-gray-50 text-gray-700 border-gray-200';
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'shortlisted':
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'accepted':
         return 'bg-green-100 text-green-700 border-green-200';
       case 'reviewed':
         return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -103,8 +172,9 @@ export default function AppliedJobsPage() {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'shortlisted':
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'accepted':
         return <CheckCircle2 className="h-4 w-4" />;
       case 'reviewed':
         return <Eye className="h-4 w-4" />;
@@ -222,7 +292,27 @@ export default function AppliedJobsPage() {
         </div>
 
         {/* Applied Jobs List */}
-        {filteredJobs.length === 0 ? (
+        {isLoading ? (
+          <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <div>
+              <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-gray-200 border-t-[#f36969]" />
+              <p className="text-gray-500">Loading applied jobs...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <div>
+              <AlertCircle className="mx-auto mb-4 h-16 w-16 text-red-300" />
+              <h3 className="mb-2 text-xl font-bold text-[#535353]">{error}</h3>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] px-6 py-3 font-semibold text-white shadow-lg shadow-[#f36969]/30 transition-all hover:shadow-xl"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : filteredJobs.length === 0 ? (
           <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
             <div>
               <Send className="mx-auto mb-4 h-16 w-16 text-gray-300" />
@@ -245,147 +335,242 @@ export default function AppliedJobsPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3 lg:space-y-4">
+          <div className="space-y-4 lg:space-y-5">
             {filteredJobs.map((job) => {
-              const applicationStatus = getApplicationStatus(job.id);
+              const appliedDate = new Date(job.appliedDate);
               const daysAgo = Math.floor(
-                (new Date().getTime() - new Date(job.createdAt).getTime()) /
+                (new Date().getTime() - appliedDate.getTime()) /
                   (1000 * 60 * 60 * 24)
               );
 
               return (
                 <div
-                  key={job.id}
-                  className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg lg:rounded-2xl"
+                  key={job.applicationId}
+                  className="group overflow-hidden rounded-2xl border-2 border-gray-100 bg-white shadow-sm transition-all hover:border-[#f36969]/20 hover:shadow-xl lg:rounded-3xl"
                 >
-                  <div className="p-3 lg:p-6">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
-                      {/* Left Section */}
-                      <div className="flex flex-1 gap-2.5 lg:gap-4">
-                        {/* Job Image */}
-                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 lg:h-20 lg:w-20 lg:rounded-xl">
-                          <Image
-                            src={job.image}
-                            alt={job.title}
-                            width={80}
-                            height={80}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
+                  {/* Header Section with Status Banner */}
+                  <div
+                    className={`px-4 py-2.5 lg:px-6 lg:py-3 ${
+                      job.status === 'Pending'
+                        ? 'bg-gradient-to-r from-yellow-50 to-amber-50'
+                        : job.status === 'Accepted'
+                          ? 'bg-gradient-to-r from-green-50 to-emerald-50'
+                          : job.status === 'Reviewed'
+                            ? 'bg-gradient-to-r from-blue-50 to-cyan-50'
+                            : job.status === 'Rejected'
+                              ? 'bg-gradient-to-r from-red-50 to-rose-50'
+                              : 'bg-gradient-to-r from-gray-50 to-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(job.status)}
+                        <span className="text-sm font-semibold lg:text-base">
+                          Application {job.status}
+                        </span>
+                      </div>
+                      <span className="text-xs font-medium text-gray-600 lg:text-sm">
+                        ID: {job.applicationId.slice(0, 8)}...
+                      </span>
+                    </div>
+                  </div>
 
-                        {/* Job Details */}
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1.5 flex flex-wrap items-center gap-1.5 lg:mb-2 lg:gap-2">
-                            <h3 className="text-base font-bold text-[#535353] lg:text-2xl">
-                              {job.title}
-                            </h3>
-                            <span
-                              className={`flex items-center gap-0.5 rounded-full border-2 px-2 py-0.5 text-[10px] font-semibold lg:gap-1 lg:px-3 lg:py-1 lg:text-xs ${getStatusColor(applicationStatus)}`}
-                            >
-                              {getStatusIcon(applicationStatus)}
-                              <span className="hidden sm:inline">
-                                {applicationStatus.charAt(0).toUpperCase() +
-                                  applicationStatus.slice(1)}
-                              </span>
-                            </span>
-                          </div>
-
-                          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 lg:mb-3 lg:gap-3 lg:text-sm">
-                            <div className="flex items-center gap-0.5 lg:gap-1">
-                              <Building2 className="h-3 w-3 lg:h-4 lg:w-4" />
-                              <span className="truncate">{job.department}</span>
-                            </div>
-                            <div className="flex items-center gap-0.5 lg:gap-1">
-                              <MapPin className="h-3 w-3 lg:h-4 lg:w-4" />
-                              <span className="truncate">{job.location}</span>
-                            </div>
-                            <div className="flex items-center gap-0.5 lg:gap-1">
-                              <Calendar className="h-3 w-3 lg:h-4 lg:w-4" />
-                              Applied{' '}
-                              {daysAgo === 0 ? 'today' : `${daysAgo}d ago`}
-                            </div>
-                          </div>
-
-                          <p className="mb-2 line-clamp-2 text-xs text-gray-600 lg:mb-3 lg:text-base">
-                            {job.description}
-                          </p>
-
-                          {/* Badges */}
-                          <div className="flex flex-wrap items-center gap-1.5 lg:gap-2">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold lg:px-3 lg:py-1 lg:text-xs ${getJobTypeColor(job.type)}`}
-                            >
-                              {job.type}
-                            </span>
-                            <div className="flex items-center gap-0.5 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 lg:gap-1 lg:px-3 lg:py-1 lg:text-xs">
-                              <IndianRupee className="h-2.5 w-2.5 lg:h-3 lg:w-3" />
-                              {job.salary}
-                            </div>
-                          </div>
-                        </div>
+                  <div className="p-4 lg:p-6">
+                    {/* Main Job Info */}
+                    <div className="mb-4 flex gap-3 lg:mb-5 lg:gap-4">
+                      {/* Job Icon/Image */}
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#f36969]/10 to-[#f36969]/5 lg:h-20 lg:w-20 lg:rounded-2xl">
+                        <Briefcase className="h-7 w-7 text-[#f36969] lg:h-10 lg:w-10" />
                       </div>
 
-                      {/* Right Section - Desktop */}
-                      <div className="hidden flex-col items-end gap-3 lg:flex">
-                        {/* Stats */}
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <Eye className="h-4 w-4" />
-                            {job.views}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {job.applications.length}
-                          </div>
+                      {/* Job Title and Basic Info */}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="mb-2 text-xl font-bold text-[#535353] lg:text-2xl">
+                          {job.jobRole}
+                        </h3>
+
+                        <div className="mb-3 flex flex-wrap items-center gap-2 lg:gap-3">
+                          <span
+                            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-semibold lg:text-sm ${getJobTypeColor(job.jobType)}`}
+                          >
+                            <Building2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                            {job.jobType}
+                          </span>
+                          <span
+                            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-semibold lg:text-sm ${getDurationColor(job.jobDuration)}`}
+                          >
+                            <Clock className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                            {job.jobDuration}
+                          </span>
+                          <span className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700 lg:text-sm">
+                            <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                            {job.jobCity}
+                          </span>
                         </div>
+
+                        {/* Salary */}
+                        {job.salary > 0 && (
+                          <div className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-2.5 lg:inline-flex">
+                            <IndianRupee className="h-5 w-5 text-green-600 lg:h-6 lg:w-6" />
+                            <span className="text-lg font-bold text-green-700 lg:text-xl">
+                              ₹{job.salary.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-green-600 lg:text-sm">
+                              per month
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Application Timeline */}
-                    <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 lg:mt-4 lg:rounded-xl lg:p-4">
-                      <div className="mb-2 flex items-center gap-2 lg:mb-3">
-                        <FileText className="h-4 w-4 text-[#f36969] lg:h-5 lg:w-5" />
-                        <h4 className="text-sm font-semibold text-[#535353] lg:text-base">
-                          Application Timeline
-                        </h4>
-                      </div>
-                      <div className="space-y-1.5 text-xs lg:space-y-2 lg:text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Submitted:</span>
-                          <span className="font-semibold text-[#535353]">
-                            {new Date(job.createdAt).toLocaleDateString(
-                              'en-US',
-                              {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              }
-                            )}
-                          </span>
+                    {/* Job Description */}
+                    {job.jobDescription && (
+                      <div className="mb-4 rounded-xl border border-gray-100 bg-gray-50/50 p-3 lg:mb-5 lg:p-4">
+                        <div className="mb-2 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-[#f36969] lg:h-5 lg:w-5" />
+                          <h4 className="text-sm font-semibold text-[#535353] lg:text-base">
+                            Job Description
+                          </h4>
                         </div>
-                        {applicationStatus === 'reviewed' && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Reviewed:</span>
-                            <span className="font-semibold text-[#535353]">
-                              {new Date(
-                                new Date(job.createdAt).getTime() +
-                                  2 * 24 * 60 * 60 * 1000
-                              ).toLocaleDateString('en-US', {
+                        <p className="text-xs leading-relaxed text-gray-700 lg:text-sm">
+                          {job.jobDescription}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Application Timeline & Details Grid */}
+                    <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
+                      {/* Timeline Card */}
+                      <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/50 to-cyan-50/30 p-3 lg:p-4">
+                        <div className="mb-3 flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-blue-600 lg:h-5 lg:w-5" />
+                          <h4 className="text-sm font-semibold text-blue-900 lg:text-base">
+                            Application Timeline
+                          </h4>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs lg:text-sm">
+                            <span className="text-blue-700">Submitted</span>
+                            <span className="font-semibold text-blue-900">
+                              {appliedDate.toLocaleDateString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
                                 year: 'numeric',
                               })}
                             </span>
                           </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Status:</span>
-                          <span className="font-semibold text-[#535353]">
-                            {applicationStatus === 'pending'
-                              ? 'Waiting for review'
-                              : 'Under review by employer'}
-                          </span>
+                          <div className="flex items-center justify-between text-xs lg:text-sm">
+                            <span className="text-blue-700">Time Elapsed</span>
+                            <span className="font-semibold text-blue-900">
+                              {daysAgo === 0
+                                ? 'Today'
+                                : `${daysAgo} day${daysAgo > 1 ? 's' : ''} ago`}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs lg:text-sm">
+                            <span className="text-blue-700">Time</span>
+                            <span className="font-semibold text-blue-900">
+                              {appliedDate.toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
                         </div>
+                      </div>
+
+                      {/* Employer Details Card */}
+                      <div className="rounded-xl border border-purple-100 bg-gradient-to-br from-purple-50/50 to-pink-50/30 p-3 lg:p-4">
+                        <div className="mb-3 flex items-center gap-2">
+                          <User className="h-4 w-4 text-purple-600 lg:h-5 lg:w-5" />
+                          <h4 className="text-sm font-semibold text-purple-900 lg:text-base">
+                            Employer Info
+                          </h4>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs lg:text-sm">
+                            <span className="text-purple-700">Posted By</span>
+                            <span className="font-semibold text-purple-900">
+                              {job.fullName || 'Not specified'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs lg:text-sm">
+                            <span className="text-purple-700">Location</span>
+                            <span className="font-semibold text-purple-900">
+                              {job.userLocation || 'Not specified'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs lg:text-sm"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Salary Expectation & Remarks Section */}
+                    {(job.salaryExpectation > 0 || job.remarks) && (
+                      <div className="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
+                        {/* Salary Expectation */}
+                        {job.salaryExpectation > 0 && (
+                          <div className="rounded-xl border border-green-100 bg-gradient-to-br from-green-50/50 to-emerald-50/30 p-3 lg:p-4">
+                            <div className="mb-2 flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4 text-green-600 lg:h-5 lg:w-5" />
+                              <h4 className="text-sm font-semibold text-green-900 lg:text-base">
+                                Your Expectation
+                              </h4>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <IndianRupee className="h-5 w-5 text-green-600" />
+                              <span className="text-xl font-bold text-green-700 lg:text-2xl">
+                                ₹{job.salaryExpectation.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Remarks */}
+                        {job.remarks && (
+                          <div
+                            className={`rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50/50 to-amber-50/30 p-3 lg:p-4 ${
+                              job.salaryExpectation > 0 ? '' : 'lg:col-span-2'
+                            }`}
+                          >
+                            <div className="mb-2 flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4 text-orange-600 lg:h-5 lg:w-5" />
+                              <h4 className="text-sm font-semibold text-orange-900 lg:text-base">
+                                Feedback / Remarks
+                              </h4>
+                            </div>
+                            <p className="text-xs leading-relaxed text-orange-800 lg:text-sm">
+                              {job.remarks}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Current Status Banner */}
+                    <div
+                      className={`mt-4 rounded-xl border-2 p-3 lg:mt-5 lg:p-4 ${getStatusColor(job.status)}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 lg:gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/50 lg:h-12 lg:w-12">
+                            {getStatusIcon(job.status)}
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium lg:text-sm">
+                              Current Status
+                            </p>
+                            <p className="text-base font-bold lg:text-lg">
+                              {job.status}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => router.push(`/professional/jobs`)}
+                          className="rounded-lg bg-white/80 px-4 py-2 text-xs font-semibold shadow-sm transition-all hover:bg-white hover:shadow-md lg:px-5 lg:py-2.5 lg:text-sm"
+                        >
+                          View Similar Jobs
+                        </button>
                       </div>
                     </div>
                   </div>

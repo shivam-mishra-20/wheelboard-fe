@@ -8,9 +8,7 @@
   "paths": {
     "/api/Job/add-job": {
       "post": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -93,10 +91,8 @@
       }
     },
     "/api/Job/update-job": {
-      "put": {
-        "tags": [
-          "JobApi"
-        ],
+      "post": {
+        "tags": ["JobApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -187,9 +183,7 @@
     },
     "/api/Job/job-list/{userId}": {
       "get": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "parameters": [
           {
             "name": "userId",
@@ -208,11 +202,9 @@
         }
       }
     },
-    "/api/Job/{jobId}/user/{userId}": {
-      "delete": {
-        "tags": [
-          "JobApi"
-        ],
+    "/api/Job/{jobId}/user/{userId}/delete": {
+      "post": {
+        "tags": ["JobApi"],
         "parameters": [
           {
             "name": "jobId",
@@ -242,9 +234,7 @@
     },
     "/api/Job/get-applications/{jobId}": {
       "get": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "parameters": [
           {
             "name": "jobId",
@@ -265,9 +255,7 @@
     },
     "/api/Job/update-job-status": {
       "post": {
-        "tags": [
-          "JobApi"
-        ],
+        "tags": ["JobApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -296,9 +284,7 @@
     },
     "/api/MasterData/getAllServices": {
       "get": {
-        "tags": [
-          "MasterDataApi"
-        ],
+        "tags": ["MasterDataApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -308,8 +294,46 @@
     },
     "/api/MasterData/getAllBusinessType": {
       "get": {
-        "tags": [
-          "MasterDataApi"
+        "tags": ["MasterDataApi"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/NotificationsApi/notifications": {
+      "get": {
+        "tags": ["NotificationsApi"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/NotificationsApi/notification/read": {
+      "post": {
+        "tags": ["NotificationsApi"],
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -320,9 +344,7 @@
     },
     "/api/Post/add": {
       "post": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -388,9 +410,7 @@
     },
     "/api/Post/user/{userId}": {
       "get": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "userId",
@@ -411,9 +431,7 @@
     },
     "/api/Post/get-all-post": {
       "get": {
-        "tags": [
-          "PostApi"
-        ],
+        "tags": ["PostApi"],
         "responses": {
           "200": {
             "description": "OK"
@@ -422,10 +440,8 @@
       }
     },
     "/api/Post/approve/{postId}": {
-      "put": {
-        "tags": [
-          "PostApi"
-        ],
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -445,10 +461,8 @@
       }
     },
     "/api/Post/reject/{postId}": {
-      "put": {
-        "tags": [
-          "PostApi"
-        ],
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
@@ -467,14 +481,33 @@
         }
       }
     },
-    "/api/Post/{postId}": {
-      "delete": {
-        "tags": [
-          "PostApi"
-        ],
+    "/api/Post/{postId}/delete": {
+      "post": {
+        "tags": ["PostApi"],
         "parameters": [
           {
             "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/details/{serviceId}": {
+      "get": {
+        "tags": ["ServiceApi"],
+        "parameters": [
+          {
+            "name": "serviceId",
             "in": "path",
             "required": true,
             "schema": {
@@ -492,9 +525,7 @@
     },
     "/api/Service/add-service": {
       "post": {
-        "tags": [
-          "ServiceApi"
-        ],
+        "tags": ["ServiceApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -554,6 +585,9 @@
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "ServiceCategory": {
+                    "type": "string"
                   }
                 }
               },
@@ -602,6 +636,9 @@
                 },
                 "Images": {
                   "style": "form"
+                },
+                "ServiceCategory": {
+                  "style": "form"
                 }
               }
             }
@@ -615,10 +652,8 @@
       }
     },
     "/api/Service/update-service": {
-      "put": {
-        "tags": [
-          "ServiceApi"
-        ],
+      "post": {
+        "tags": ["ServiceApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -682,6 +717,9 @@
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "ServiceCategory": {
+                    "type": "string"
                   }
                 }
               },
@@ -733,6 +771,9 @@
                 },
                 "NewImages": {
                   "style": "form"
+                },
+                "ServiceCategory": {
+                  "style": "form"
                 }
               }
             }
@@ -747,9 +788,7 @@
     },
     "/api/Service/service-list/{userId}": {
       "get": {
-        "tags": [
-          "ServiceApi"
-        ],
+        "tags": ["ServiceApi"],
         "parameters": [
           {
             "name": "userId",
@@ -768,15 +807,14 @@
         }
       }
     },
-    "/api/Service/{serviceId}/user/{userId}": {
-      "delete": {
-        "tags": [
-          "ServiceApi"
-        ],
+    "/api/Service/{serviceId}/user/{userId}/delete": {
+      "post": {
+        "tags": ["ServiceApi"],
         "parameters": [
           {
-            "name": "jobId",
-            "in": "query",
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -790,11 +828,70 @@
               "type": "string",
               "format": "uuid"
             }
-          },
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/service-assign-list": {
+      "get": {
+        "tags": ["ServiceApi"],
+        "parameters": [
           {
             "name": "serviceId",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/complete-service": {
+      "post": {
+        "tags": ["ServiceApi"],
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Service/update-service-status": {
+      "post": {
+        "tags": ["ServiceApi"],
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
             "schema": {
               "type": "string"
             }
@@ -807,11 +904,29 @@
         }
       }
     },
+    "/api/Service/cancel-service": {
+      "post": {
+        "tags": ["ServiceApi"],
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/User/company_signup": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -840,9 +955,7 @@
     },
     "/api/User/complete-service-provider": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -939,9 +1052,7 @@
     },
     "/api/User/login": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -970,9 +1081,7 @@
     },
     "/api/User/user-profile/{userId}": {
       "get": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "parameters": [
           {
             "name": "userId",
@@ -993,9 +1102,7 @@
     },
     "/api/User/save-referral": {
       "post": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1024,9 +1131,7 @@
     },
     "/api/User/GetReferralsByUserId/{userId}": {
       "get": {
-        "tags": [
-          "UserApi"
-        ],
+        "tags": ["UserApi"],
         "parameters": [
           {
             "name": "userId",
@@ -1168,7 +1273,7 @@
   },
   "security": [
     {
-      "Bearer": [ ]
+      "Bearer": []
     }
   ]
 }

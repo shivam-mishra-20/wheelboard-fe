@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Users, Filter, Share2 } from 'lucide-react';
+import { Filter, Share2 } from 'lucide-react';
 import { ProfessionalProtected } from '@/components/ProtectedRoute';
 import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
@@ -41,31 +41,34 @@ export default function ProfessionalFeedsPage() {
         const response = await wheelboardApi.post.getAllPosts();
         console.log('📦 Posts API Response:', response);
 
-        const postsData = Array.isArray(response)
+        const postsData: any[] = Array.isArray(response)
           ? response
-          : response.data || [];
+          : (response as any)?.data || [];
 
         // Map API response to FeedPost format
-        const mappedFeeds: FeedPost[] = postsData.map((post: any) => ({
-          id: post.postId,
-          author: {
-            id: post.userId || 'unknown',
-            name: post.authorName || 'Professional',
-            avatar: post.authorAvatar || '/profile.png',
-            role: 'Professional',
-            userType: 'professional',
-            initials: (post.authorName || 'P').charAt(0).toUpperCase(),
-          },
-          content: post.content || '',
-          category: post.category || 'general',
-          images: post.imageUrls || [],
-          timestamp: post.dateEntered || new Date().toISOString(),
-          timeAgo: getTimeAgo(new Date(post.dateEntered)),
-          likes: post.likes || 0,
-          comments: post.comments || [],
-          shares: post.shares || 0,
-          status: post.status || 'Pending',
-        }));
+        const mappedFeeds: FeedPost[] = postsData.map((post: any) => {
+          const userName = post.userName || 'Anonymous';
+          return {
+            id: post.postId,
+            author: {
+              id: post.userId || 'unknown',
+              name: userName,
+              avatar: '/profile.png',
+              role: 'Community Member',
+              userType: 'professional',
+              initials: userName.charAt(0).toUpperCase(),
+            },
+            content: post.content || '',
+            category: post.category || 'general',
+            images: post.imageUrls || [],
+            timestamp: post.dateEntered || new Date().toISOString(),
+            timeAgo: getTimeAgo(new Date(post.dateEntered)),
+            likes: 0,
+            comments: [],
+            shares: 0,
+            status: post.status || 'Pending',
+          };
+        });
 
         setFeeds(mappedFeeds);
         console.log('✅ Posts loaded:', mappedFeeds.length);
@@ -147,32 +150,10 @@ export default function ProfessionalFeedsPage() {
     filterCategory === 'all'
       ? feeds
       : feeds.filter(
-          (feed) => feed.category.toLowerCase() === filterCategory.toLowerCase()
+          (feed) =>
+            feed.category &&
+            feed.category.toLowerCase() === filterCategory.toLowerCase()
         );
-
-  const stats = [
-    {
-      icon: Users,
-      label: 'Community Members',
-      value: '12,547',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-    },
-    {
-      icon: TrendingUp,
-      label: 'Active Discussions',
-      value: '342',
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    {
-      icon: Share2,
-      label: 'Posts This Week',
-      value: '1,234',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
-    },
-  ];
 
   return (
     <ProfessionalProtected>
@@ -189,21 +170,27 @@ export default function ProfessionalFeedsPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-6 lg:mb-8"
           >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="mb-2 text-3xl font-bold text-gray-900">
-                  Professional Feeds
+                <h1 className="mb-1.5 text-2xl font-bold text-[#535353] lg:text-3xl">
+                  Community Feeds
                 </h1>
-                <p className="text-gray-600">
-                  Stay connected with the fleet management community
+                <p className="text-sm text-gray-600 lg:text-base">
+                  Discover tips, promotions, and insights from the community
                 </p>
+              </div>
+              <div className="text-sm text-gray-500">
+                <span className="font-semibold text-[#f36969]">
+                  {feeds.length}
+                </span>{' '}
+                Posts
               </div>
             </div>
           </motion.div>
 
-          {/* Stats Cards */}
+          {/* Stats Cards
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -229,19 +216,21 @@ export default function ProfessionalFeedsPage() {
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </motion.div> */}
 
           {/* Filter Bar */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-6 rounded-2xl bg-white p-4 shadow-md"
+            transition={{ delay: 0.1 }}
+            className="mb-5 rounded-xl border-2 border-gray-100 bg-white p-3 shadow-sm lg:mb-6 lg:rounded-2xl lg:p-4"
           >
-            <div className="hidden items-center gap-4 overflow-x-auto sm:flex">
+            <div className="hidden items-center gap-3 overflow-x-auto lg:flex">
               <div className="flex items-center gap-2 text-gray-700">
-                <Filter className="h-5 w-5" />
-                <span className="whitespace-nowrap font-semibold">Filter:</span>
+                <Filter className="h-4 w-4 text-[#f36969] lg:h-5 lg:w-5" />
+                <span className="whitespace-nowrap text-sm font-semibold lg:text-base">
+                  Filter:
+                </span>
               </div>
 
               {[
@@ -254,13 +243,13 @@ export default function ProfessionalFeedsPage() {
               ].map((category) => (
                 <motion.button
                   key={category.value}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setFilterCategory(category.value)}
-                  className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                  className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-all lg:rounded-xl lg:text-base ${
                     filterCategory === category.value
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-[#f36969] to-[#f36565] text-white shadow-md shadow-[#f36969]/20'
+                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   {category.label}
@@ -268,21 +257,21 @@ export default function ProfessionalFeedsPage() {
               ))}
             </div>
 
-            <div className="flex items-center justify-between sm:hidden">
+            <div className="flex items-center justify-between lg:hidden">
               <button
                 onClick={() => setMobileFiltersOpen((s) => !s)}
-                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-gray-700"
+                className="inline-flex items-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
                 <Filter className="h-4 w-4" />
                 Filters
               </button>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm font-medium text-gray-500">
                 {filteredFeeds.length} posts
               </span>
             </div>
 
             {mobileFiltersOpen && (
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+              <div className="mt-3 grid grid-cols-2 gap-2 lg:hidden">
                 {[
                   { value: 'all', label: 'All Posts' },
                   { value: 'Tips', label: 'Tips' },
@@ -297,10 +286,10 @@ export default function ProfessionalFeedsPage() {
                       setFilterCategory(category.value);
                       setMobileFiltersOpen(false);
                     }}
-                    className={`w-full rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
+                    className={`w-full rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
                       filterCategory === category.value
-                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-gradient-to-r from-[#f36969] to-[#f36565] text-white shadow-md'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     {category.label}
@@ -312,11 +301,14 @@ export default function ProfessionalFeedsPage() {
 
           {/* Loading State */}
           {loading ? (
-            <div className="flex min-h-[400px] items-center justify-center">
+            <div className="flex min-h-[500px] items-center justify-center rounded-2xl border-2 border-gray-100 bg-white">
               <div className="text-center">
-                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[#f36969]" />
-                <p className="text-sm font-medium text-gray-600">
+                <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-gray-100 border-t-[#f36969]" />
+                <p className="text-base font-semibold text-gray-700">
                   Loading posts...
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Please wait while we fetch the latest updates
                 </p>
               </div>
             </div>
@@ -327,7 +319,7 @@ export default function ProfessionalFeedsPage() {
                 variants={container}
                 initial="hidden"
                 animate="show"
-                className="space-y-6"
+                className="space-y-4 lg:space-y-5"
               >
                 {filteredFeeds.map((feed) => (
                   <FeedCard
@@ -347,16 +339,17 @@ export default function ProfessionalFeedsPage() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="rounded-3xl bg-white p-16 text-center shadow-sm"
+                  className="rounded-2xl border-2 border-gray-100 bg-white p-12 text-center shadow-sm lg:rounded-3xl lg:p-16"
                 >
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                     <Filter className="h-8 w-8 text-gray-400" />
                   </div>
-                  <h3 className="mb-2 text-xl font-bold text-gray-900">
+                  <h3 className="mb-2 text-xl font-bold text-[#535353] lg:text-2xl">
                     No Posts Found
                   </h3>
-                  <p className="text-gray-600">
-                    Try adjusting your filter to see more posts
+                  <p className="text-sm text-gray-600 lg:text-base">
+                    Try adjusting your filter to see more posts from the
+                    community
                   </p>
                 </motion.div>
               )}

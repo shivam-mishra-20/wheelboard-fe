@@ -17,14 +17,16 @@ import {
   Bookmark,
   BookmarkCheck,
   X,
+  Heart,
 } from 'lucide-react';
 import Headers from '@/components/Header';
 import { wheelboardApi } from '@/lib/wheelboardApi';
 import type { DetailedJob } from '@/lib/mockApi';
 
-export default function SavedJobsPage() {
+export default function LikedJobsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [likedJobs, setLikedJobs] = useState<string[]>([]);
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
   const [allJobs, setAllJobs] = useState<DetailedJob[]>([]);
@@ -38,9 +40,15 @@ export default function SavedJobsPage() {
     experience: '',
     expectedSalary: '',
   });
+  const [likingJobId, setLikingJobId] = useState<string | null>(null);
 
-  // Load saved jobs from localStorage
+  // Load liked and saved jobs from localStorage
   useEffect(() => {
+    const liked = localStorage.getItem('likedJobs');
+    if (liked) {
+      setLikedJobs(JSON.parse(liked));
+    }
+
     const saved = localStorage.getItem('savedJobs');
     if (saved) {
       setSavedJobs(JSON.parse(saved));
@@ -108,23 +116,24 @@ export default function SavedJobsPage() {
     fetchJobs();
   }, []);
 
-  // Filter to show only saved jobs
-  const savedJobsList = useMemo(() => {
-    return allJobs.filter((job) => savedJobs.includes(job.id));
-  }, [allJobs, savedJobs]);
+  // Filter to show only liked jobs
+  const likedJobsList = useMemo(() => {
+    return allJobs.filter((job) => likedJobs.includes(job.id));
+  }, [allJobs, likedJobs]);
 
   // Search filter
   const filteredJobs = useMemo(() => {
-    if (!searchQuery) return savedJobsList;
+    if (!searchQuery) return likedJobsList;
 
     const query = searchQuery.toLowerCase();
-    return savedJobsList.filter(
+    return likedJobsList.filter(
       (job) =>
         job.title.toLowerCase().includes(query) ||
         job.location.toLowerCase().includes(query) ||
-        job.department.toLowerCase().includes(query)
+        job.department.toLowerCase().includes(query) ||
+        job.description.toLowerCase().includes(query)
     );
-  }, [searchQuery, savedJobsList]);
+  }, [searchQuery, likedJobsList]);
 
   const toggleSaveJob = (jobId: string) => {
     const newSavedJobs = savedJobs.includes(jobId)
@@ -135,6 +144,42 @@ export default function SavedJobsPage() {
     localStorage.setItem('savedJobs', JSON.stringify(newSavedJobs));
   };
 
+  const handleLikeToggle = async (jobId: string) => {
+    if (!currentUser?.id) {
+      console.error('User not logged in');
+      return;
+    }
+
+    try {
+      setLikingJobId(jobId);
+
+      // Optimistic update
+      const newLikedJobs = likedJobs.filter((id) => id !== jobId);
+      setLikedJobs(newLikedJobs);
+      localStorage.setItem('likedJobs', JSON.stringify(newLikedJobs));
+
+      // Call API
+      const response = await wheelboardApi.job.toggleJobLike(
+        jobId,
+        currentUser.id
+      );
+      const responseData = (response as any).data;
+
+      console.log('✅ Job unliked:', {
+        isLiked: responseData?.isLiked,
+        likeCount: responseData?.likeCount,
+      });
+    } catch (error) {
+      console.error('❌ Error toggling job like:', error);
+      // Revert on error
+      const revertedLikedJobs = [...likedJobs, jobId];
+      setLikedJobs(revertedLikedJobs);
+      localStorage.setItem('likedJobs', JSON.stringify(revertedLikedJobs));
+    } finally {
+      setLikingJobId(null);
+    }
+  };
+
   const handleApplyClick = (job: DetailedJob) => {
     setSelectedJob(job);
     setIsApplyModalOpen(true);
@@ -142,18 +187,16 @@ export default function SavedJobsPage() {
 
   const handleSubmitApplication = async () => {
     if (!selectedJob || !currentUser) {
-      setError('Please log in to apply for jobs');
+      console.error('User not logged in or no job selected');
       return;
     }
 
     if (!applicationData.coverLetter || !applicationData.experience) {
-      setError('Please fill in all required fields');
+      console.error('Missing required fields');
       return;
     }
 
     try {
-      setIsLoading(true);
-
       // Call API to apply for job
       await wheelboardApi.job.applyJob({
         jobId: selectedJob.id,
@@ -174,9 +217,6 @@ export default function SavedJobsPage() {
       router.push('/professional/jobs/applied');
     } catch (error) {
       console.error('❌ Error applying for job:', error);
-      setError('Failed to submit application');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -224,26 +264,26 @@ export default function SavedJobsPage() {
           </button>
           <div>
             <h1 className="text-3xl font-bold text-[#535353] lg:text-4xl">
-              Saved Jobs
+              Liked Jobs
             </h1>
             <p className="mt-1 text-base text-gray-600 lg:text-lg">
-              Your bookmarked job opportunities
+              Jobs you&apos;ve shown interest in
             </p>
           </div>
         </div>
 
         {/* Stats Card */}
-        <div className="mb-6 rounded-2xl border border-gray-200 bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white shadow-lg">
+        <div className="mb-6 rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-500 to-pink-600 p-6 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="mb-2 text-sm opacity-90">Total Saved Jobs</p>
-              <p className="text-4xl font-bold">{savedJobs.length}</p>
+              <p className="mb-2 text-sm opacity-90">Liked Jobs</p>
+              <p className="text-4xl font-bold">{likedJobsList.length}</p>
               <p className="mt-2 text-sm opacity-90">
                 Quick access to your favorite opportunities
               </p>
             </div>
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-              <BookmarkCheck className="h-8 w-8" />
+              <Heart className="h-8 w-8 fill-current" />
             </div>
           </div>
         </div>
@@ -254,7 +294,7 @@ export default function SavedJobsPage() {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search saved jobs..."
+              placeholder="Search liked jobs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-gray-300 py-3 pl-12 pr-4 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-2 focus:ring-[#f36969]/20 lg:text-base"
@@ -269,16 +309,16 @@ export default function SavedJobsPage() {
             <span className="font-semibold text-[#535353]">
               {filteredJobs.length}
             </span>{' '}
-            saved {filteredJobs.length === 1 ? 'job' : 'jobs'}
+            liked {filteredJobs.length === 1 ? 'job' : 'jobs'}
           </p>
         </div>
 
-        {/* Saved Jobs List */}
+        {/* Liked Jobs List */}
         {isLoading ? (
           <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
             <div>
               <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-gray-200 border-t-[#f36969]" />
-              <p className="text-gray-500">Loading saved jobs...</p>
+              <p className="text-gray-500">Loading liked jobs...</p>
             </div>
           </div>
         ) : error ? (
@@ -297,14 +337,16 @@ export default function SavedJobsPage() {
         ) : filteredJobs.length === 0 ? (
           <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
             <div>
-              <Bookmark className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+              <Heart className="mx-auto mb-4 h-16 w-16 text-gray-300" />
               <h3 className="mb-2 text-xl font-bold text-[#535353]">
-                {searchQuery ? 'No saved jobs found' : 'No saved jobs yet'}
+                {searchQuery
+                  ? 'No liked jobs found'
+                  : "You haven't liked any jobs yet"}
               </h3>
               <p className="mb-4 text-gray-500">
                 {searchQuery
                   ? 'Try adjusting your search'
-                  : 'Save jobs to easily find them later'}
+                  : 'Start liking jobs to save them for later'}
               </p>
               <button
                 onClick={() => router.push('/professional/jobs')}
@@ -317,6 +359,7 @@ export default function SavedJobsPage() {
         ) : (
           <div className="space-y-4">
             {filteredJobs.map((job) => {
+              const isSaved = savedJobs.includes(job.id);
               const isApplied = appliedJobs.includes(job.id);
               const daysAgo = Math.floor(
                 (new Date().getTime() - new Date(job.createdAt).getTime()) /
@@ -421,10 +464,25 @@ export default function SavedJobsPage() {
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => toggleSaveJob(job.id)}
-                            className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-[#f36969] bg-[#f36969] text-white transition-all hover:bg-[#e45858]"
+                            onClick={() => handleLikeToggle(job.id)}
+                            disabled={likingJobId === job.id}
+                            className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-pink-500 bg-pink-500 text-white transition-all hover:bg-pink-600 disabled:opacity-50"
                           >
-                            <BookmarkCheck className="h-5 w-5" />
+                            <Heart className="h-5 w-5 fill-current" />
+                          </button>
+                          <button
+                            onClick={() => toggleSaveJob(job.id)}
+                            className={`flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-all ${
+                              isSaved
+                                ? 'border-[#f36969] bg-[#f36969] text-white'
+                                : 'border-gray-300 bg-white text-gray-600 hover:border-[#f36969] hover:text-[#f36969]'
+                            }`}
+                          >
+                            {isSaved ? (
+                              <BookmarkCheck className="h-5 w-5" />
+                            ) : (
+                              <Bookmark className="h-5 w-5" />
+                            )}
                           </button>
                           {job.status === 'Active' && (
                             <button
@@ -446,10 +504,25 @@ export default function SavedJobsPage() {
                     {/* Action Buttons - Mobile */}
                     <div className="mt-3 flex gap-2 lg:hidden">
                       <button
-                        onClick={() => toggleSaveJob(job.id)}
-                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 border-[#f36969] bg-[#f36969] text-white transition-all hover:bg-[#e45858]"
+                        onClick={() => handleLikeToggle(job.id)}
+                        disabled={likingJobId === job.id}
+                        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 border-pink-500 bg-pink-500 text-white transition-all hover:bg-pink-600 disabled:opacity-50"
                       >
-                        <BookmarkCheck className="h-4 w-4" />
+                        <Heart className="h-4 w-4 fill-current" />
+                      </button>
+                      <button
+                        onClick={() => toggleSaveJob(job.id)}
+                        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 transition-all ${
+                          isSaved
+                            ? 'border-[#f36969] bg-[#f36969] text-white'
+                            : 'border-gray-300 bg-white text-gray-600 hover:border-[#f36969] hover:text-[#f36969]'
+                        }`}
+                      >
+                        {isSaved ? (
+                          <BookmarkCheck className="h-4 w-4" />
+                        ) : (
+                          <Bookmark className="h-4 w-4" />
+                        )}
                       </button>
                       {job.status === 'Active' && (
                         <button

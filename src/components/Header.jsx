@@ -20,6 +20,7 @@ import {
   FiChevronRight,
   FiLayers,
   FiBell,
+  FiSearch,
 } from 'react-icons/fi';
 import { Building2 } from 'lucide-react';
 import { wheelboardApi } from '../lib/wheelboardApi';
@@ -198,6 +199,7 @@ const Header = () => {
       services: <FiTarget className="mr-2" />,
       earnings: <FiBriefcase className="mr-2" />,
       expenses: <FiMail className="mr-2" />,
+      search: <FiSearch className="mr-2" />,
     };
 
     switch (userType) {
@@ -270,6 +272,12 @@ const Header = () => {
             label: 'Home',
             href: '/professional/home',
             icon: icons.home,
+          },
+          {
+            id: 'search',
+            label: 'Search',
+            href: '/professional/search',
+            icon: icons.search,
           },
           {
             id: 'jobs',
@@ -350,15 +358,25 @@ const Header = () => {
 
       // Determine profile image with priority: API data > localStorage > default
       const profileImage =
+        profileData?.profileImagePath ||
+        profileData?.businessLogoPath ||
+        profileData?.businessLogo ||
         profileData?.companyLogoPath ||
         profileData?.companyLogo ||
+        profileData?.logo ||
         user.profileImage ||
         user.avatar ||
         '/profile.png';
 
       // Determine company name with priority: API data > localStorage
       const displayName =
-        profileData?.companyName || user.companyName || user.name || 'User';
+        profileData?.name ||
+        profileData?.companyName ||
+        profileData?.businessName ||
+        user.companyName ||
+        user.businessName ||
+        user.name ||
+        'User';
 
       // Create a session-like object for the Header
       const session = {
@@ -871,9 +889,18 @@ const Header = () => {
                       className="flex items-center space-x-3 rounded-xl px-3 py-3 hover:bg-gray-50"
                       onClick={() => setIsOpen(false)}
                     >
-                      <div className="h-10 w-10 overflow-hidden rounded-full bg-amber-500 ring-2 ring-gray-200">
+                      <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-primary-400 to-primary-600 ring-2 ring-gray-200">
                         <img
-                          src={userSession.profileImage}
+                          src={
+                            profileData?.profileImagePath ||
+                            profileData?.businessLogoPath ||
+                            profileData?.businessLogo ||
+                            profileData?.companyLogoPath ||
+                            profileData?.companyLogo ||
+                            profileData?.logo ||
+                            userSession.profileImage ||
+                            '/profile.png'
+                          }
                           alt="Profile"
                           className="h-full w-full object-cover"
                           onError={(e) => {
@@ -883,13 +910,39 @@ const Header = () => {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold text-gray-900">
-                          {userSession.user.companyName}
+                          {profileData?.name ||
+                            profileData?.companyName ||
+                            profileData?.businessName ||
+                            userSession.user.companyName ||
+                            'User'}
                         </span>
                         <span className="text-xs text-gray-500">
                           View profile
                         </span>
                       </div>
                     </Link>
+                    {/* Notification button for mobile */}
+                    <button
+                      onClick={() => {
+                        setIsNotificationDropdownOpen(
+                          !isNotificationDropdownOpen
+                        );
+                        setIsOpen(false);
+                      }}
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-3 transition-colors hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FiBell size={18} className="text-gray-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Notifications
+                        </span>
+                      </div>
+                      {unreadCount > 0 && (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
                     <button
                       onClick={handleLogout}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500 px-4 py-3 text-center text-sm font-medium text-white shadow-sm transition-all hover:bg-rose-600"
@@ -917,6 +970,125 @@ const Header = () => {
       </AnimatePresence>
     </div>
   );
+
+  // Mobile Notification Dropdown
+  const renderMobileNotificationDropdown = () => {
+    if (!userSession) return null;
+
+    return (
+      <AnimatePresence>
+        {isNotificationDropdownOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="fixed inset-x-0 top-16 z-40 md:hidden"
+          >
+            <div className="mx-4 mt-2 max-h-[80vh] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+              <div className="sticky top-0 z-10 border-b border-gray-200 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">
+                    Notifications
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-primary-600">
+                        {unreadCount} new
+                      </span>
+                    )}
+                    <button
+                      onClick={() => setIsNotificationDropdownOpen(false)}
+                      className="rounded-full p-1 text-white transition-colors hover:bg-white/20"
+                    >
+                      <FiX size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-h-[calc(80vh-60px)] overflow-y-auto">
+                {isLoadingNotifications ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary-500"></div>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <FiBell size={40} className="mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-500">
+                      No notifications yet
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      You're all caught up!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {notifications.map((notification) => (
+                      <button
+                        key={notification.notificationId || notification.id}
+                        onClick={() => {
+                          if (!notification.isRead) {
+                            handleMarkAsRead(
+                              notification.notificationId || notification.id
+                            );
+                          }
+                        }}
+                        className={`w-full px-4 py-3 text-left transition-all hover:bg-gray-50 ${
+                          !notification.isRead
+                            ? 'bg-blue-50/50 hover:bg-blue-50'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 flex-shrink-0">
+                            {!notification.isRead ? (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600">
+                                <FiBell size={14} className="text-white" />
+                              </div>
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+                                <FiBell size={14} className="text-gray-500" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={`text-sm leading-relaxed ${
+                                !notification.isRead
+                                  ? 'font-semibold text-gray-900'
+                                  : 'font-medium text-gray-700'
+                              }`}
+                            >
+                              {notification.message ||
+                                notification.title ||
+                                'New notification'}
+                            </p>
+                            {notification.createdAt && (
+                              <p className="mt-1.5 text-xs text-gray-500">
+                                {new Date(
+                                  notification.createdAt
+                                ).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
 
   // Enhanced logo component with subtle animation
   const renderLogo = () => (
@@ -977,74 +1149,96 @@ const Header = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-full mt-2 max-h-96 w-80 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg"
+              className="absolute right-[-160px] top-full mt-2 max-h-[32rem] w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
             >
-              <div className="border-b border-gray-100 px-4 py-3">
+              <div className="sticky top-0 z-10 border-b border-gray-200 bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">
+                  <h3 className="text-sm font-semibold text-white">
                     Notifications
                   </h3>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-primary-600">
                       {unreadCount} new
                     </span>
                   )}
                 </div>
               </div>
 
-              {isLoadingNotifications ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary-500"></div>
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="py-8 text-center">
-                  <FiBell size={32} className="mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm text-gray-500">No notifications</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100">
-                  {notifications.map((notification) => (
-                    <button
-                      key={notification.notificationId || notification.id}
-                      onClick={() =>
-                        !notification.isRead &&
-                        handleMarkAsRead(
-                          notification.notificationId || notification.id
-                        )
-                      }
-                      className={`w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
-                        !notification.isRead ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        {!notification.isRead && (
-                          <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500"></div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={`text-sm ${
-                              !notification.isRead
-                                ? 'font-semibold text-gray-900'
-                                : 'text-gray-700'
-                            }`}
-                          >
-                            {notification.message ||
-                              notification.title ||
-                              'New notification'}
-                          </p>
-                          {notification.createdAt && (
-                            <p className="mt-1 text-xs text-gray-500">
-                              {new Date(
-                                notification.createdAt
-                              ).toLocaleString()}
+              <div className="max-h-[28rem] overflow-y-auto">
+                {isLoadingNotifications ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-primary-500"></div>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <FiBell size={40} className="mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-500">
+                      No notifications yet
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      You're all caught up!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {notifications.map((notification) => (
+                      <button
+                        key={notification.notificationId || notification.id}
+                        onClick={() =>
+                          !notification.isRead &&
+                          handleMarkAsRead(
+                            notification.notificationId || notification.id
+                          )
+                        }
+                        className={`w-full px-4 py-3 text-left transition-all hover:bg-gray-50 ${
+                          !notification.isRead
+                            ? 'bg-blue-50/50 hover:bg-blue-50'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 flex-shrink-0">
+                            {!notification.isRead ? (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600">
+                                <FiBell size={14} className="text-white" />
+                              </div>
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+                                <FiBell size={14} className="text-gray-500" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={`text-sm leading-relaxed ${
+                                !notification.isRead
+                                  ? 'font-semibold text-gray-900'
+                                  : 'font-medium text-gray-700'
+                              }`}
+                            >
+                              {notification.message ||
+                                notification.title ||
+                                'New notification'}
                             </p>
-                          )}
+                            {notification.createdAt && (
+                              <p className="mt-1.5 text-xs text-gray-500">
+                                {new Date(
+                                  notification.createdAt
+                                ).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1064,9 +1258,18 @@ const Header = () => {
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
               className="group flex items-center gap-3 rounded-xl px-2 py-1.5 transition-all duration-200 hover:bg-gray-50"
             >
-              <div className="h-9 w-9 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 transition-all duration-200 group-hover:border-primary-100 group-hover:shadow-md">
+              <div className="h-9 w-9 overflow-hidden rounded-full border-2 border-gray-200 bg-gradient-to-br from-primary-400 to-primary-600 transition-all duration-200 group-hover:border-primary-300 group-hover:shadow-md">
                 <img
-                  src={userSession.profileImage}
+                  src={
+                    profileData?.profileImagePath ||
+                    profileData?.businessLogoPath ||
+                    profileData?.businessLogo ||
+                    profileData?.companyLogoPath ||
+                    profileData?.companyLogo ||
+                    profileData?.logo ||
+                    userSession.profileImage ||
+                    '/profile.png'
+                  }
                   alt="Profile"
                   className="h-full w-full object-cover"
                   onError={(e) => {
@@ -1075,7 +1278,11 @@ const Header = () => {
                 />
               </div>
               <span className="hidden text-sm font-medium text-gray-700 transition-colors group-hover:text-gray-900 xl:block">
-                {userSession.user.companyName}
+                {profileData?.name ||
+                  profileData?.companyName ||
+                  profileData?.businessName ||
+                  userSession.user.companyName ||
+                  'User'}
               </span>
               <motion.div
                 animate={{ rotate: isProfileDropdownOpen ? 180 : 0 }}
@@ -1181,6 +1388,9 @@ const Header = () => {
           )}
         </div>
       </header>
+
+      {/* Mobile Notification Dropdown */}
+      {renderMobileNotificationDropdown()}
 
       {/* Auth Popup */}
       <AuthPopup

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Headers from '@/components/Header';
 import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 
 type TripFilter = 'all' | 'Completed' | 'In-Process' | 'Upcoming' | 'Assigned';
 type ChartView = 'trips' | 'earnings' | 'distance';
@@ -31,43 +32,29 @@ export default function ProfessionalTripsPage() {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [professionalTrips, setProfessionalTrips] = useState<any[]>([]);
-  const [unassignedTrips, setUnassignedTrips] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [showBidModal, setShowBidModal] = useState(false);
-  const [selectedTrip, setSelectedTrip] = useState<any>(null);
-  const [bidAmount, setBidAmount] = useState('');
-  const [bidDescription, setBidDescription] = useState('');
 
   // Fetch trips from API
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        setIsLoading(true);
+        // Get current user using api adapter
+        const user = api.getCurrentUser();
 
-        // Get current user
-        const user = wheelboardApi.getCurrentUser?.() || {
-          id: '48e36413-ba01-4850-8aae-8c8d05206dc7',
-        };
-        setCurrentUser(user);
+        if (!user?.id) {
+          console.error('No user found');
+          return;
+        }
 
         // Fetch assigned trips for professional
         const assignedResponse = await wheelboardApi.trip.getAssignedTrips(
           user.id
         );
         console.log('🚚 Assigned Trips Response:', assignedResponse);
-        const assignedData: any[] = Array.isArray(assignedResponse)
-          ? assignedResponse
-          : assignedResponse.data || [];
-
-        // Fetch unassigned trips (available for bidding)
-        const unassignedResponse =
-          await wheelboardApi.trip.getUnassignedTrips();
-        console.log('📦 Unassigned Trips Response:', unassignedResponse);
-        const unassignedData: any[] = Array.isArray(unassignedResponse)
-          ? unassignedResponse
-          : unassignedResponse.data || [];
+        const assignedData: any[] = (
+          Array.isArray(assignedResponse)
+            ? assignedResponse
+            : assignedResponse?.data || []
+        ) as any[];
 
         // Map assigned trips
         const mappedAssignedTrips = assignedData.map((trip: any) => ({
@@ -90,18 +77,13 @@ export default function ProfessionalTripsPage() {
         }));
 
         setProfessionalTrips(mappedAssignedTrips);
-        setUnassignedTrips(unassignedData);
         console.log('✅ Trips loaded successfully');
       } catch (error) {
         console.error('❌ Error fetching trips:', error);
-        setError('Failed to load trips');
-      } finally {
-        setIsLoading(false);
       }
     };
 
     fetchTrips();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Calculate stats
@@ -634,6 +616,9 @@ export default function ProfessionalTripsPage() {
                   <div
                     key={trip.id}
                     className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:shadow-xl"
+                    onClick={() =>
+                      router.push(`/professional/trips/${trip.id}`)
+                    }
                   >
                     {/* Animated background */}
                     <div className="absolute right-0 top-0 h-32 w-32 -translate-y-16 translate-x-16 rounded-full bg-blue-50 opacity-0 transition-all group-hover:opacity-100"></div>
@@ -755,7 +740,7 @@ export default function ProfessionalTripsPage() {
                     key={trip.id}
                     className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:shadow-lg"
                     onClick={() =>
-                      router.push(`/professional/trips/${trip.id}/progress`)
+                      router.push(`/professional/trips/${trip.id}`)
                     }
                   >
                     <div className="flex items-center justify-between gap-2 md:gap-4">
@@ -884,7 +869,7 @@ export default function ProfessionalTripsPage() {
                     key={trip.id}
                     className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:shadow-lg"
                     onClick={() =>
-                      router.push(`/professional/trips/${trip.id}/progress`)
+                      router.push(`/professional/trips/${trip.id}`)
                     }
                   >
                     <div className="flex items-start justify-between">
@@ -958,7 +943,7 @@ export default function ProfessionalTripsPage() {
                       key={trip.id}
                       className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:shadow-lg"
                       onClick={() =>
-                        router.push(`/professional/trips/${trip.id}/progress`)
+                        router.push(`/professional/trips/${trip.id}`)
                       }
                     >
                       <div className="flex items-start justify-between">

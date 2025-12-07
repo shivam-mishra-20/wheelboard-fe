@@ -30,6 +30,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
 interface ProfessionalProfile {
   id: string;
@@ -80,11 +81,17 @@ const ProfessionalProfilePage = () => {
     useState<ProfessionalProfile | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [darkTheme, setDarkTheme] = useState(false);
   const [smsNotifications, setSmsNotifications] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [whatsappNotifications, setWhatsappNotifications] = useState(true);
   const [language, setLanguage] = useState('English');
+  const [referralStats, setReferralStats] = useState({
+    totalReferrals: 0,
+    acceptedReferrals: 0,
+    pendingReferrals: 0,
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -95,7 +102,7 @@ const ProfessionalProfilePage = () => {
         const currentUser = localStorage.getItem('currentUser');
         const userId = currentUser
           ? JSON.parse(currentUser).id
-          : '99b58c17-1812-4816-b2fd-20cfb386346c';
+          : 'af7b9574-67b7-4944-8bf5-78ff0c33aec9';
 
         console.log('👤 Using userId:', userId);
 
@@ -116,21 +123,22 @@ const ProfessionalProfilePage = () => {
           // Map API response to ProfessionalProfile interface
           const apiProfile: ProfessionalProfile = {
             id: data.userId || userId,
-            email: data.email || '',
+            email: data.email || 'Not provided',
             fullName: data.name || 'Professional User',
-            fatherName: data.fatherName || '',
-            phoneNumber: data.mobileNo || '',
-            whatsappNumber: data.whatsappNumber || data.mobileNo || '',
+            fatherName: data.fatherName || 'Not provided',
+            phoneNumber: data.mobileNo || 'Not provided',
+            whatsappNumber:
+              data.whatsappNumber || data.mobileNo || 'Not provided',
             birthDate: data.dateOfBirth
               ? new Date(data.dateOfBirth).toISOString().split('T')[0]
               : undefined,
             businessCategory: data.professionalType || 'Driver',
             userType: data.userType?.toLowerCase() || 'professional',
-            address: data.address || '',
-            city: data.city || '',
-            state: data.state || '',
+            address: data.address || 'Not provided',
+            city: data.city || 'Not provided',
+            state: data.state || 'Not provided',
             zipCode: data.zipCode || '',
-            experience: data.experience || '',
+            experience: data.yearsOfExperience || 'Not specified',
             skills: data.skills || [],
             licenseNumber: data.licenseNumber || '',
             description: data.description || '',
@@ -171,77 +179,47 @@ const ProfessionalProfilePage = () => {
             apiProfile.preferences?.whatsappNotifications || false
           );
           setLanguage(apiProfile.preferences?.language || 'English');
+
+          // Fetch referrals for stats
+          try {
+            const referralsResponse =
+              await wheelboardApi.user.getReferralsByUserId(userId);
+            const referralsData: any[] =
+              referralsResponse.success && referralsResponse.data
+                ? Array.isArray(referralsResponse.data)
+                  ? referralsResponse.data
+                  : []
+                : [];
+
+            const acceptedCount = referralsData.filter((ref: any) => {
+              const status = (ref.referralStatus || '').toUpperCase();
+              return status === 'TRUE' || status === 'ACCEPTED';
+            }).length;
+
+            const pendingCount = referralsData.filter((ref: any) => {
+              const status = (ref.referralStatus || '').toUpperCase();
+              return (
+                status !== 'TRUE' &&
+                status !== 'ACCEPTED' &&
+                status !== 'FALSE' &&
+                status !== 'REJECTED'
+              );
+            }).length;
+
+            setReferralStats({
+              totalReferrals: referralsData.length,
+              acceptedReferrals: acceptedCount,
+              pendingReferrals: pendingCount,
+            });
+          } catch (error) {
+            console.error('❌ Error fetching referrals:', error);
+          }
         } else {
           console.error('❌ Failed to fetch profile:', response.statusText);
-          // Fallback to mock data if API fails
-          loadMockData();
         }
       } catch (error) {
         console.error('❌ Error fetching profile:', error);
-        // Fallback to mock data on error
-        loadMockData();
       }
-    };
-
-    const loadMockData = () => {
-      const mockProfile: ProfessionalProfile = {
-        id: '1',
-        email: 'rohit.sharma@email.com',
-        fullName: 'Rohit Sharma',
-        fatherName: 'Jitendra Sharma',
-        phoneNumber: '+91 98765 43210',
-        whatsappNumber: '+91 98765 43210',
-        birthDate: '1990-06-17',
-        businessCategory: 'Heavy Vehicle Driver',
-        userType: 'professional',
-        address: 'Residential Colony, Driver Housing Sector 10',
-        city: 'Pune',
-        state: 'Maharashtra',
-        zipCode: '411001',
-        experience: '4 Years',
-        skills: [
-          'Heavy Vehicle Driving',
-          'Long Distance Routes',
-          'Safety Protocols',
-        ],
-        licenseNumber: 'DL-1420110012345',
-        description:
-          'Experienced professional driver with over 4 years in the transportation industry. Specialized in heavy vehicle operations and long-distance routes. Committed to safety, punctuality, and excellent service. Hold a valid commercial driving license and have a clean driving record.',
-        avatar: '/profile.png',
-        createdAt: '2024-02-01T10:00:00Z',
-        membershipTier: 'Gold Member',
-        rating: 4.7,
-        jobsCompleted: 128,
-        availableToday: true,
-        kycProgress: 80,
-        kycDocuments: {
-          aadharCard: 'verified',
-          panCard: 'pending',
-          drivingLicense: 'missing',
-          bankAccount: 'pending',
-          profilePhoto: 'verified',
-        },
-        preferences: {
-          language: 'English',
-          darkTheme: false,
-          smsNotifications: true,
-          emailNotifications: false,
-          whatsappNotifications: true,
-        },
-      };
-
-      setProfile(mockProfile);
-      setEditedProfile(mockProfile);
-      setAvatarPreview(mockProfile.avatar || null);
-      setDarkTheme(mockProfile.preferences?.darkTheme || false);
-      setSmsNotifications(mockProfile.preferences?.smsNotifications || false);
-      setEmailNotifications(
-        mockProfile.preferences?.emailNotifications || false
-      );
-      setWhatsappNotifications(
-        mockProfile.preferences?.whatsappNotifications || false
-      );
-      setLanguage(mockProfile.preferences?.language || 'English');
     };
 
     fetchProfile();
@@ -270,6 +248,9 @@ const ProfessionalProfilePage = () => {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Store the actual file for upload
+      setImageFile(file);
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
@@ -285,11 +266,73 @@ const ProfessionalProfilePage = () => {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setProfile(editedProfile);
-    setIsSaving(false);
-    setIsEditing(false);
+    if (!editedProfile) return;
+
+    try {
+      setIsSaving(true);
+      console.log('💾 Saving professional profile...');
+
+      // Get current user ID
+      const currentUser = localStorage.getItem('currentUser');
+      const userId = currentUser
+        ? JSON.parse(currentUser).id
+        : editedProfile.id;
+
+      // Parse experience to get years as number
+      const yearsOfExperience = editedProfile.experience
+        ? parseInt(editedProfile.experience.toString().replace(/\D/g, '')) || 0
+        : 0;
+
+      // Prepare the data matching the exact API format
+      const updateData: any = {
+        UserId: userId,
+        FullName: editedProfile.fullName,
+        FathersName: editedProfile.fatherName || '',
+        YearsOfExperience: yearsOfExperience,
+        BirthDate: editedProfile.birthDate
+          ? new Date(editedProfile.birthDate).toISOString()
+          : new Date().toISOString(),
+        State: editedProfile.state || '',
+        City: editedProfile.city || '',
+      };
+
+      // Add image file if available
+      if (imageFile) {
+        updateData.DriverImage = imageFile;
+      }
+
+      console.log('📦 Update data:', updateData);
+
+      // Call the API
+      const response =
+        await wheelboardApi.user.updateProfessionalProfile(updateData);
+
+      console.log('✅ Profile updated successfully:', response);
+
+      if (response.success && response.data) {
+        // Update profile with new image URL if provided
+        if (response.data.imageUrl) {
+          setEditedProfile({
+            ...editedProfile,
+            avatar: response.data.imageUrl,
+          });
+          setAvatarPreview(response.data.imageUrl);
+        }
+
+        setProfile(editedProfile);
+        setIsEditing(false);
+        setImageFile(null);
+
+        alert(response.data.message || 'Profile updated successfully!');
+      } else {
+        throw new Error(response.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('❌ Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!profile || !editedProfile) {
@@ -371,17 +414,17 @@ const ProfessionalProfilePage = () => {
     },
     {
       icon: Star,
-      value: profile.rating,
+      value: profile.rating && profile.rating > 0 ? profile.rating : 'N/A',
       label: 'Current Rating',
       color: 'yellow',
       bg: 'yellow-50',
     },
     {
       icon: CheckCircle,
-      value: 'Available',
+      value: profile.availableToday ? 'Available' : 'Not Available',
       label: 'Status Today',
-      color: 'green',
-      bg: 'green-50',
+      color: profile.availableToday ? 'green' : 'gray',
+      bg: profile.availableToday ? 'green-50' : 'gray-50',
     },
   ];
 
@@ -514,13 +557,15 @@ const ProfessionalProfilePage = () => {
                   <h2 className="mb-2 text-2xl font-bold text-gray-900">
                     {editedProfile.fullName}
                   </h2>
-                  <span className="inline-block rounded-full bg-red-500 px-4 py-1 text-xs font-bold text-white shadow-lg">
-                    Beta
+                  <span className="inline-block rounded-full bg-gradient-to-r from-[#f36969] to-[#f36565] px-4 py-1 text-xs font-bold text-white shadow-lg">
+                    {editedProfile.businessCategory || 'Professional'}
                   </span>
                   <div className="mt-3 flex items-center justify-center gap-1.5">
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     <span className="text-base font-bold text-gray-900">
-                      {editedProfile.rating} / 5
+                      {editedProfile.rating && editedProfile.rating > 0
+                        ? `${editedProfile.rating} / 5`
+                        : 'No ratings yet'}
                     </span>
                   </div>
                 </div>
@@ -541,7 +586,7 @@ const ProfessionalProfilePage = () => {
                   </div>
                 </button>
 
-                {/* Gold Member */}
+                {/* Membership Tier */}
                 <div className="mt-4 flex items-center justify-between rounded-xl bg-gradient-to-r from-yellow-100 to-orange-100 p-4 shadow-md">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 shadow-lg">
@@ -549,7 +594,7 @@ const ProfessionalProfilePage = () => {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-gray-900">
-                        Gold Member
+                        {editedProfile.membershipTier || 'Standard Member'}
                       </p>
                       <p className="text-xs text-gray-600">Premium Access</p>
                     </div>
@@ -1193,6 +1238,53 @@ const ProfessionalProfilePage = () => {
                   </span>
                 </button>
               </div>
+            </div>
+
+            {/* Referrals Summary */}
+            <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
+                  Your Referrals
+                </h3>
+                <button
+                  onClick={() => router.push('/professional/referrals')}
+                  className="flex items-center gap-1 text-sm font-semibold text-[#f36969] transition-colors hover:text-[#f36565]"
+                >
+                  View All
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-col items-center rounded-xl bg-gradient-to-br from-pink-50 to-pink-100 p-4">
+                  <Gift className="mb-2 h-8 w-8 text-pink-600" />
+                  <p className="text-2xl font-bold text-gray-900">
+                    {referralStats.totalReferrals}
+                  </p>
+                  <p className="text-xs font-medium text-gray-600">Total</p>
+                </div>
+                <div className="flex flex-col items-center rounded-xl bg-gradient-to-br from-green-50 to-green-100 p-4">
+                  <CheckCircle className="mb-2 h-8 w-8 text-green-600" />
+                  <p className="text-2xl font-bold text-gray-900">
+                    {referralStats.acceptedReferrals}
+                  </p>
+                  <p className="text-xs font-medium text-gray-600">Accepted</p>
+                </div>
+                <div className="flex flex-col items-center rounded-xl bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
+                  <XCircle className="mb-2 h-8 w-8 text-yellow-600" />
+                  <p className="text-2xl font-bold text-gray-900">
+                    {referralStats.pendingReferrals}
+                  </p>
+                  <p className="text-xs font-medium text-gray-600">Pending</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => router.push('/professional/referrals')}
+                className="mt-4 w-full rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#f36969]/30 transition-all hover:shadow-xl hover:shadow-[#f36969]/40"
+              >
+                Add New Referral
+              </button>
             </div>
 
             {/* Quick Actions */}

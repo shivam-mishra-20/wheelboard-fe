@@ -151,6 +151,11 @@ export default function RootLayout({
       <head>
         {/* Ensure correct mobile scaling and prevent automatic zooming on small devices */}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Razorpay Checkout Script */}
+        <script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          async
+        ></script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
