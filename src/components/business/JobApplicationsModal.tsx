@@ -82,7 +82,7 @@ export default function JobApplicationsModal({
       await wheelboardApi.job.updateJobStatus({
         applicationId: applicationId,
         status: newStatus,
-        userId: user.id,
+        modifiedUserId: user.id,
       });
 
       // Update local state

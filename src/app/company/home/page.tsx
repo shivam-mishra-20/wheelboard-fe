@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../../components/Header';
-import LoginSimulator from '../../../components/LoginSimulator';
+
 import Footer from '../../../components/Footer';
 import { CompanyProtected } from '../../../components/ProtectedRoute';
 import HeroCarousel from '../../../components/company/HeroCarousel';
@@ -149,6 +149,8 @@ export default function CompanyHomePage() {
           Description: jobData.description || 'No description provided',
           JobType: jobData.type || 'Full-time', // type from form -> JobType in API (e.g., "Full-time")
           JobDuration: jobData.duration, // duration from form -> JobDuration in API (e.g., "Permanent")
+          Openings: 1, // Default value since not in form
+          Salary: 0, // Default value since not in form
           Images: jobData.images || [],
         });
 
@@ -280,9 +282,6 @@ export default function CompanyHomePage() {
 
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="min-h-screen pt-4 font-poppins">
         {/* Main Content */}

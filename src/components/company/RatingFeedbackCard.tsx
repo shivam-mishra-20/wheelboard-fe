@@ -17,12 +17,12 @@ export default function RatingFeedbackCard({
 }: RatingFeedbackCardProps) {
   const [rating, setRating] = useState(driver.rating);
   const [hoveredRating, setHoveredRating] = useState(0);
-  const [feedback, setFeedback] = useState(driver.feedback || '');
+  const [feedback, setFeedback] = useState((driver as any).feedback || '');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
     setIsSaving(true);
-    await onSaveFeedback(rating, feedback);
+    await onSaveFeedback(rating || 0, feedback);
     setTimeout(() => setIsSaving(false), 500);
   };
 
@@ -49,7 +49,7 @@ export default function RatingFeedbackCard({
             >
               <Star
                 className={`h-8 w-8 transition-colors ${
-                  star <= (hoveredRating || rating)
+                  star <= (hoveredRating || rating || 0)
                     ? 'fill-yellow-400 text-yellow-400'
                     : 'text-gray-300'
                 }`}
@@ -57,13 +57,13 @@ export default function RatingFeedbackCard({
             </button>
           ))}
           <span className="ml-2 text-lg font-bold text-gray-700">
-            {rating.toFixed(1)}
+            {(rating || 0).toFixed(1)}
           </span>
         </div>
       </div>
 
       {/* Current Feedback Display */}
-      {driver.feedback && (
+      {(driver as any).feedback && (
         <div className="mb-6 rounded-lg border-l-4 border-[#3B82F6] bg-blue-50 p-4">
           <div className="flex items-start gap-2">
             <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#3B82F6]" />
@@ -71,7 +71,9 @@ export default function RatingFeedbackCard({
               <p className="mb-1 text-sm font-semibold text-[#3B82F6]">
                 Current Feedback
               </p>
-              <p className="text-sm text-gray-700">{driver.feedback}</p>
+              <p className="text-sm text-gray-700">
+                {(driver as any).feedback}
+              </p>
             </div>
           </div>
         </div>

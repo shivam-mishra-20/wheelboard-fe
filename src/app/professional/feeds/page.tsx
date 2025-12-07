@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, Share2 } from 'lucide-react';
 import { ProfessionalProtected } from '@/components/ProtectedRoute';
-import LoginSimulator from '@/components/LoginSimulator';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeedCard from '@/components/company/FeedCard';
@@ -159,9 +159,6 @@ export default function ProfessionalFeedsPage() {
     <ProfessionalProtected>
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
         {/* Main Content */}

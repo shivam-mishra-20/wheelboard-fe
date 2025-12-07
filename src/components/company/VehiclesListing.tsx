@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Vehicle, Driver } from '@/types/fleet';
-import { Select } from 'antd';
 
 interface VehiclesListingProps {
   vehicles: Vehicle[];

@@ -105,7 +105,7 @@ export default function ServiceAssignmentModal({
     try {
       // Get current user
       const user = await api.getCurrentUser();
-      const userId = user?.id || user?.userId;
+      const userId = user?.id;
 
       if (!userId) {
         toast.error('User not found. Please log in.');
@@ -133,10 +133,14 @@ export default function ServiceAssignmentModal({
 
       if (response.message === 'Service Assigned Successfully') {
         // Use the serviceId from response or generate for display
-        setGeneratedServiceId(response.serviceId || service.id);
+        const assignmentId =
+          (response.data as any)?.serviceId ||
+          (response.data as any)?.assignmentId ||
+          service.id;
+        setGeneratedServiceId(assignmentId);
 
         // Call parent onAssign callback with assignment ID
-        await onAssign(response.serviceId || service.id);
+        await onAssign(assignmentId);
 
         setIsSubmitted(true);
         toast.success('Service assigned successfully!');

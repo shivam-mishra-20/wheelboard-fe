@@ -14,7 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { BusinessProtected } from '@/components/ProtectedRoute';
-import LoginSimulator from '@/components/LoginSimulator';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeedCard from '@/components/company/FeedCard';
@@ -375,9 +375,6 @@ export default function BusinessFeedsPage() {
     <BusinessProtected>
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-16 font-poppins">
         {/* Main Content */}

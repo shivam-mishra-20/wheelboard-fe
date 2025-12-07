@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
-import LoginSimulator from '../../../components/LoginSimulator';
+
 import { CompanyProtected } from '../../../components/ProtectedRoute';
 import VehiclesListing from '@/components/company/VehiclesListing';
 import VehicleFormModal from '@/components/company/VehicleFormModal';
@@ -532,9 +532,6 @@ export default function CompanyFleetPage() {
 
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
         {/* Main Content */}

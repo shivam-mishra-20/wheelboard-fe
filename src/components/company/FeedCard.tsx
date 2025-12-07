@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useState } from 'react';
@@ -309,40 +310,16 @@ export default function FeedCard({
       </div>
 
       {/* Images */}
-      {post.images && post.images.length > 0 && (
-        <div
-          className={`grid gap-2 px-4 pb-4 sm:px-5 sm:pb-5 lg:px-6 ${
-            post.images.length === 1
-              ? 'grid-cols-1'
-              : post.images.length === 2
-                ? 'grid-cols-2'
-                : post.images.length === 3
-                  ? 'grid-cols-3'
-                  : 'grid-cols-2'
-          }`}
-        >
-          {post.images.slice(0, 4).map((imageUrl, index) => (
-            <div
-              key={index}
-              className={`relative overflow-hidden rounded-xl bg-gray-100 ${
-                post.images.length === 1 ? 'aspect-video' : 'aspect-square'
-              } ${index === 3 && post.images.length > 4 ? 'relative' : ''}`}
-            >
-              <Image
-                src={imageUrl}
-                alt={`Post image ${index + 1}`}
-                fill
-                className="object-cover transition-transform duration-500 hover:scale-105"
-              />
-              {index === 3 && post.images.length > 4 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                  <span className="text-2xl font-bold text-white">
-                    +{post.images.length - 4}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+      {post.image && (
+        <div className="grid grid-cols-1 gap-2 px-4 pb-4 sm:px-5 sm:pb-5 lg:px-6">
+          <div className="relative aspect-video overflow-hidden rounded-xl bg-gray-100">
+            <Image
+              src={post.image}
+              alt="Post image"
+              fill
+              className="object-cover transition-transform duration-500 hover:scale-105"
+            />
+          </div>
         </div>
       )}
 

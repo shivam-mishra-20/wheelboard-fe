@@ -18,7 +18,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
-import LoginSimulator from '@/components/LoginSimulator';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Job } from '@/types/api';
@@ -166,23 +166,38 @@ export default function CompanyJobsPage() {
       const applicationsData = (response.data as any[]) || [];
 
       // Map API response to JobApplication format
-      const mappedApplications = applicationsData.map((app: any) => ({
-        id: app.applicationId || app.id,
-        applicationId: app.applicationId,
-        candidateName: app.applicantName || app.name || 'Unknown',
-        candidateEmail: app.email || '',
-        candidatePhone: app.phone || '',
-        location: app.location || '',
-        experience: app.experience || 'Not specified',
-        appliedDate: app.appliedAt || new Date().toISOString(),
-        status: (app.status || 'pending') as
-          | 'pending'
-          | 'reviewed'
-          | 'shortlisted'
-          | 'rejected',
-        coverLetter: app.coverLetter || '',
-        avatar: app.avatar || '',
-      }));
+      const mappedApplications = applicationsData.map((app: any) => {
+        // Normalize status to match JobApplication type
+        const normalizeStatus = (
+          status: string
+        ): 'Pending' | 'Accepted' | 'Rejected' => {
+          const lowerStatus = status.toLowerCase();
+          if (lowerStatus === 'accepted' || lowerStatus === 'shortlisted')
+            return 'Accepted';
+          if (lowerStatus === 'rejected') return 'Rejected';
+          return 'Pending';
+        };
+
+        return {
+          id: app.applicationId || app.id,
+          applicationId: app.applicationId,
+          jobId: job.jobId, // Add jobId from parent job
+          applicantId: app.applicantId || app.userId || '', // Add applicantId
+          applicantName: app.applicantName || app.name || 'Unknown', // Use applicantName
+          applicantPhone: app.phone || '', // Use applicantPhone
+          applicantEmail: app.email || '', // Keep as applicantEmail (optional)
+          candidateName: app.applicantName || app.name || 'Unknown',
+          candidateEmail: app.email || '',
+          candidatePhone: app.phone || '',
+          location: app.location || '',
+          experience: app.experience || 'Not specified',
+          appliedDate: app.appliedAt || new Date().toISOString(),
+          appliedAt: app.appliedAt || new Date().toISOString(), // Add appliedAt
+          status: normalizeStatus(app.status || 'pending'),
+          coverLetter: app.coverLetter || '',
+          avatar: app.avatar || '',
+        };
+      });
 
       // Update the selected job with applications
       setSelectedJob({ ...job, applications: mappedApplications });
@@ -384,9 +399,6 @@ export default function CompanyJobsPage() {
     <CompanyProtected>
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="mt-20 min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50/30">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

@@ -24,7 +24,7 @@ export default function RecentReviewsCard({ driver }: RecentReviewsCardProps) {
 
       {hasReviews ? (
         <div className="space-y-4">
-          {driver.reviews.map((review) => (
+          {(driver.reviews || []).map((review) => (
             <div
               key={review.id}
               className="rounded-lg border border-gray-100 p-4 transition-shadow hover:shadow-md"

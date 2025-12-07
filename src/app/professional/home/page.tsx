@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Header from '../../../components/Header';
-import LoginSimulator from '../../../components/LoginSimulator';
+
 import Footer from '../../../components/Footer';
 import { ProfessionalProtected } from '../../../components/ProtectedRoute';
 import HeroCarousel from '../../../components/professional/HeroCarousel';
@@ -112,9 +112,6 @@ export default function ProfessionalHomePage() {
     <ProfessionalProtected>
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="min-h-screen pt-6 font-poppins">
         {/* Main Content */}

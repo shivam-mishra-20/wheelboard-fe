@@ -495,30 +495,42 @@ export const serviceApi = {
 
   // GET /api/Service/service-assign-list?serviceId={serviceId} - Get bookings/assignments for a specific service
   getServiceAssignments: async (serviceId: string) => {
-    return apiRequest(`/api/Service/service-assign-list?serviceId=${serviceId}`, {
-      method: 'GET',
-    });
+    return apiRequest(
+      `/api/Service/service-assign-list?serviceId=${serviceId}`,
+      {
+        method: 'GET',
+      }
+    );
   },
 
   // POST /api/Service/complete-service?assignmentId={assignmentId} - Mark service as completed
   completeService: async (assignmentId: string) => {
-    return apiRequest(`/api/Service/complete-service?assignmentId=${assignmentId}`, {
-      method: 'POST',
-    });
+    return apiRequest(
+      `/api/Service/complete-service?assignmentId=${assignmentId}`,
+      {
+        method: 'POST',
+      }
+    );
   },
 
   // POST /api/Service/update-service-status?assignmentId={assignmentId}&status={status} - Update booking status
   updateServiceStatus: async (assignmentId: string, status: string) => {
-    return apiRequest(`/api/Service/update-service-status?assignmentId=${assignmentId}&status=${encodeURIComponent(status)}`, {
-      method: 'POST',
-    });
+    return apiRequest(
+      `/api/Service/update-service-status?assignmentId=${assignmentId}&status=${encodeURIComponent(status)}`,
+      {
+        method: 'POST',
+      }
+    );
   },
 
   // POST /api/Service/cancel-service?assignmentId={assignmentId} - Cancel a service booking
   cancelService: async (assignmentId: string) => {
-    return apiRequest(`/api/Service/cancel-service?assignmentId=${assignmentId}`, {
-      method: 'POST',
-    });
+    return apiRequest(
+      `/api/Service/cancel-service?assignmentId=${assignmentId}`,
+      {
+        method: 'POST',
+      }
+    );
   },
 
   // POST /api/Service/{assignmentId}/delete
@@ -530,12 +542,9 @@ export const serviceApi = {
 
   // POST /api/Service/{serviceId}/user/{userId}/delete
   deleteService: async (serviceId: string, userId: string) => {
-    return apiRequest(
-      `/api/Service/${serviceId}/user/${userId}/delete`,
-      {
-        method: 'POST',
-      }
-    );
+    return apiRequest(`/api/Service/${serviceId}/user/${userId}/delete`, {
+      method: 'POST',
+    });
   },
 
   // POST /api/Service/update-viewcount
@@ -658,9 +667,12 @@ export const jobApi = {
 
   // POST /api/Job/job-like-toggle - Toggle like on a job
   toggleJobLike: async (jobId: string, userId: string) => {
-    return apiRequest(`/api/Job/job-like-toggle?jobId=${jobId}&userId=${userId}`, {
-      method: 'POST',
-    });
+    return apiRequest(
+      `/api/Job/job-like-toggle?jobId=${jobId}&userId=${userId}`,
+      {
+        method: 'POST',
+      }
+    );
   },
 
   // POST /api/Job/apply-job - Apply for a job

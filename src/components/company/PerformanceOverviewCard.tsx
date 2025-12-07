@@ -27,22 +27,24 @@ export default function PerformanceOverviewCard({
       currentStep++;
       const progress = currentStep / steps;
 
+      const performance = driver.performance || {
+        timelyDelivery: 0,
+        tripEfficiency: 0,
+        safety: 0,
+      };
+
       setAnimatedValues({
-        timelyDelivery: Math.round(
-          driver.performance.timelyDelivery * progress
-        ),
-        tripEfficiency: Math.round(
-          driver.performance.tripEfficiency * progress
-        ),
-        safety: Math.round(driver.performance.safety * progress),
+        timelyDelivery: Math.round(performance.timelyDelivery * progress),
+        tripEfficiency: Math.round(performance.tripEfficiency * progress),
+        safety: Math.round(performance.safety * progress),
       });
 
       if (currentStep >= steps) {
         clearInterval(timer);
         setAnimatedValues({
-          timelyDelivery: driver.performance.timelyDelivery,
-          tripEfficiency: driver.performance.tripEfficiency,
-          safety: driver.performance.safety,
+          timelyDelivery: performance.timelyDelivery,
+          tripEfficiency: performance.tripEfficiency,
+          safety: performance.safety,
         });
       }
     }, interval);

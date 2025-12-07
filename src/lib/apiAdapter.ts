@@ -115,7 +115,8 @@ export const api = {
 
         // Service Provider users come as Company type with businessCategory 'Service Provider'
         const mappedUserType: 'professional' | 'company' | 'business' =
-          (userData.businessCategory || '').toLowerCase() === 'service provider' ||
+          (userData.businessCategory || '').toLowerCase() ===
+            'service provider' ||
           (userData.businessCategory || '').toLowerCase() === 'service-provider'
             ? 'business'
             : normalizedUserType;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -22,7 +23,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
-import LoginSimulator from '@/components/LoginSimulator';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CreateTripModal from '@/components/company/CreateTripModal';
@@ -440,9 +441,6 @@ export default function CompanyTripsPage() {
     <CompanyProtected>
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
         {/* Main Content */}

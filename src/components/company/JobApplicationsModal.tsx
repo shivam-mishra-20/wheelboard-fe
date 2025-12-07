@@ -4,7 +4,21 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Phone, MapPin, Calendar, FileText } from 'lucide-react';
-import { JobApplication } from '@/lib/mockApi';
+import { JobApplication as BaseJobApplication } from '@/types/api';
+
+// Extended JobApplication type with UI-specific fields
+interface JobApplication extends BaseJobApplication {
+  id?: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  candidatePhone?: string;
+  location?: string;
+  experience?: string;
+  appliedDate?: string;
+  coverLetter?: string;
+  avatar?: string;
+  status: any; // Allow flexible status values for UI
+}
 
 interface JobApplicationsModalProps {
   isOpen: boolean;
@@ -19,13 +33,25 @@ const statusColors = {
   reviewed: 'bg-blue-100 text-blue-800 border-blue-200',
   shortlisted: 'bg-green-100 text-green-800 border-green-200',
   rejected: 'bg-red-100 text-red-800 border-red-200',
-};
+} as const;
 
 const statusLabels = {
   pending: 'Pending Review',
   reviewed: 'Reviewed',
   shortlisted: 'Shortlisted',
   rejected: 'Rejected',
+} as const;
+
+type StatusKey = keyof typeof statusColors;
+
+const getStatusColor = (status: any): string => {
+  const normalizedStatus = String(status || 'pending').toLowerCase();
+  return statusColors[normalizedStatus as StatusKey] || statusColors.pending;
+};
+
+const getStatusLabel = (status: any): string => {
+  const normalizedStatus = String(status || 'pending').toLowerCase();
+  return statusLabels[normalizedStatus as StatusKey] || statusLabels.pending;
 };
 
 export default function JobApplicationsModal({
@@ -35,11 +61,16 @@ export default function JobApplicationsModal({
   applications,
   onStatusUpdate,
 }: JobApplicationsModalProps) {
-  const [updatingApplicationId, setUpdatingApplicationId] = useState<string | null>(null);
+  const [updatingApplicationId, setUpdatingApplicationId] = useState<
+    string | null
+  >(null);
 
-  const handleStatusUpdate = async (applicationId: string, newStatus: string) => {
+  const handleStatusUpdate = async (
+    applicationId: string,
+    newStatus: string
+  ) => {
     if (!onStatusUpdate) return;
-    
+
     setUpdatingApplicationId(applicationId);
     try {
       await onStatusUpdate(applicationId, newStatus);
@@ -126,13 +157,13 @@ export default function JobApplicationsModal({
                           {application.avatar ? (
                             <Image
                               src={application.avatar}
-                              alt={application.candidateName}
+                              alt={application.candidateName || 'Candidate'}
                               fill
                               className="object-cover"
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-500 to-accent-500 text-xl font-bold text-white">
-                              {application.candidateName
+                              {(application.candidateName || 'U')
                                 .split(' ')
                                 .map((n) => n[0])
                                 .join('')
@@ -154,9 +185,9 @@ export default function JobApplicationsModal({
                             </p>
                           </div>
                           <span
-                            className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusColors[application.status]}`}
+                            className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusColor(application.status)}`}
                           >
-                            {statusLabels[application.status]}
+                            {getStatusLabel(application.status)}
                           </span>
                         </div>
 
@@ -181,7 +212,9 @@ export default function JobApplicationsModal({
                             <span>
                               Applied:{' '}
                               {new Date(
-                                application.appliedDate
+                                application.appliedDate ||
+                                  application.appliedAt ||
+                                  Date.now()
                               ).toLocaleDateString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
@@ -224,20 +257,50 @@ export default function JobApplicationsModal({
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => handleStatusUpdate(application.id || application.applicationId || '', 'shortlisted')}
-                                disabled={updatingApplicationId === (application.id || application.applicationId)}
-                                className="rounded-lg border border-green-300 bg-white px-4 py-2 text-xs font-semibold text-green-600 transition-all hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() =>
+                                  handleStatusUpdate(
+                                    application.id ||
+                                      application.applicationId ||
+                                      '',
+                                    'shortlisted'
+                                  )
+                                }
+                                disabled={
+                                  updatingApplicationId ===
+                                  (application.id || application.applicationId)
+                                }
+                                className={
+                                  'rounded-lg border border-green-300 bg-white px-4 py-2 text-xs font-semibold text-green-600 transition-all hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50'
+                                }
                               >
-                                {updatingApplicationId === (application.id || application.applicationId) ? 'Updating...' : 'Shortlist'}
+                                {updatingApplicationId ===
+                                (application.id || application.applicationId)
+                                  ? 'Updating...'
+                                  : 'Shortlist'}
                               </motion.button>
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => handleStatusUpdate(application.id || application.applicationId || '', 'rejected')}
-                                disabled={updatingApplicationId === (application.id || application.applicationId)}
-                                className="rounded-lg border border-red-300 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-all hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() =>
+                                  handleStatusUpdate(
+                                    application.id ||
+                                      application.applicationId ||
+                                      '',
+                                    'rejected'
+                                  )
+                                }
+                                disabled={
+                                  updatingApplicationId ===
+                                  (application.id || application.applicationId)
+                                }
+                                className={
+                                  'rounded-lg border border-red-300 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-all hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50'
+                                }
                               >
-                                {updatingApplicationId === (application.id || application.applicationId) ? 'Updating...' : 'Reject'}
+                                {updatingApplicationId ===
+                                (application.id || application.applicationId)
+                                  ? 'Updating...'
+                                  : 'Reject'}
                               </motion.button>
                             </>
                           )}

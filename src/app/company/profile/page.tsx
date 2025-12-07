@@ -20,10 +20,10 @@ import {
   Star,
   Users,
   UserPlus,
+  CheckCircle,
   CheckCircle2,
   Clock,
   XCircle,
-  Send,
   Loader2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -286,7 +286,6 @@ const CompanyProfilePage = () => {
       const referralData = {
         referralId: crypto.randomUUID(),
         createdBy: user.id,
-        partnerId: user.partnerId || undefined,
         userId: user.id,
         fullName: referralForm.fullName,
         mobileNumber: referralForm.mobileNumber,
@@ -1014,7 +1013,8 @@ const CompanyProfilePage = () => {
                       {
                         referrals.filter(
                           (r) =>
-                            r.status === 'Accepted' || r.status === 'accepted'
+                            r.referralStatus === 'Accepted' ||
+                            r.referralStatus === 'accepted'
                         ).length
                       }
                     </p>
@@ -1032,7 +1032,8 @@ const CompanyProfilePage = () => {
                       {
                         referrals.filter(
                           (r) =>
-                            r.status === 'Pending' || r.status === 'pending'
+                            r.referralStatus === 'Pending' ||
+                            r.referralStatus === 'pending'
                         ).length
                       }
                     </p>
@@ -1053,7 +1054,7 @@ const CompanyProfilePage = () => {
                 </p>
               </div>
 
-              {loadingReferrals ? (
+              {isLoadingReferrals ? (
                 <div className="flex items-center justify-center p-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#f36969]" />
                 </div>
@@ -1082,7 +1083,7 @@ const CompanyProfilePage = () => {
                 <div className="divide-y divide-gray-100">
                   {referrals.map((referral, index) => (
                     <motion.div
-                      key={referral.id || index}
+                      key={referral.referralId || index}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -1123,9 +1124,9 @@ const CompanyProfilePage = () => {
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getReferralStatusColor(referral.status)}`}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getReferralStatusColor(referral.referralStatus)}`}
                         >
-                          {referral.status || 'Pending'}
+                          {referral.referralStatus || 'Pending'}
                         </span>
                         {referral.createdAt && (
                           <span className="text-xs text-gray-400">
@@ -1174,10 +1175,10 @@ const CompanyProfilePage = () => {
                     </label>
                     <input
                       type="text"
-                      value={newReferral.fullName}
+                      value={referralForm.fullName}
                       onChange={(e) =>
-                        setNewReferral({
-                          ...newReferral,
+                        setReferralForm({
+                          ...referralForm,
                           fullName: e.target.value,
                         })
                       }
@@ -1193,10 +1194,10 @@ const CompanyProfilePage = () => {
                     </label>
                     <input
                       type="tel"
-                      value={newReferral.mobileNumber}
+                      value={referralForm.mobileNumber}
                       onChange={(e) =>
-                        setNewReferral({
-                          ...newReferral,
+                        setReferralForm({
+                          ...referralForm,
                           mobileNumber: e.target.value,
                         })
                       }
@@ -1212,10 +1213,10 @@ const CompanyProfilePage = () => {
                     </label>
                     <input
                       type="email"
-                      value={newReferral.email}
+                      value={referralForm.email}
                       onChange={(e) =>
-                        setNewReferral({
-                          ...newReferral,
+                        setReferralForm({
+                          ...referralForm,
                           email: e.target.value,
                         })
                       }
@@ -1229,9 +1230,12 @@ const CompanyProfilePage = () => {
                       Role <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={newReferral.role}
+                      value={referralForm.role}
                       onChange={(e) =>
-                        setNewReferral({ ...newReferral, role: e.target.value })
+                        setReferralForm({
+                          ...referralForm,
+                          role: e.target.value,
+                        })
                       }
                       className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm transition-all focus:border-[#f36969] focus:outline-none focus:ring-4 focus:ring-[#f36969]/10"
                       required
@@ -1252,10 +1256,10 @@ const CompanyProfilePage = () => {
                     </label>
                     <input
                       type="text"
-                      value={newReferral.location}
+                      value={referralForm.location}
                       onChange={(e) =>
-                        setNewReferral({
-                          ...newReferral,
+                        setReferralForm({
+                          ...referralForm,
                           location: e.target.value,
                         })
                       }
@@ -1268,10 +1272,10 @@ const CompanyProfilePage = () => {
                     <input
                       type="checkbox"
                       id="notifyOnAcceptance"
-                      checked={newReferral.notifyOnAcceptance}
+                      checked={referralForm.notifyOnAcceptance}
                       onChange={(e) =>
-                        setNewReferral({
-                          ...newReferral,
+                        setReferralForm({
+                          ...referralForm,
                           notifyOnAcceptance: e.target.checked,
                         })
                       }
@@ -1299,10 +1303,10 @@ const CompanyProfilePage = () => {
                       type="submit"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      disabled={submittingReferral}
+                      disabled={isSubmittingReferral}
                       className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[#f36969]/30 disabled:opacity-50"
                     >
-                      {submittingReferral ? (
+                      {isSubmittingReferral ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Submitting...

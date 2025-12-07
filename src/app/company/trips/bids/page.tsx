@@ -16,7 +16,7 @@ import {
   Award,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
-import LoginSimulator from '@/components/LoginSimulator';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { wheelboardApi } from '@/lib/wheelboardApi';
@@ -151,9 +151,6 @@ function TripBidsInner() {
     <CompanyProtected>
       {/* Unified Header */}
       <Header />
-
-      {/* Login Simulator for Testing */}
-      <LoginSimulator />
 
       <div className="min-h-screen bg-gray-50 pt-16 font-poppins">
         {/* Main Content */}

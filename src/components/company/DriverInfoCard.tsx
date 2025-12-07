@@ -29,7 +29,7 @@ export default function DriverInfoCard({
           <div className="relative mb-4">
             <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-white shadow-lg">
               <Image
-                src={driver.image}
+                src={driver.image || '/default-avatar.png'}
                 alt={driver.name}
                 width={128}
                 height={128}

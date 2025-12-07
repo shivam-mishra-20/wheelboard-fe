@@ -7,14 +7,16 @@
  */
 export const hasImageExtension = (path: string): boolean => {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-  return imageExtensions.some(ext => path.toLowerCase().endsWith(ext));
+  return imageExtensions.some((ext) => path.toLowerCase().endsWith(ext));
 };
 
 /**
  * Gets image path with fallback extensions if the original path doesn't have one
  * This is a workaround for backend not saving file extensions
  */
-export const getImagePathWithFallback = (imagePath: string | null | undefined): string => {
+export const getImagePathWithFallback = (
+  imagePath: string | null | undefined
+): string => {
   if (!imagePath) {
     return '/profile-pic.png';
   }

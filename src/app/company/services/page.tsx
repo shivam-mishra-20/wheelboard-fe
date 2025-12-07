@@ -408,7 +408,10 @@ export default function ServicesPage() {
         console.error('Error refreshing assigned services:', err);
         // Fallback: add to local state if refresh fails
         const newAssignment: Assignment = {
-          assignmentId: response.serviceId || serviceId,
+          assignmentId:
+            ((response.data as any)?.serviceId ||
+              (response.data as any)?.assignmentId) ??
+            serviceId,
           serviceId: serviceId,
           assignedToUserId: currentUser.id,
           vehicleNumber: assignmentData?.vehicleNumber || '',
