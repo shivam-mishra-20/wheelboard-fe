@@ -6,12 +6,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'wheelboardapi.addonshareware.com',
-        pathname: '/uploads/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'wheelboardapi.addonshareware.com',
-        pathname: '/logos/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',

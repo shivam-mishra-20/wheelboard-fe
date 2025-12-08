@@ -68,31 +68,86 @@ export default function CompanyHomePage() {
   useEffect(() => {
     const fetchPopularFeeds = async () => {
       try {
-        const user = api.getCurrentUser();
-        if (!user) return;
+        setIsLoadingFeeds(true);
+        const response = await wheelboardApi.post.getAllPosts();
 
-        const response = await wheelboardApi.post.getPostsByUser(user.id);
-        const postsData = (response.data as any[]) || [];
+        console.log('Popular Feeds API Response:', response);
+        console.log('Response type:', typeof response);
+        console.log('Has data?:', (response as any)?.data);
+
+        // Handle both response structures: {data: [...]} or direct array
+        let postsData: any[] = [];
+        if (Array.isArray(response)) {
+          postsData = response;
+          console.log('Using direct array');
+        } else if (
+          (response as any).data &&
+          Array.isArray((response as any).data)
+        ) {
+          postsData = (response as any).data;
+          console.log('Using response.data');
+        } else {
+          console.log('No valid data structure found');
+        }
+
+        console.log('Posts Data:', postsData);
+        console.log('Posts Count:', postsData.length);
 
         // Map API response to Feed interface
-        const mappedFeeds = postsData.slice(0, 8).map((apiPost: any) => ({
-          id: apiPost.postId,
-          author: {
-            name: apiPost.authorName || user.mobileNo || 'Company User',
-            avatar: apiPost.authorAvatar,
-            initials: (apiPost.authorName || 'C')
-              .split(' ')
-              .map((s: string) => s[0])
-              .slice(0, 2)
-              .join(''),
-            userType: 'company' as const,
-          },
-          title: apiPost.title,
-          content: apiPost.content,
-          image: apiPost.mediaUrls?.[0],
-          timeAgo: apiPost.createdAt || 'Recently posted',
-        }));
+        const mappedFeeds = postsData.slice(0, 8).map((apiPost: any) => {
+          // Calculate time ago from createdAt
+          let timeAgo = 'Recently posted';
+          if (apiPost.createdAt) {
+            const postDate = new Date(apiPost.createdAt);
+            const now = new Date();
+            const diffMs = now.getTime() - postDate.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
 
+            if (diffDays > 0) {
+              timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            } else if (diffHours > 0) {
+              timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            } else if (diffMins > 0) {
+              timeAgo = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+            } else {
+              timeAgo = 'Just now';
+            }
+          }
+
+          // Construct image URL
+          const mediaUrl =
+            apiPost.mediaUrl || apiPost.mediaUrls?.[0] || apiPost.image;
+          let imageUrl = '';
+          if (mediaUrl) {
+            if (mediaUrl.startsWith('http')) {
+              imageUrl = mediaUrl;
+            } else {
+              imageUrl = `https://wheelboardapi.addonshareware.com${mediaUrl.startsWith('/') ? '' : '/'}${mediaUrl}`;
+            }
+          }
+
+          return {
+            id: apiPost.postId || apiPost.id,
+            author: {
+              name: apiPost.userName || apiPost.authorName || 'Anonymous User',
+              avatar: apiPost.userProfileImage || apiPost.authorAvatar,
+              initials: (apiPost.userName || apiPost.authorName || 'A')
+                .split(' ')
+                .map((s: string) => s[0])
+                .slice(0, 2)
+                .join(''),
+              userType: 'company' as const,
+            },
+            title: apiPost.title,
+            content: apiPost.description || apiPost.content,
+            image: imageUrl,
+            timeAgo: timeAgo,
+          };
+        });
+
+        console.log('Mapped Feeds:', mappedFeeds);
         setPopularFeeds(mappedFeeds);
       } catch (error) {
         console.error('Error fetching feeds:', error);

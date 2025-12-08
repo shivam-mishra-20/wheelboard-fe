@@ -174,12 +174,23 @@ export default function TripDetailsPage() {
       setIsStarting(true);
       await wheelboardApi.trip.startTrip(tripId);
 
-      setTripStatus('In-Process');
+      // Refetch trip details to get updated status
+      const response =
+        await wheelboardApi.trip.getUnassignedTripDetails(tripId);
+      const tripData = (response?.data || response) as TripDetails;
+      setTrip(tripData);
+      setTripStatus(tripData.tripStatus || 'In-Process');
+
       setToastMessage('✅ Trip started successfully!');
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 3000);
 
       console.log('✅ Trip started');
+
+      // Navigate to tracking page after 2 seconds
+      setTimeout(() => {
+        router.push(`/professional/trips/${tripId}/progress`);
+      }, 2000);
     } catch (error) {
       console.error('❌ Error starting trip:', error);
       alert('Failed to start trip. Please try again.');
@@ -200,12 +211,23 @@ export default function TripDetailsPage() {
       setIsEnding(true);
       await wheelboardApi.trip.endTrip(tripId);
 
-      setTripStatus('Completed');
+      // Refetch trip details to get updated status
+      const response =
+        await wheelboardApi.trip.getUnassignedTripDetails(tripId);
+      const tripData = (response?.data || response) as TripDetails;
+      setTrip(tripData);
+      setTripStatus(tripData.tripStatus || 'Completed');
+
       setToastMessage('✅ Trip completed successfully!');
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 3000);
 
       console.log('✅ Trip ended');
+
+      // Navigate back to trips list after 2 seconds
+      setTimeout(() => {
+        router.push('/professional/trips');
+      }, 2000);
     } catch (error) {
       console.error('❌ Error ending trip:', error);
       alert('Failed to end trip. Please try again.');

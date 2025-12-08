@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Headers from '@/components/Header';
 import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MONTHS = [
@@ -46,31 +47,125 @@ export default function CalendarPage() {
   const currentMonth = MONTHS[currentDate.getMonth()];
   const currentYear = currentDate.getFullYear();
 
-  // Fetch calendar events from API
+  // Fetch calendar events and assigned trips from API
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        console.log('🔍 Fetching calendar events...');
+        console.log('🔍 Fetching calendar events and trips...');
         setLoading(true);
 
         // Get current user
-        const currentUser = localStorage.getItem('currentUser');
-        const userId = currentUser
-          ? JSON.parse(currentUser).id
-          : '99b58c17-1812-4816-b2fd-20cfb386346c';
+        const user = api.getCurrentUser();
+        const userId = user?.id || '99b58c17-1812-4816-b2fd-20cfb386346c';
 
-        const response = await wheelboardApi.trip.getCalendarEvents(userId);
-        console.log('📅 Calendar events response:', response);
+        console.log('👤 User ID for calendar:', userId);
 
-        const eventsData: any[] = Array.isArray(response)
-          ? response
-          : response?.data && Array.isArray(response.data)
-            ? response.data
-            : [];
-        setEvents(eventsData);
+        // Fetch both calendar events and assigned trips
+        const [calendarResponse, tripsResponse] = await Promise.all([
+          wheelboardApi.trip.getCalendarEvents(userId),
+          wheelboardApi.trip.getAssignedTrips(userId),
+        ]);
 
-        // Calculate stats
-        const activeEvents = eventsData.filter((e: any) => e.isActive);
+        console.log(
+          '📅 Calendar events RAW response:',
+          JSON.stringify(calendarResponse, null, 2)
+        );
+        console.log(
+          '🚚 Assigned trips RAW response:',
+          JSON.stringify(tripsResponse, null, 2)
+        );
+
+        // Process calendar events - handle all possible response structures
+        let calendarEvents: any[] = [];
+        if (Array.isArray(calendarResponse)) {
+          calendarEvents = calendarResponse;
+        } else if (
+          calendarResponse?.data &&
+          Array.isArray(calendarResponse.data)
+        ) {
+          calendarEvents = calendarResponse.data;
+        } else if (calendarResponse && typeof calendarResponse === 'object') {
+          // Check if it's wrapped in another property
+          const keys = Object.keys(calendarResponse);
+          console.log('📋 Response keys:', keys);
+          for (const key of keys) {
+            if (Array.isArray((calendarResponse as any)[key])) {
+              calendarEvents = (calendarResponse as any)[key];
+              console.log(`✅ Found array in property: ${key}`);
+              break;
+            }
+          }
+        }
+
+        // Process assigned trips
+        let tripsData: any[] = [];
+        if (Array.isArray(tripsResponse)) {
+          tripsData = tripsResponse;
+        } else if (tripsResponse?.data && Array.isArray(tripsResponse.data)) {
+          tripsData = tripsResponse.data;
+        }
+
+        console.log(
+          '📊 Processed calendar events:',
+          calendarEvents.length,
+          calendarEvents
+        );
+        console.log('📊 Processed trips:', tripsData.length, tripsData);
+
+        // Convert assigned trips to calendar events format
+        const tripEvents = tripsData.map((trip: any) => {
+          let startTime: string;
+          let endTime: string;
+
+          try {
+            // pickupDate comes as "2025-12-26T00:00:00"
+            // pickupTime comes as "11:42:00"
+            if (trip.pickupDate && trip.pickupTime) {
+              // Extract date part from pickupDate
+              const datePart = trip.pickupDate.split('T')[0]; // "2025-12-26"
+              // Combine with pickupTime
+              const dateTimeString = `${datePart}T${trip.pickupTime}`; // "2025-12-26T11:42:00"
+              startTime = new Date(dateTimeString).toISOString();
+              endTime = startTime; // Same as start for trips
+            } else if (trip.pickupDate) {
+              // Only date available
+              startTime = new Date(trip.pickupDate).toISOString();
+              endTime = startTime;
+            } else {
+              // Fallback to current date
+              startTime = new Date().toISOString();
+              endTime = startTime;
+            }
+          } catch (error) {
+            console.error('Error parsing trip date/time:', error, trip);
+            startTime = new Date().toISOString();
+            endTime = startTime;
+          }
+
+          return {
+            eventId: `trip-${trip.tripId}`,
+            eventName: `Trip: ${trip.pickupLocation} → ${trip.deliveryLocation}`,
+            startTime,
+            endTime,
+            note: `${trip.tripStatus} - ${trip.tripCode || 'No code'}`,
+            category: 'trip',
+            isActive:
+              trip.tripStatus === 'Assigned' ||
+              trip.tripStatus === 'Inprogress',
+            isTripEvent: true,
+            tripData: trip,
+          };
+        });
+
+        // Combine both types of events
+        const allEvents = [...calendarEvents, ...tripEvents];
+        setEvents(allEvents);
+
+        console.log('📅 Total combined events:', allEvents.length);
+        console.log('📋 All events:', allEvents);
+
+        // Calculate stats using combined events
+        const activeEvents = allEvents.filter((e: any) => e.isActive);
         const thisMonth = new Date().getMonth();
         const thisYear = new Date().getFullYear();
         const thisMonthEvents = activeEvents.filter((e: any) => {
@@ -81,9 +176,9 @@ export default function CalendarPage() {
           );
         });
 
-        setStats({
+        const calculatedStats = {
           totalActiveDays: activeEvents.length,
-          totalEventsScheduled: eventsData.length,
+          totalEventsScheduled: allEvents.length,
           thisMonthAvailability:
             thisMonthEvents.length > 0
               ? Math.round(
@@ -92,11 +187,27 @@ export default function CalendarPage() {
                     100
                 )
               : 0,
-        });
+        };
 
-        console.log('✅ Events loaded:', eventsData.length);
+        console.log('📊 Calculated stats:', calculatedStats);
+        setStats(calculatedStats);
+
+        console.log(
+          '✅ Events loaded:',
+          allEvents.length,
+          '(Calendar:',
+          calendarEvents.length,
+          ', Trips:',
+          tripEvents.length,
+          ')'
+        );
       } catch (error) {
         console.error('❌ Error fetching events:', error);
+        // Show error details
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
       } finally {
         setLoading(false);
       }
@@ -175,6 +286,8 @@ export default function CalendarPage() {
         time: `${new Date(e.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(e.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
         location: e.note || '',
         category: e.category || 'General',
+        isTripEvent: e.isTripEvent || false,
+        tripData: e.tripData || null,
       })),
     };
   };
@@ -428,28 +541,78 @@ export default function CalendarPage() {
                         <h4 className="text-sm font-semibold text-[#535353] lg:text-base">
                           {event.title}
                         </h4>
-                        <span
-                          className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            event.category.toLowerCase() === 'trip'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-teal-100 text-teal-700'
-                          }`}
-                        >
-                          {event.category}
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs font-medium ${
+                              event.category.toLowerCase() === 'trip'
+                                ? 'bg-blue-100 text-blue-700'
+                                : event.category.toLowerCase() === 'job'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : 'bg-teal-100 text-teal-700'
+                            }`}
+                          >
+                            {event.category}
+                          </span>
+                        </div>
                       </div>
 
-                      {event.location && (
-                        <div className="mb-2 flex items-center gap-2 text-xs text-gray-600 lg:text-sm">
-                          <MapPin className="h-3 w-3 lg:h-4 lg:w-4" />
-                          <span>{event.location}</span>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2 text-xs text-gray-600 lg:text-sm">
+                      <div className="mb-2 flex items-center gap-2 text-xs text-gray-600 lg:text-sm">
                         <Clock className="h-3 w-3 lg:h-4 lg:w-4" />
                         <span>{event.time}</span>
                       </div>
+
+                      {event.location && (
+                        <div className="mb-2 rounded-lg bg-white p-2 text-xs text-gray-700 lg:text-sm">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="mt-0.5 h-3 w-3 flex-shrink-0 text-gray-400 lg:h-4 lg:w-4" />
+                            <span className="font-medium text-gray-600">
+                              Note:
+                            </span>
+                          </div>
+                          <p className="ml-5 mt-1 text-gray-700">
+                            {event.location}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Show trip details and action button for trip events */}
+                      {event.isTripEvent && event.tripData && (
+                        <div className="mt-3 border-t border-gray-200 pt-3">
+                          <div className="mb-2 flex items-center gap-2 text-xs text-gray-600">
+                            <MapPin className="h-3 w-3" />
+                            <span className="font-medium">Route:</span>
+                          </div>
+                          <div className="mb-2 ml-5 text-xs text-gray-700">
+                            <div>From: {event.tripData.pickupLocation}</div>
+                            <div>To: {event.tripData.deliveryLocation}</div>
+                          </div>
+                          {event.tripData.tripStatus && (
+                            <div className="mb-2 flex items-center gap-2">
+                              <span
+                                className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                  event.tripData.tripStatus === 'Completed'
+                                    ? 'bg-green-100 text-green-700'
+                                    : event.tripData.tripStatus === 'Inprogress'
+                                      ? 'bg-yellow-100 text-yellow-700'
+                                      : 'bg-blue-100 text-blue-700'
+                                }`}
+                              >
+                                {event.tripData.tripStatus}
+                              </span>
+                            </div>
+                          )}
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/professional/trips/${event.tripData.tripId}/progress`
+                              )
+                            }
+                            className="mt-2 w-full rounded-lg bg-[#f36969] px-3 py-2 text-xs font-semibold text-white transition-all hover:bg-[#e55555] lg:text-sm"
+                          >
+                            View Trip Details
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

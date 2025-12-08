@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -9,77 +9,32 @@ import {
   Phone,
   Mail,
   Star,
-  TrendingUp,
-  Clock,
   CheckCircle2,
   Award,
   Calendar as CalendarIcon,
   Shield,
-  MapPin,
   Truck,
 } from 'lucide-react';
 import { CompanyProtected } from '@/components/ProtectedRoute';
-import LoginSimulator from '@/components/LoginSimulator';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { wheelboardApi } from '@/lib/wheelboardApi';
 
-// Mock driver data
-const getDriverById = (id: string) => {
-  return {
-    id,
-    name: 'Jon Doe',
-    avatar: '/profile.png',
-    phoneNumber: '704 Hameogeo +61 70063',
-    rating: 4.6,
-    totalTrips: 162,
-    isVerified: true,
-    experience: '5 years',
-    performance: {
-      safetyRating: 95,
-      topEfficiency: 93,
-      customerFeedback: 4.4,
-    },
-    tripStats: {
-      totalTrips: 162,
-      onTimeDelivery: '2h 18m',
-      avgDeliveryTime: '8h 40m',
-      completedTrips: 28,
-    },
-    reviews: [
-      {
-        id: 'r1',
-        author: 'Alex Sharma',
-        date: 'Jul 12, 2019',
-        location: 'Ontario-5',
-        rating: 5,
-        comment:
-          'Delayed it always prompt and professional. He has an expert drivers and is very comfortable.',
-      },
-      {
-        id: 'r2',
-        author: 'Samantha Jones',
-        date: 'Jul 14, 2019',
-        location: 'Ontario-5',
-        rating: 4,
-        comment:
-          'On time and quick service. Would pick again. Polite and professional.',
-      },
-      {
-        id: 'r3',
-        author: 'Michael Lee',
-        date: 'Jul 16, 2019',
-        location: 'Ontario-5',
-        rating: 5,
-        comment:
-          'Punctual and efficient. All deliveries were timely and in perfect condition.',
-      },
-    ],
-    calendar: {
-      month: 'May 2025',
-      availableDays: [2, 4, 5, 9, 11, 16, 18, 23, 25, 30],
-    },
-  };
-};
+interface DriverData {
+  driverId: string;
+  fullName: string;
+  driverImagePath?: string;
+  contactNumber: string;
+  emailAddress?: string;
+  rating?: number;
+  totalTrips?: number;
+  isVerified?: boolean;
+  experience?: string;
+  licenseNumber?: string;
+  licenseExpiryDate?: string;
+  vehicleType?: string;
+  description?: string;
+}
 
 function DriverProfileInner() {
   const searchParams = useSearchParams();
@@ -87,9 +42,94 @@ function DriverProfileInner() {
   const driverId = searchParams.get('driverId');
   const tripId = searchParams.get('tripId');
 
-  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [driver, setDriver] = useState<DriverData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!driverId) {
+  useEffect(() => {
+    const fetchDriverData = async () => {
+      if (!driverId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        // First try to get professional details (for professionals who bid on trips)
+        const response =
+          await wheelboardApi.transport.getProfessionalDetails(driverId);
+
+        console.log('Driver Profile API Response:', response);
+        console.log('Response type:', typeof response);
+        console.log('Has data?:', (response as any)?.data);
+
+        // Handle both response structures: {data: {...}} or direct object
+        let driverData: any = null;
+        if (
+          (response as any).data &&
+          typeof (response as any).data === 'object'
+        ) {
+          driverData = (response as any).data;
+          console.log('Using response.data');
+        } else if (typeof response === 'object') {
+          driverData = response;
+          console.log('Using direct response');
+        }
+
+        console.log('Driver Data:', driverData);
+        setDriver(driverData);
+      } catch (error) {
+        console.error('Error fetching professional details:', error);
+        // If professional details fail, try getting driver details
+        try {
+          const driverResponse =
+            await wheelboardApi.transport.getDriverDetails(driverId);
+
+          console.log('Driver Details API Response:', driverResponse);
+
+          // Handle both response structures
+          let driverData: any = null;
+          if (
+            (driverResponse as any).data &&
+            typeof (driverResponse as any).data === 'object'
+          ) {
+            driverData = (driverResponse as any).data;
+            console.log('Using driverResponse.data');
+          } else if (typeof driverResponse === 'object') {
+            driverData = driverResponse;
+            console.log('Using direct driverResponse');
+          }
+
+          console.log('Driver Data from fallback:', driverData);
+          setDriver(driverData);
+        } catch (driverError) {
+          console.error('Error fetching driver details:', driverError);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDriverData();
+  }, [driverId]);
+
+  if (isLoading) {
+    return (
+      <CompanyProtected>
+        <Header />
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 pt-16">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></div>
+            <h3 className="mb-2 text-xl font-bold text-gray-900">
+              Loading Driver Profile...
+            </h3>
+            <p className="text-gray-600">Please wait</p>
+          </div>
+        </div>
+      </CompanyProtected>
+    );
+  }
+
+  if (!driverId || !driver) {
     return (
       <CompanyProtected>
         <Header />
@@ -98,6 +138,9 @@ function DriverProfileInner() {
             <h2 className="text-2xl font-bold text-gray-900">
               Driver Not Found
             </h2>
+            <p className="mt-2 text-gray-600">
+              Unable to load driver information.
+            </p>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -112,10 +155,19 @@ function DriverProfileInner() {
     );
   }
 
-  const driver = getDriverById(driverId);
-  const displayedReviews = showAllReviews
-    ? driver.reviews
-    : driver.reviews.slice(0, 2);
+  // Extract data with fallbacks
+  const driverName = driver.fullName || 'Professional Driver';
+  const driverPhone = driver.contactNumber || 'N/A';
+  const driverEmail = driver.emailAddress || '';
+  const driverRating = driver.rating || 4.5;
+  const driverTrips = driver.totalTrips || 0;
+  const driverExperience = driver.experience || 'Not specified';
+  const driverImagePath = driver.driverImagePath
+    ? driver.driverImagePath.startsWith('http')
+      ? driver.driverImagePath
+      : `https://wheelboardapi.addonshareware.com${driver.driverImagePath.startsWith('/') ? '' : '/'}${driver.driverImagePath}`
+    : '/profile.png';
+  const isVerified = driver.isVerified !== true; // Default to false
 
   const handleAssignTrip = () => {
     if (tripId) {
@@ -125,35 +177,20 @@ function DriverProfileInner() {
     }
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  // Generate calendar for current month
+  // Generate calendar for current month (simplified - actual availability would come from API)
   const generateCalendar = () => {
     const daysInMonth = 31;
     const firstDay = 0; // Sunday
     const days = [];
+    // Mock available days for now - this should come from API when available
+    const availableDays = [2, 4, 5, 9, 11, 16, 18, 23, 25, 30];
 
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="h-10 w-10" />);
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const isAvailable = driver.calendar.availableDays.includes(day);
+      const isAvailable = availableDays.includes(day);
       days.push(
         <div
           key={day}
@@ -174,7 +211,6 @@ function DriverProfileInner() {
   return (
     <CompanyProtected>
       <Header />
-      <LoginSimulator />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 pt-16 font-poppins">
         <main className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
@@ -205,13 +241,13 @@ function DriverProfileInner() {
                     <div className="relative mb-4">
                       <div className="relative h-40 w-40 overflow-hidden rounded-2xl border-4 border-gray-100 shadow-lg">
                         <Image
-                          src={driver.avatar}
-                          alt={driver.name}
+                          src={driverImagePath}
+                          alt={driverName}
                           fill
                           className="object-cover"
                         />
                       </div>
-                      {driver.isVerified && (
+                      {isVerified && (
                         <div className="absolute -bottom-2 -right-2 rounded-full bg-white p-2 shadow-lg">
                           <CheckCircle2 className="h-7 w-7 text-green-500" />
                         </div>
@@ -219,20 +255,20 @@ function DriverProfileInner() {
                     </div>
 
                     <h1 className="mb-2 text-center text-2xl font-bold text-gray-900">
-                      {driver.name}
+                      {driverName}
                     </h1>
                     <p className="mb-3 text-center text-sm text-gray-600">
-                      {driver.phoneNumber}
+                      {driverPhone}
                     </p>
 
                     {/* Rating Badge */}
                     <div className="mb-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-yellow-50 to-yellow-100 px-5 py-2.5">
                       <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                       <span className="text-2xl font-bold text-gray-900">
-                        {driver.rating}
+                        {driverRating.toFixed(1)}
                       </span>
                       <span className="text-sm text-gray-600">
-                        ({driver.totalTrips} trips)
+                        ({driverTrips} trips)
                       </span>
                     </div>
 
@@ -241,6 +277,7 @@ function DriverProfileInner() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => window.open(`tel:${driverPhone}`)}
                         className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-green-500 hover:bg-green-50 hover:text-green-600"
                       >
                         <Phone className="h-4 w-4" />
@@ -249,7 +286,11 @@ function DriverProfileInner() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600"
+                        onClick={() =>
+                          driverEmail && window.open(`mailto:${driverEmail}`)
+                        }
+                        disabled={!driverEmail}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Mail className="h-4 w-4" />
                         Email
@@ -260,13 +301,51 @@ function DriverProfileInner() {
                     <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-50 px-4 py-2.5">
                       <Award className="h-4 w-4 text-[#f36969]" />
                       <span className="text-sm font-semibold text-gray-700">
-                        {driver.experience} Experience
+                        {driverExperience} Experience
                       </span>
                     </div>
+
+                    {/* License Info */}
+                    {driver.licenseNumber && (
+                      <div className="mt-3 w-full rounded-xl bg-blue-50 p-3">
+                        <p className="text-xs font-semibold text-blue-700">
+                          License: {driver.licenseNumber}
+                        </p>
+                        {driver.licenseExpiryDate && (
+                          <p className="mt-1 text-xs text-blue-600">
+                            Expires:{' '}
+                            {new Date(
+                              driver.licenseExpiryDate
+                            ).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Vehicle Type */}
+                    {driver.vehicleType && (
+                      <div className="mt-3 w-full rounded-xl bg-purple-50 p-3 text-center">
+                        <p className="text-xs font-semibold text-purple-700">
+                          Vehicle: {driver.vehicleType}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Right: Stats & Assign Button */}
                   <div className="lg:col-span-9">
+                    {/* Description */}
+                    {driver.description && (
+                      <div className="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <h3 className="mb-2 text-sm font-bold text-gray-900">
+                          About
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {driver.description}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Stats Grid */}
                     <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                       <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100/50 p-5 transition-all hover:shadow-md">
@@ -274,22 +353,22 @@ function DriverProfileInner() {
                           <Truck className="h-6 w-6 text-white" />
                         </div>
                         <p className="text-3xl font-bold text-gray-900">
-                          {driver.tripStats.totalTrips}
+                          {driverTrips}
                         </p>
                         <p className="text-sm font-medium text-gray-600">
                           Total Trips
                         </p>
                       </div>
 
-                      <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-purple-50 to-purple-100/50 p-5 transition-all hover:shadow-md">
-                        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500">
-                          <Clock className="h-6 w-6 text-white" />
+                      <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-yellow-50 to-yellow-100/50 p-5 transition-all hover:shadow-md">
+                        <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500">
+                          <Star className="h-6 w-6 text-white" />
                         </div>
                         <p className="text-3xl font-bold text-gray-900">
-                          {driver.tripStats.onTimeDelivery}
+                          {driverRating.toFixed(1)}
                         </p>
                         <p className="text-sm font-medium text-gray-600">
-                          Avg Delivery
+                          Rating
                         </p>
                       </div>
 
@@ -298,98 +377,31 @@ function DriverProfileInner() {
                           <CheckCircle2 className="h-6 w-6 text-white" />
                         </div>
                         <p className="text-3xl font-bold text-gray-900">
-                          {driver.tripStats.completedTrips}
+                          {isVerified ? 'Yes' : 'No'}
                         </p>
                         <p className="text-sm font-medium text-gray-600">
-                          Completed
+                          Verified
                         </p>
                       </div>
 
                       <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-[#f36969]/10 to-[#f36969]/20 p-5 transition-all hover:shadow-md">
                         <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-[#f36969]">
-                          <TrendingUp className="h-6 w-6 text-white" />
+                          <Shield className="h-6 w-6 text-white" />
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">
-                          {driver.tripStats.avgDeliveryTime}
-                        </p>
+                        <p className="text-3xl font-bold text-gray-900">Pro</p>
                         <p className="text-sm font-medium text-gray-600">
-                          Drive Time
+                          Status
                         </p>
                       </div>
                     </div>
 
-                    {/* Performance Bars */}
-                    <div className="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-6">
-                      <h3 className="mb-4 text-lg font-bold text-gray-900">
-                        Performance Metrics
-                      </h3>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-700">
-                              Safety Rating
-                            </span>
-                            <span className="text-sm font-bold text-[#f36969]">
-                              {driver.performance.safetyRating}%
-                            </span>
-                          </div>
-                          <div className="h-2.5 overflow-hidden rounded-full bg-white">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{
-                                width: `${driver.performance.safetyRating}%`,
-                              }}
-                              transition={{ duration: 1, delay: 0.2 }}
-                              className="h-full rounded-full bg-gradient-to-r from-green-400 to-green-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-700">
-                              Efficiency
-                            </span>
-                            <span className="text-sm font-bold text-[#f36969]">
-                              {driver.performance.topEfficiency}%
-                            </span>
-                          </div>
-                          <div className="h-2.5 overflow-hidden rounded-full bg-white">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{
-                                width: `${driver.performance.topEfficiency}%`,
-                              }}
-                              transition={{ duration: 1, delay: 0.3 }}
-                              className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-700">
-                              Customer Satisfaction
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-bold text-yellow-600">
-                                {driver.performance.customerFeedback}/5
-                              </span>
-                            </div>
-                          </div>
-                          <div className="h-2.5 overflow-hidden rounded-full bg-white">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{
-                                width: `${(driver.performance.customerFeedback / 5) * 100}%`,
-                              }}
-                              transition={{ duration: 1, delay: 0.4 }}
-                              className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500"
-                            />
-                          </div>
-                        </div>
-                      </div>
+                    {/* Performance Note */}
+                    <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                      <p className="text-sm text-blue-700">
+                        <strong>Note:</strong> Detailed performance metrics,
+                        trip history, and reviews will be available once the
+                        driver completes trips through the platform.
+                      </p>
                     </div>
 
                     {/* Assign Button */}
@@ -426,7 +438,7 @@ function DriverProfileInner() {
                 <div className="flex items-center gap-2 rounded-lg bg-[#f36969]/10 px-3 py-1.5">
                   <CalendarIcon className="h-4 w-4 text-[#f36969]" />
                   <span className="text-sm font-semibold text-[#f36969]">
-                    {driver.calendar.month}
+                    December 2025
                   </span>
                 </div>
               </div>
@@ -448,12 +460,16 @@ function DriverProfileInner() {
               <div className="mt-6 flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
                 <div className="h-4 w-4 rounded bg-[#f36969] shadow-sm" />
                 <span className="text-sm font-semibold text-gray-700">
-                  Available Days
+                  Available Days (Sample)
                 </span>
               </div>
+              <p className="mt-2 text-center text-xs text-gray-500">
+                Calendar availability will sync once driver updates their
+                schedule
+              </p>
             </motion.div>
 
-            {/* Right Column - Reviews */}
+            {/* Right Column - Additional Info */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -461,48 +477,69 @@ function DriverProfileInner() {
               className="rounded-2xl bg-white p-6 shadow-lg"
             >
               <h2 className="mb-6 border-b border-gray-200 pb-4 text-xl font-bold text-gray-900">
-                Customer Reviews
+                Professional Information
               </h2>
 
               <div className="space-y-4">
-                {displayedReviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-5 transition-all hover:border-[#f36969]/30 hover:shadow-md"
-                  >
-                    <div className="mb-3 flex items-start justify-between">
-                      <div>
-                        <h4 className="font-bold text-gray-900">
-                          {review.author}
-                        </h4>
-                        <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
-                          <MapPin className="h-3 w-3" />
-                          {review.date} • {review.location}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {renderStars(review.rating)}
-                      </div>
+                {/* Contact Info */}
+                <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-[#f36969]" />
+                    <h4 className="font-bold text-gray-900">Contact</h4>
+                  </div>
+                  <p className="mb-2 text-sm text-gray-700">{driverPhone}</p>
+                  {driverEmail && (
+                    <p className="text-sm text-gray-600">{driverEmail}</p>
+                  )}
+                </div>
+
+                {/* Vehicle Info */}
+                {driver.vehicleType && (
+                  <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-purple-50 to-white p-5">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Truck className="h-5 w-5 text-purple-600" />
+                      <h4 className="font-bold text-gray-900">Vehicle Type</h4>
                     </div>
-                    <p className="text-sm leading-relaxed text-gray-600">
-                      {review.comment}
+                    <p className="text-sm text-gray-700">
+                      {driver.vehicleType}
                     </p>
                   </div>
-                ))}
-              </div>
+                )}
 
-              {driver.reviews.length > 2 && (
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={() => setShowAllReviews(!showAllReviews)}
-                  className="mt-5 w-full rounded-xl border border-[#f36969]/30 bg-[#f36969]/5 px-4 py-3 font-semibold text-[#f36969] transition-all hover:bg-[#f36969]/10"
-                >
-                  {showAllReviews
-                    ? 'Show Less'
-                    : `View All ${driver.reviews.length} Reviews`}
-                </motion.button>
-              )}
+                {/* License Info */}
+                {driver.licenseNumber && (
+                  <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-5">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-blue-600" />
+                      <h4 className="font-bold text-gray-900">
+                        License Details
+                      </h4>
+                    </div>
+                    <p className="mb-1 text-sm text-gray-700">
+                      {driver.licenseNumber}
+                    </p>
+                    {driver.licenseExpiryDate && (
+                      <p className="text-xs text-gray-600">
+                        Valid until:{' '}
+                        {new Date(
+                          driver.licenseExpiryDate
+                        ).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Reviews Placeholder */}
+                <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-yellow-50 to-white p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Star className="h-5 w-5 text-yellow-500" />
+                    <h4 className="font-bold text-gray-900">Reviews</h4>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Customer reviews will appear here after completed trips.
+                  </p>
+                </div>
+              </div>
             </motion.div>
           </div>
         </main>

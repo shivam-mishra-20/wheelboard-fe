@@ -38,7 +38,7 @@ interface Trip extends ApiTrip {
   // UI compatibility fields
   id: string;
   title: string;
-  status: 'Completed' | 'In-Process' | 'Upcoming';
+  status: 'Completed' | 'Inprogress' | 'Upcoming';
   deliveryType:
     | 'Express Delivery'
     | 'Standard'
@@ -89,7 +89,7 @@ const item = {
   },
 };
 
-type TripStatus = 'Completed' | 'In-Process' | 'Upcoming';
+type TripStatus = 'Completed' | 'Inprogress' | 'Upcoming';
 
 type StatusFilter = 'All' | 'Assigned' | 'Unassigned';
 type SortOption = 'dateDesc' | 'dateAsc' | 'distanceDesc' | 'distanceAsc';
@@ -155,7 +155,7 @@ export default function CompanyTripsPage() {
           // UI compatibility fields
           id: apiTrip.tripId,
           title: `${apiTrip.pickupLocation} to ${apiTrip.deliveryLocation}`,
-          status: apiTrip.tripStatus as 'Completed' | 'In-Process' | 'Upcoming',
+          status: apiTrip.tripStatus as 'Completed' | 'Inprogress' | 'Upcoming',
           deliveryType: 'Standard' as const, // Default value
           from: apiTrip.pickupLocation,
           to: apiTrip.deliveryLocation,
@@ -209,7 +209,7 @@ export default function CompanyTripsPage() {
           ...apiTrip,
           id: apiTrip.tripId,
           title: `${apiTrip.pickupLocation} to ${apiTrip.deliveryLocation}`,
-          status: apiTrip.tripStatus as 'Completed' | 'In-Process' | 'Upcoming',
+          status: apiTrip.tripStatus as 'Completed' | 'Inprogress' | 'Upcoming',
           deliveryType: 'Standard' as const,
           from: apiTrip.pickupLocation,
           to: apiTrip.deliveryLocation,
@@ -268,8 +268,8 @@ export default function CompanyTripsPage() {
             ? 'Upcoming'
             : apiTrip.tripStatus === 'In Progress' ||
                 apiTrip.tripStatus === 'InProgress'
-              ? 'In-Process'
-              : 'Completed') as 'Completed' | 'In-Process' | 'Upcoming',
+              ? 'Inprogress'
+              : 'Completed') as 'Completed' | 'Inprogress' | 'Upcoming',
           deliveryType: 'Standard' as const,
           from: apiTrip.pickupLocation,
           to: apiTrip.deliveryLocation,
@@ -401,7 +401,7 @@ export default function CompanyTripsPage() {
           active: 'bg-green-100 shadow-green-200',
           glow: 'shadow-green-300',
         };
-      case 'In-Process':
+      case 'Inprogress':
         return {
           bg: 'bg-blue-50',
           text: 'text-blue-700',
@@ -602,7 +602,7 @@ export default function CompanyTripsPage() {
             className="top-16 z-10 mb-8"
           >
             <div className="flex items-center justify-center gap-2 rounded-2xl bg-white p-3 shadow-md md:gap-4">
-              {(['Completed', 'In-Process', 'Upcoming'] as TripStatus[]).map(
+              {(['Completed', 'Inprogress', 'Upcoming'] as TripStatus[]).map(
                 (status) => {
                   const colors = getStatusColor(status);
                   const isActive = activeTab === status;
@@ -746,7 +746,7 @@ export default function CompanyTripsPage() {
                         </div>
 
                         {/* Progress Bar for In-Process */}
-                        {trip.status === 'In-Process' && trip.progress && (
+                        {trip.status === 'Inprogress' && trip.progress && (
                           <div className="absolute bottom-0 left-0 right-0 h-2 bg-black/20 backdrop-blur-sm">
                             <motion.div
                               initial={{ width: 0 }}
@@ -831,7 +831,7 @@ export default function CompanyTripsPage() {
                           )}
 
                           {/* ETA for In-Process */}
-                          {trip.status === 'In-Process' && trip.eta && (
+                          {trip.status === 'Inprogress' && trip.eta && (
                             <div className="flex items-center gap-2 rounded-lg bg-blue-50 p-2">
                               <TrendingUp className="h-4 w-4 text-blue-600" />
                               <span className="font-semibold text-blue-700">
@@ -854,7 +854,7 @@ export default function CompanyTripsPage() {
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-2">
                           {/* In-Process Trip Buttons */}
-                          {trip.status === 'In-Process' && (
+                          {trip.status === 'Inprogress' && (
                             <>
                               <motion.button
                                 whileHover={{ scale: 1.05 }}

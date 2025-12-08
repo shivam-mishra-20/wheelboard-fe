@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Headers from '@/components/Header';
 import { wheelboardApi } from '@/lib/wheelboardApi';
+import { api } from '@/lib/apiAdapter';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
@@ -91,20 +92,15 @@ export default function MarkDatePage() {
     e.preventDefault();
 
     try {
-      // Get current user data - using correct localStorage key
-      const currentUser = localStorage.getItem('wheelboard_current_user');
-      if (!currentUser) {
+      // Get current user data
+      const user = api.getCurrentUser();
+      if (!user?.id) {
         alert('Please login to continue');
         return;
       }
-      const userData = JSON.parse(currentUser);
-      // Use 'id' field to match profile page storage format
-      const userId =
-        userData.id ||
-        userData.userId ||
-        '99b58c17-1812-4816-b2fd-20cfb386346c';
+      const userId = user.id;
 
-      console.log('👤 Current user data:', userData);
+      console.log('👤 Current user:', user);
       console.log('🆔 Using userId:', userId);
 
       // Convert date and time to ISO 8601 format

@@ -13,6 +13,7 @@ import PopularFeeds from '../../../components/company/PopularFeeds';
 import FloatingSOSButton from '../../../components/professional/FloatingSOSButton';
 import { professionalHomeData } from '../../../lib/mockApi';
 import { wheelboardApi } from '../../../lib/wheelboardApi';
+import { api } from '../../../lib/apiAdapter';
 
 // Helper function to calculate time ago
 const getTimeAgo = (dateString: string): string => {
@@ -56,6 +57,8 @@ interface FeedPost {
 export default function ProfessionalHomePage() {
   const [feeds, setFeeds] = useState<FeedPost[]>([]);
   const [isLoadingFeeds, setIsLoadingFeeds] = useState(true);
+  const [nextTrip, setNextTrip] = useState<any>(null);
+  const [isLoadingTrip, setIsLoadingTrip] = useState(true);
 
   useEffect(() => {
     const fetchFeeds = async () => {
@@ -108,6 +111,54 @@ export default function ProfessionalHomePage() {
     fetchFeeds();
   }, []);
 
+  // Fetch next scheduled trip
+  useEffect(() => {
+    const fetchNextTrip = async () => {
+      try {
+        setIsLoadingTrip(true);
+        const user = api.getCurrentUser();
+        if (!user?.id) {
+          console.log('No user found');
+          setIsLoadingTrip(false);
+          return;
+        }
+
+        const response = await wheelboardApi.trip.getAssignedTrips(user.id);
+        console.log('🚚 Assigned Trips for Home:', response);
+
+        let tripsData: any[] = [];
+        if (Array.isArray(response)) {
+          tripsData = response;
+        } else if (response?.data && Array.isArray(response.data)) {
+          tripsData = response.data;
+        }
+
+        // Get all assigned trips (any status)
+        if (tripsData.length > 0) {
+          // Sort by created date to get the last/most recent trip
+          const sortedTrips = tripsData.sort((a: any, b: any) => {
+            const dateA = new Date(a.createdDate || 0).getTime();
+            const dateB = new Date(b.createdDate || 0).getTime();
+            return dateB - dateA; // Descending order - most recent first
+          });
+
+          setNextTrip(sortedTrips[0]); // Get the last (most recent) trip
+          console.log('📍 Last scheduled trip:', sortedTrips[0]);
+        } else {
+          setNextTrip(null);
+          console.log('No assigned trips found');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching next trip:', error);
+        setNextTrip(null);
+      } finally {
+        setIsLoadingTrip(false);
+      }
+    };
+
+    fetchNextTrip();
+  }, []);
+
   return (
     <ProfessionalProtected>
       {/* Unified Header */}
@@ -127,9 +178,7 @@ export default function ProfessionalHomePage() {
           <QuickActions />
 
           {/* Next Scheduled Trip */}
-          <NextScheduledTrip
-            tripDetails={professionalHomeData.nextScheduledTrip}
-          />
+          <NextScheduledTrip tripDetails={nextTrip} isLoading={isLoadingTrip} />
 
           {/* Job Listings Section */}
           <JobListings />

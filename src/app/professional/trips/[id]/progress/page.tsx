@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import {
   AlertCircle,
   ArrowLeft,
-  Calendar,
   ChevronDown,
   Clock,
   Loader2,
@@ -17,17 +16,36 @@ import {
   Navigation,
   Phone,
   PhoneCall,
-  Play,
   Plus,
   RefreshCw,
   Route,
   Star,
-  TrendingUp,
   Truck,
   User,
 } from 'lucide-react';
-import { companyHomeData } from '@/lib/mockApi';
 import Headers from '@/components/Header';
+import { wheelboardApi } from '@/lib/wheelboardApi';
+//import { api } from '@/lib/apiAdapter';
+
+interface TripDetails {
+  tripId: string;
+  tripCode: string;
+  pickupLocation: string;
+  deliveryLocation: string;
+  pickupDate: string;
+  pickupTime: string;
+  specialInstructions: string;
+  payRange: string | null;
+  tripStatus: string;
+  vehicleId: string;
+  vehicleNumber: string;
+  vehicleModel: string;
+  vehicleTypeName: string;
+  driverId: string | null;
+  driverName: string;
+  driverContact: string;
+  driverImagePath: string;
+}
 
 export default function TripProgressPage() {
   const params = useParams();
@@ -36,12 +54,53 @@ export default function TripProgressPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isTripDetailsOpen, setIsTripDetailsOpen] = useState(false);
   const [isDriverInfoOpen, setIsDriverInfoOpen] = useState(false);
-  const [isStartingTrip, setIsStartingTrip] = useState(false);
-  const [tripStarted, setTripStarted] = useState(false);
   const [showLiveLocation, setShowLiveLocation] = useState(false);
+  const [trip, setTrip] = useState<TripDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Find trip from mock data
-  const trip = companyHomeData.allTrips.find((t) => t.id === tripId);
+  // Fetch trip details
+  useEffect(() => {
+    const fetchTripDetails = async () => {
+      try {
+        setIsLoading(true);
+        const response =
+          await wheelboardApi.trip.getUnassignedTripDetails(tripId);
+        console.log('✅ Trip Progress - Trip Details Response:', response);
+
+        const tripData = (response?.data || response) as TripDetails;
+        setTrip(tripData);
+
+        // Check if trip is already in progress
+        if (tripData.tripStatus === 'Inprogress') {
+          setShowLiveLocation(true);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching trip details:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Get current user
+    //const user = api.getCurrentUser();
+
+    if (tripId) {
+      fetchTripDetails();
+    }
+  }, [tripId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-[#f36969]" />
+          <p className="text-lg font-semibold text-[#535353]">
+            Loading trip progress...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!trip) {
     return (
@@ -61,29 +120,31 @@ export default function TripProgressPage() {
     );
   }
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
+    try {
+      const response =
+        await wheelboardApi.trip.getUnassignedTripDetails(tripId);
+      const tripData = (response?.data || response) as TripDetails;
+      setTrip(tripData);
 
-  const handleStartTrip = () => {
-    setIsStartingTrip(true);
-    // Simulate API call to start the trip
-    setTimeout(() => {
-      setIsStartingTrip(false);
-      setTripStarted(true);
-      setShowLiveLocation(true);
-      // In a real app, this would update the backend and change trip status to In-Process
-    }, 2000);
+      if (tripData.tripStatus === 'Inprogress') {
+        setShowLiveLocation(true);
+      }
+    } catch (error) {
+      console.error('Error refreshing trip:', error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'In-Process':
+      case 'Inprogress':
         return 'bg-blue-100 text-blue-700';
       case 'Completed':
         return 'bg-green-100 text-green-700';
-      case 'Upcoming':
+      case 'Assigned':
         return 'bg-yellow-100 text-yellow-700';
       default:
         return 'bg-gray-100 text-gray-700';
@@ -91,12 +152,30 @@ export default function TripProgressPage() {
   };
 
   const getStatusLabel = (status: string) => {
-    if (status === 'In-Process') return 'In Progress';
+    if (status === 'Inprogress') return 'In Progress';
     return status;
   };
 
-  const isAssigned = trip.isAssigned && trip.status === 'Upcoming';
-  //const isInProgress = trip.status === 'In-Process' || tripStarted;
+  // Only show this page for Inprogress trips
+  if (trip.tripStatus !== 'Inprogress') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-yellow-500" />
+          <h2 className="text-xl font-semibold text-[#535353]">
+            This trip is not in progress
+          </h2>
+          <p className="mt-2 text-gray-500">Trip Status: {trip.tripStatus}</p>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 rounded-xl bg-[#f36969] px-6 py-2 text-white hover:bg-[#e05858]"
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-8">
@@ -140,21 +219,19 @@ export default function TripProgressPage() {
             </div>
             <div>
               <span
-                className={`inline-block rounded-full px-3 py-1 text-xs font-bold lg:text-sm ${getStatusColor(trip.status)}`}
+                className={`inline-block rounded-full px-3 py-1 text-xs font-bold lg:text-sm ${getStatusColor(trip.tripStatus)}`}
               >
-                {tripStarted ? 'In Progress' : getStatusLabel(trip.status)}
+                {getStatusLabel(trip.tripStatus)}
               </span>
               <p className="mt-1 text-sm text-gray-500 lg:text-base">
-                {(trip.status === 'In-Process' || tripStarted) && trip.progress
-                  ? `${trip.progress}% Complete`
-                  : trip.deliveryType}
+                {trip.vehicleTypeName || 'Transport Service'}
               </p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500 lg:text-sm">Trip ID</p>
+            <p className="text-xs text-gray-500 lg:text-sm">Trip Code</p>
             <p className="text-sm font-bold text-[#535353] lg:text-base">
-              {trip.id.toUpperCase()}
+              {trip.tripCode}
             </p>
           </div>
         </div>
@@ -169,24 +246,44 @@ export default function TripProgressPage() {
                 {/* Placeholder for map - would be replaced with actual map component */}
                 <div className="absolute inset-0 flex items-center justify-center bg-[#e9ecef]">
                   <div className="text-center">
-                    {showLiveLocation || trip.status === 'In-Process' ? (
+                    {showLiveLocation || trip.tripStatus === 'Inprogress' ? (
                       <div className="flex flex-col items-center justify-center">
                         <MapIcon className="mb-4 h-16 w-16 animate-pulse text-[#f36969]" />
                         <p className="text-lg font-bold text-[#535353]">
                           Live Tracking Active
                         </p>
                         <p className="mt-2 text-sm text-gray-500">
-                          Showing real-time location
+                          Real-time location tracking enabled
                         </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                          {trip.pickupLocation} → {trip.deliveryLocation}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                          Pickup:{' '}
+                          {new Date(trip.pickupDate).toLocaleDateString()} at{' '}
+                          {trip.pickupTime}
+                        </p>
+                        <div className="mt-4 rounded-lg bg-yellow-100 px-4 py-2">
+                          <p className="text-sm font-semibold text-yellow-800">
+                            📍 Google Maps Integration
+                          </p>
+                          <p className="mt-1 text-xs text-yellow-700">
+                            To enable real-time GPS tracking, integrate Google
+                            Maps API with geolocation updates
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center">
                         <MapIcon className="mb-4 h-16 w-16 text-gray-400" />
                         <p className="text-lg font-bold text-[#535353]">
-                          Map Preview
+                          Route Preview
                         </p>
                         <p className="mt-2 text-sm text-gray-500">
-                          Start trip to activate live tracking
+                          {trip.pickupLocation} → {trip.deliveryLocation}
+                        </p>
+                        <p className="mt-4 text-xs text-gray-400">
+                          Start trip to activate live GPS tracking
                         </p>
                       </div>
                     )}
@@ -198,7 +295,7 @@ export default function TripProgressPage() {
                 <div className="absolute bottom-[25%] right-[20%] h-4 w-4 rounded-full border-2 border-white bg-green-500 shadow-lg shadow-green-500/50"></div>
 
                 {/* Current position marker - only shown when trip is in progress */}
-                {(showLiveLocation || trip.status === 'In-Process') && (
+                {(showLiveLocation || trip.tripStatus === 'Inprogress') && (
                   <div className="absolute left-[45%] top-[40%] animate-pulse">
                     <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#f36969] shadow-lg shadow-[#f36969]/50">
                       <Navigation className="h-3 w-3 text-white" />
@@ -218,11 +315,11 @@ export default function TripProgressPage() {
                       className="h-full w-full"
                       style={{
                         strokeDashoffset:
-                          showLiveLocation || trip.status === 'In-Process'
+                          showLiveLocation || trip.tripStatus === 'Inprogress'
                             ? '100'
                             : '0',
                         animation:
-                          showLiveLocation || trip.status === 'In-Process'
+                          showLiveLocation || trip.tripStatus === 'Inprogress'
                             ? 'dash 15s linear infinite'
                             : 'none',
                       }}
@@ -278,13 +375,14 @@ export default function TripProgressPage() {
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-gray-500">
-                          Origin
+                          Pickup Location
                         </p>
                         <h4 className="text-sm font-bold text-[#535353]">
-                          {trip.from}
+                          {trip.pickupLocation}
                         </h4>
                         <p className="text-xs text-gray-500">
-                          Warehouse A, 123 Main St
+                          {new Date(trip.pickupDate).toLocaleDateString()} •{' '}
+                          {trip.pickupTime}
                         </p>
                       </div>
                     </div>
@@ -296,103 +394,62 @@ export default function TripProgressPage() {
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-gray-500">
-                          Destination
+                          Delivery Location
                         </p>
                         <h4 className="text-sm font-bold text-[#535353]">
-                          {trip.to}
+                          {trip.deliveryLocation}
                         </h4>
                         <p className="text-xs text-gray-500">
-                          Distribution Center, 456 Oak Ave
+                          Estimated delivery
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Trip Stats */}
-                  <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {/* ETA */}
-                    {trip.eta && (
-                      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
-                          <Clock className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <p className="text-xs text-gray-500">ETA</p>
-                        <p className="text-sm font-bold text-[#535353]">
-                          {trip.eta}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Distance Left */}
-                    {(trip.status === 'In-Process' || tripStarted) &&
-                      trip.progress && (
-                        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                          <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-red-100">
-                            <TrendingUp className="h-4 w-4 text-[#f36969]" />
-                          </div>
-                          <p className="text-xs text-gray-500">Distance Left</p>
-                          <p className="text-sm font-bold text-[#535353]">
-                            {Math.floor(
-                              (parseInt(trip.distance) *
-                                (100 - trip.progress)) /
-                                100
-                            )}{' '}
-                            mi
-                          </p>
-                        </div>
-                      )}
-
-                    {/* Total Distance */}
-                    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
-                        <Navigation className="h-4 w-4 text-green-600" />
-                      </div>
-                      <p className="text-xs text-gray-500">Total Distance</p>
-                      <p className="text-sm font-bold text-[#535353]">
-                        {trip.distance}
+                  {/* Additional Info Grid */}
+                  <div className="grid grid-cols-2 gap-4 rounded-xl bg-gray-50 p-4 md:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Vehicle</p>
+                      <p className="mt-1 text-sm font-bold text-[#535353]">
+                        {trip.vehicleNumber}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {trip.vehicleModel || trip.vehicleTypeName}
                       </p>
                     </div>
-
-                    {/* Departure */}
-                    {trip.departureTime && (
-                      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100">
-                          <Calendar className="h-4 w-4 text-purple-600" />
-                        </div>
-                        <p className="text-xs text-gray-500">Departure</p>
-                        <p className="text-sm font-bold text-[#535353]">
-                          {trip.departureTime}
-                        </p>
-                      </div>
-                    )}
+                    <div>
+                      <p className="text-xs text-gray-500">Driver</p>
+                      <p className="mt-1 text-sm font-bold text-[#535353]">
+                        {trip.driverName || 'You'}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {trip.driverContact || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Payment</p>
+                      <p className="mt-1 text-sm font-bold text-green-600">
+                        ₹{trip.payRange || '0'}
+                      </p>
+                    </div>
                   </div>
+
+                  {/* Special Instructions */}
+                  {trip.specialInstructions && (
+                    <div className="mt-4 rounded-lg border-l-4 border-yellow-400 bg-yellow-50 p-3">
+                      <p className="text-xs font-semibold text-yellow-700">
+                        Special Instructions:
+                      </p>
+                      <p className="mt-1 text-sm text-yellow-600">
+                        {trip.specialInstructions}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Progress Bar - Mobile and Desktop */}
-            {(trip.status === 'In-Process' || tripStarted) && trip.progress && (
-              <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-[#535353]">
-                    Overall Progress
-                  </h3>
-                  <span className="text-2xl font-bold text-[#f36969]">
-                    {trip.progress}%
-                  </span>
-                </div>
-                <div className="relative h-4 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#f36969] to-[#f36565] transition-all duration-500"
-                    style={{ width: `${trip.progress}%` }}
-                  ></div>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                  <span>{trip.from}</span>
-                  <span>{trip.to}</span>
-                </div>
-              </div>
-            )}
+            {/* Note: Progress tracking would require additional API endpoints for real-time updates */}
           </div>
 
           {/* Right Column - Info Cards & Actions */}
@@ -423,11 +480,11 @@ export default function TripProgressPage() {
                   <div className="mb-4">
                     <div className="flex items-center gap-4">
                       <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gray-200 to-gray-300 text-2xl font-bold text-gray-700">
-                        {trip.driver.name.charAt(0)}
+                        {trip.driverName.charAt(0)}
                       </div>
                       <div className="flex-1">
                         <h4 className="text-base font-bold text-[#535353]">
-                          {trip.driver.name}
+                          {trip.driverName}
                         </h4>
                         <p className="text-xs text-gray-500">
                           Professional Driver
@@ -458,13 +515,13 @@ export default function TripProgressPage() {
                       <div>
                         <p className="text-xs text-gray-500">Model</p>
                         <p className="text-sm font-semibold text-[#535353]">
-                          {trip.vehicle.name}
+                          {trip.vehicleTypeName}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Registration</p>
                         <p className="font-mono text-sm font-semibold text-[#535353]">
-                          {trip.vehicle.registrationNumber}
+                          {trip.vehicleNumber}
                         </p>
                       </div>
                     </div>
@@ -473,62 +530,37 @@ export default function TripProgressPage() {
               </div>
             </div>
 
-            {/* Schedule Info for Upcoming */}
-            {trip.status === 'Upcoming' && (
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-[#f36969]" />
-                  <h3 className="text-lg font-bold text-[#535353]">Schedule</h3>
+            {/* Trip Schedule */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-[#f36969]" />
+                <h3 className="text-lg font-bold text-[#535353]">Schedule</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Pickup Date</span>
+                  <span className="font-semibold text-[#535353]">
+                    {new Date(trip.pickupDate).toLocaleDateString()}
+                  </span>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Departure</span>
-                    <span className="font-semibold text-[#535353]">
-                      {trip.departureTime}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Duration</span>
-                    <span className="font-semibold text-[#535353]">
-                      {trip.duration}
-                    </span>
-                  </div>
-                  {trip.arrivalTime && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">
-                        Est. Arrival
-                      </span>
-                      <span className="font-semibold text-[#535353]">
-                        {trip.arrivalTime}
-                      </span>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Pickup Time</span>
+                  <span className="font-semibold text-[#535353]">
+                    {trip.pickupTime}
+                  </span>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              {/* Show Start Trip button only for assigned upcoming trips */}
-              {isAssigned && !tripStarted && (
-                <button
-                  onClick={handleStartTrip}
-                  disabled={isStartingTrip}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] py-4 font-semibold text-white shadow-lg shadow-[#f36969]/30 transition-all hover:shadow-xl hover:shadow-[#f36969]/40 disabled:opacity-70"
-                >
-                  {isStartingTrip ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Starting Trip...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-5 w-5" />
-                      Start Trip
-                    </>
-                  )}
-                </button>
-              )}
+              {/* Trip is in progress - show status */}
+              <div className="rounded-xl border-2 border-green-500 bg-green-50 p-4">
+                <div className="flex items-center justify-center gap-2 text-green-700">
+                  <Truck className="h-5 w-5" />
+                  <span className="font-bold">Trip In Progress</span>
+                </div>
+              </div>
 
               <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f36969] to-[#f36565] py-4 font-semibold text-white shadow-lg shadow-[#f36969]/30 transition-all hover:shadow-xl hover:shadow-[#f36969]/40">
                 <Phone className="h-5 w-5" />
