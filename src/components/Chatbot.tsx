@@ -120,7 +120,6 @@ const ACTION_RESPONSES: Record<string, string> = {
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -136,18 +135,6 @@ export default function Chatbot() {
   const [currentContext, setCurrentContext] = useState<string>('userType');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Detect mobile devices
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -325,15 +312,6 @@ export default function Chatbot() {
     }
   };
 
-  const handleChatToggle = () => {
-    // On mobile, directly open fullscreen mode
-    if (isMobile) {
-      setIsFullscreen(true);
-    } else {
-      setIsOpen(!isOpen);
-    }
-  };
-
   return (
     <>
       {/* Fullscreen Chatbot */}
@@ -344,14 +322,14 @@ export default function Chatbot() {
 
       {/* Floating Chat Button */}
       <motion.button
-        onClick={handleChatToggle}
-        className="fixed bottom-6 right-6 z-50 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 p-3 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl md:p-4"
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Toggle chat"
       >
         <AnimatePresence mode="wait">
-          {isOpen && !isMobile ? (
+          {isOpen ? (
             <motion.div
               key="close"
               initial={{ rotate: -90, opacity: 0 }}
@@ -359,7 +337,7 @@ export default function Chatbot() {
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <FaTimes className="h-5 w-5 md:h-6 md:w-6" />
+              <FaTimes size={24} />
             </motion.div>
           ) : (
             <motion.div
@@ -369,15 +347,15 @@ export default function Chatbot() {
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <FaComments className="h-5 w-5 md:h-6 md:w-6" />
+              <FaComments size={24} />
             </motion.div>
           )}
         </AnimatePresence>
       </motion.button>
 
-      {/* Chat Window - Desktop Only */}
+      {/* Chat Window */}
       <AnimatePresence>
-        {isOpen && !isMobile && (
+        {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
